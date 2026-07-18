@@ -3,16 +3,18 @@ import cors from "cors";
 import dotenv from "dotenv";
 import pool from "./config/db.js";
 import authRoutes from "./routes/authRoutes.js";
-app.use(express.json());
-app.use("/api/auth", authRoutes);
 
 dotenv.config();
 
+// Create Express app FIRST
 const app = express();
 
 // Middleware
 app.use(cors());
 app.use(express.json());
+
+// Routes
+app.use("/api/auth", authRoutes);
 
 // Test Route
 app.get("/", (req, res) => {
@@ -33,7 +35,6 @@ try {
 
 const PORT = process.env.PORT || 5000;
 
-// Start Server
 app.listen(PORT, () => {
   console.log(`🚀 Server running on http://localhost:${PORT}`);
 });
