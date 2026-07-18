@@ -1,9 +1,9 @@
-import API from "./axios";
+import axios from "axios";
 
-export const signupUser = (userData) => {
-  return API.post("/auth/signup", userData);
-};
+const API = axios.create({
+  baseURL: "http://127.0.0.1:5000/api",
+});
 
-export const loginUser = (userData) => {
-  return API.post("/auth/login", userData);
-};
+export const signupUser = (userData) => API.post("/auth/signup", userData);
+
+export const loginUser = (userData) => API.post("/auth/login", userData);
