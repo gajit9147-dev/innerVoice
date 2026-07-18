@@ -1,9 +1,8 @@
 function Dashboard() {
   return (
-    <main className="page-wrap">
-      <h1>Dashboard</h1>
-      <p>This is the Dashboard page.</p>
-    </main>
+    <div className="min-h-screen flex items-center justify-center">
+      <h1 className="text-4xl font-bold">Dashboard</h1>
+    </div>
   );
 }
 

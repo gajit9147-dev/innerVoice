@@ -1,9 +1,10 @@
 function NotFound() {
   return (
-    <main className="page-wrap">
-      <h1>NotFound</h1>
-      <p>This is the NotFound page.</p>
-    </main>
+    <div className="min-h-screen flex items-center justify-center">
+      <h1 className="text-4xl font-bold text-red-500">
+        404 - Page Not Found
+      </h1>
+    </div>
   );
 }
 
