@@ -1,4 +1,5 @@
 import express from "express";
+import noteRoutes from "./routes/noteRoutes.js";
 import cors from "cors";
 import dotenv from "dotenv";
 import pool from "./config/db.js";
@@ -15,6 +16,7 @@ app.use(express.json());
 
 // Routes
 app.use("/api/auth", authRoutes);
+app.use("/api/notes", noteRoutes);
 
 // Test Route
 app.get("/", (req, res) => {
