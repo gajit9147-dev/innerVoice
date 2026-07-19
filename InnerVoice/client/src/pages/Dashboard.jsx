@@ -124,7 +124,7 @@ function Dashboard() {
   }).length;
 
   return (
-    <div className="min-h-screen bg-slate-100 flex">
+    <div className="min-h-screen bg-slate-100 dark:bg-slate-900 flex transition-colors duration-300 text-gray-900 dark:text-gray-100">
       {/* Sidebar */}
       <Sidebar />
 
@@ -170,8 +170,8 @@ function Dashboard() {
 
           {/* Left Panel */}
           <div className="lg:col-span-1">
-            <div className="bg-white rounded-xl shadow-md p-6">
-              <h2 className="text-2xl font-bold mb-5">
+            <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-md p-6 border border-transparent dark:border-slate-700 transition-colors">
+              <h2 className="text-2xl font-bold mb-5 dark:text-white">
                 Create New Note
               </h2>
 
@@ -188,13 +188,13 @@ function Dashboard() {
             />
 
             <div className="flex flex-col sm:flex-row sm:items-center justify-between mt-6 mb-5 gap-4">
-              <h2 className="text-2xl font-bold">Your Notes</h2>
+              <h2 className="text-2xl font-bold dark:text-white">Your Notes</h2>
               
               <div className="flex gap-3">
                 <select
                   value={filterCategory}
                   onChange={(e) => setFilterCategory(e.target.value)}
-                  className="bg-white border border-gray-200 text-sm rounded-xl px-4 py-2 outline-none focus:ring-2 focus:ring-blue-500 shadow-sm transition"
+                  className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 text-sm rounded-xl px-4 py-2 outline-none focus:ring-2 focus:ring-blue-500 shadow-sm transition dark:text-white"
                 >
                   <option value="All">All Categories</option>
                   <option value="General">General</option>
@@ -207,7 +207,7 @@ function Dashboard() {
                 <select
                   value={sortBy}
                   onChange={(e) => setSortBy(e.target.value)}
-                  className="bg-white border border-gray-200 text-sm rounded-xl px-4 py-2 outline-none focus:ring-2 focus:ring-blue-500 shadow-sm transition"
+                  className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 text-sm rounded-xl px-4 py-2 outline-none focus:ring-2 focus:ring-blue-500 shadow-sm transition dark:text-white"
                 >
                   <option value="latest">Latest First</option>
                   <option value="oldest">Oldest First</option>
@@ -217,8 +217,8 @@ function Dashboard() {
             </div>
 
             {filteredNotes.length === 0 ? (
-              <div className="bg-white rounded-xl shadow-md p-10 text-center">
-                <p className="text-gray-500 text-lg">
+              <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-md p-10 text-center border border-transparent dark:border-slate-700 transition-colors">
+                <p className="text-gray-500 dark:text-gray-400 text-lg">
                   No matching notes found.
                 </p>
               </div>
