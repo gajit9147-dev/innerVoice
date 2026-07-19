@@ -1,5 +1,6 @@
 import { Bell, Moon, Sun, Calendar, Menu } from "lucide-react";
 import { useTheme } from "../../context/ThemeContext";
+import { Link } from "react-router-dom";
 
 function Header({ onMenuClick }) {
   const { theme, toggleTheme } = useTheme();
@@ -40,42 +41,43 @@ function Header({ onMenuClick }) {
         </div>
       </div>
 
-      {/* Right side: Actions & Profile */}
-      <div className="flex items-center gap-2 sm:gap-4">
+      {/* Right side: Actions and Profile */}
+      <div className="flex items-center gap-2 lg:gap-4">
         
-        {/* Dark Mode Button */}
+        {/* Dark Mode Toggle */}
         <button 
           onClick={toggleTheme}
-          className="p-2 rounded-xl text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-slate-700 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
-          title="Toggle Dark Mode"
+          className="p-2.5 rounded-xl text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors"
+          title={theme === 'dark' ? "Switch to Light Mode" : "Switch to Dark Mode"}
         >
-          {theme === 'dark' ? <Sun size={20} /> : <Moon size={20} />}
+          {theme === "dark" ? <Sun size={20} /> : <Moon size={20} />}
         </button>
 
-        {/* Notification Icon */}
-        <button 
-          className="relative p-2 rounded-xl text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-slate-700 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
-          title="Notifications"
-        >
+        {/* Notifications */}
+        <button className="p-2.5 rounded-xl text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors relative hidden sm:block">
           <Bell size={20} />
-          {/* Notification Dot */}
-          <span className="absolute top-1 right-1 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white dark:border-slate-800"></span>
+          <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border-2 border-white dark:border-slate-800 transition-colors"></span>
         </button>
 
-        {/* Divider */}
-        <div className="hidden sm:block w-px h-8 bg-gray-200 dark:bg-slate-700 mx-1 transition-colors"></div>
+        <div className="w-px h-8 bg-gray-200 dark:bg-slate-700 hidden sm:block mx-2 transition-colors"></div>
 
-        {/* User Avatar & Info */}
-        <div className="flex items-center gap-3 cursor-pointer group">
-          <div className="hidden sm:flex flex-col text-right">
-            <span className="text-sm font-semibold text-gray-800 dark:text-gray-100 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">Ajeet Gupta</span>
-            <span className="text-xs text-gray-500 dark:text-gray-400">Free Plan</span>
-          </div>
-          
-          <div className="w-10 h-10 rounded-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white flex items-center justify-center font-bold shadow-md shadow-blue-500/30 group-hover:scale-105 transition-transform">
+        {/* User Profile */}
+        <Link 
+          to="/profile"
+          className="flex items-center gap-3 hover:bg-gray-50 dark:hover:bg-slate-700/50 p-1.5 pr-3 rounded-2xl transition-colors cursor-pointer"
+        >
+          <div className="w-10 h-10 lg:w-11 lg:h-11 rounded-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white flex items-center justify-center text-sm lg:text-base font-bold shadow-sm">
             AG
           </div>
-        </div>
+          <div className="hidden sm:block">
+            <h3 className="font-semibold text-gray-800 dark:text-white text-sm">
+              Ajeet Gupta
+            </h3>
+            <p className="text-gray-500 dark:text-gray-400 text-xs mt-0.5">
+              Free Plan
+            </p>
+          </div>
+        </Link>
 
       </div>
     </header>

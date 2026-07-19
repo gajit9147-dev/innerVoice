@@ -17,7 +17,7 @@ const menu = [
   { name: "Archive", path: "/dashboard", icon: <Archive size={20} /> },
   { name: "Trash", path: "/dashboard", icon: <Trash2 size={20} /> },
   { name: "Analytics", path: "/analytics", icon: <BarChart3 size={20} /> },
-  { name: "Settings", path: "/dashboard", icon: <Settings size={20} /> },
+  { name: "Profile", path: "/profile", icon: <Settings size={20} /> },
 ];
 
 function Sidebar({ onClose }) {

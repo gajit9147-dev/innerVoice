@@ -15,7 +15,6 @@
     "express": "^5.2.1",
     "express-validator": "^7.3.2",
     "jsonwebtoken": "^9.0.3",
-    "mongoose": "^8.18.0",
     "mysql2": "^3.23.0"
   },
   "devDependencies": {
