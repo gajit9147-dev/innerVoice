@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
-import Sidebar from "../components/layout/Sidebar";
-import Header from "../components/layout/Header";
+import Layout from "../components/layout/Layout";
 import StatsCard from "../components/dashboard/StatsCard";
 import { getNotes } from "../api/note";
 import { PieChart, BarChart, TrendingUp, FolderHeart } from "lucide-react";
@@ -53,14 +52,7 @@ function Analytics() {
   });
 
   return (
-    <div className="min-h-screen bg-slate-100 dark:bg-slate-900 flex transition-colors duration-300 text-gray-900 dark:text-gray-100">
-      {/* Sidebar */}
-      <Sidebar />
-
-      {/* Main Content */}
-      <div className="flex-1 p-6 h-screen overflow-y-auto">
-        <Header />
-
+    <Layout>
         <div className="mt-8 mb-6">
           <h2 className="text-3xl font-bold text-gray-800 dark:text-white flex items-center gap-3">
             <TrendingUp className="text-blue-600 dark:text-blue-500" />
@@ -120,9 +112,7 @@ function Analytics() {
             </p>
           </div>
         </div>
-
-      </div>
-    </div>
+    </Layout>
   );
 }
 

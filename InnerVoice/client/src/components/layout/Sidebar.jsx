@@ -6,6 +6,7 @@ import {
   Trash2,
   BarChart3,
   Settings,
+  X
 } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 
@@ -19,20 +20,27 @@ const menu = [
   { name: "Settings", path: "/dashboard", icon: <Settings size={20} /> },
 ];
 
-function Sidebar() {
+function Sidebar({ onClose }) {
   const location = useLocation();
 
   return (
     <aside className="w-64 h-screen bg-white dark:bg-slate-800 shadow-lg border-r border-gray-100 dark:border-slate-700 flex flex-col transition-colors duration-300">
       
       {/* Logo */}
-      <div className="p-6 border-b border-gray-100 dark:border-slate-700 transition-colors">
-        <h1 className="text-3xl font-bold text-blue-600 dark:text-blue-500">
-          📝 InnerVoice
-        </h1>
-        <p className="text-gray-500 dark:text-gray-400 text-sm mt-1">
-          Express your thoughts
-        </p>
+      <div className="p-6 border-b border-gray-100 dark:border-slate-700 transition-colors flex justify-between items-center">
+        <div>
+          <h1 className="text-3xl font-bold text-blue-600 dark:text-blue-500">
+            📝 InnerVoice
+          </h1>
+          <p className="text-gray-500 dark:text-gray-400 text-sm mt-1">
+            Express your thoughts
+          </p>
+        </div>
+        {onClose && (
+          <button onClick={onClose} className="lg:hidden p-2 text-gray-500 hover:bg-gray-100 dark:hover:bg-slate-700 rounded-xl transition">
+            <X size={24} />
+          </button>
+        )}
       </div>
 
       {/* Navigation */}
@@ -44,6 +52,7 @@ function Sidebar() {
             <Link
               key={item.name}
               to={item.path}
+              onClick={onClose}
               className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
                 isCurrent 
                   ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 font-medium' 
