@@ -1,14 +1,16 @@
 import { useEffect, useState } from "react";
 
-import Header from "../components/layout/Header";
-import Sidebar from "../components/layout/Sidebar";
+import Layout from "../components/layout/Layout";
 import StatsCard from "../components/dashboard/StatsCard";
 import SearchBar from "../components/dashboard/SearchBar";
 
 import AddNote from "../components/notes/AddNote";
 import NoteCard from "../components/notes/NoteCard";
 import EditNote from "../components/notes/EditNote";
+import { NoteCardSkeleton } from "../components/ui/Skeleton";
+import { Search } from "lucide-react";
 
+import { useToast } from "../context/ToastContext";
 import {
   getNotes,
   createNote,
@@ -17,7 +19,9 @@ import {
 } from "../api/note";
 
 function Dashboard() {
+  const { addToast } = useToast();
   const [notes, setNotes] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [editingNote, setEditingNote] = useState(null);
   const [search, setSearch] = useState("");
   const [filterCategory, setFilterCategory] = useState("All");
@@ -26,10 +30,13 @@ function Dashboard() {
   // Fetch Notes
   const fetchNotes = async () => {
     try {
+      setIsLoading(true);
       const res = await getNotes();
       setNotes(res.data.notes);
     } catch (err) {
       console.error(err);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -41,8 +48,10 @@ function Dashboard() {
   const handleAddNote = async (note) => {
     try {
       await createNote(note);
+      addToast("Note created successfully!", "success");
       fetchNotes();
     } catch (err) {
+      addToast("Failed to create note.", "error");
       console.error(err);
     }
   };
@@ -57,8 +66,10 @@ function Dashboard() {
 
     try {
       await deleteNote(id);
+      addToast("Note deleted.", "success");
       fetchNotes();
     } catch (err) {
+      addToast("Failed to delete note.", "error");
       console.error(err);
     }
   };
@@ -77,8 +88,10 @@ function Dashboard() {
       });
 
       setEditingNote(null);
+      addToast("Note updated!", "success");
       fetchNotes();
     } catch (err) {
+      addToast("Failed to update note.", "error");
       console.error(err);
     }
   };
@@ -124,16 +137,7 @@ function Dashboard() {
   }).length;
 
   return (
-    <div className="min-h-screen bg-slate-100 dark:bg-slate-900 flex transition-colors duration-300 text-gray-900 dark:text-gray-100">
-      {/* Sidebar */}
-      <Sidebar />
-
-      {/* Main Content */}
-      <div className="flex-1 p-6 h-screen overflow-y-auto">
-
-        {/* Header */}
-        <Header />
-
+    <Layout>
         {/* Stats */}
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-5 mt-6">
           <StatsCard
@@ -216,10 +220,20 @@ function Dashboard() {
               </div>
             </div>
 
-            {filteredNotes.length === 0 ? (
-              <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-md p-10 text-center border border-transparent dark:border-slate-700 transition-colors">
-                <p className="text-gray-500 dark:text-gray-400 text-lg">
-                  No matching notes found.
+            {isLoading ? (
+              <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-5">
+                {[1, 2, 3, 4, 5, 6].map((i) => <NoteCardSkeleton key={i} />)}
+              </div>
+            ) : filteredNotes.length === 0 ? (
+              <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-md p-12 text-center border border-transparent dark:border-slate-700 transition-colors flex flex-col items-center animate-fade-scale">
+                <div className="w-24 h-24 bg-gray-50 dark:bg-slate-700/50 rounded-full flex items-center justify-center mb-6">
+                  <Search className="text-gray-400" size={40} />
+                </div>
+                <h3 className="text-xl font-bold text-gray-800 dark:text-gray-100 mb-2">No notes found</h3>
+                <p className="text-gray-500 dark:text-gray-400 max-w-sm">
+                  {search 
+                    ? "We couldn't find any notes matching your search. Try different keywords or clear your filters."
+                    : "Your dashboard is empty! Start capturing your thoughts by creating a new note."}
                 </p>
               </div>
             ) : (
@@ -245,8 +259,7 @@ function Dashboard() {
             onSave={handleSaveEdit}
           />
         )}
-      </div>
-    </div>
+    </Layout>
   );
 }
 

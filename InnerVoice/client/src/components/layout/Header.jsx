@@ -1,7 +1,7 @@
-import { Bell, Moon, Sun, Calendar } from "lucide-react";
+import { Bell, Moon, Sun, Calendar, Menu } from "lucide-react";
 import { useTheme } from "../../context/ThemeContext";
 
-function Header() {
+function Header({ onMenuClick }) {
   const { theme, toggleTheme } = useTheme();
 
   // Generate greeting based on time of day
@@ -19,16 +19,24 @@ function Header() {
   });
 
   return (
-    <header className="bg-white dark:bg-slate-800 shadow-sm rounded-2xl px-6 py-5 flex items-center justify-between border border-gray-100 dark:border-slate-700 transition-colors">
+    <header className="bg-white dark:bg-slate-800 shadow-sm rounded-2xl px-5 py-4 lg:px-6 lg:py-5 flex items-center justify-between border border-gray-100 dark:border-slate-700 transition-colors">
       
       {/* Left side: Greeting and Date */}
-      <div>
-        <h1 className="text-2xl font-bold text-gray-800 dark:text-white">
-          👋 {greeting}, Ajeet!
-        </h1>
-        <div className="flex items-center gap-2 text-gray-500 dark:text-gray-400 text-sm mt-1.5 font-medium">
-          <Calendar size={14} className="text-blue-500 dark:text-blue-400" />
-          <span>{dateStr}</span>
+      <div className="flex items-center gap-3 lg:gap-0">
+        <button 
+          onClick={onMenuClick}
+          className="lg:hidden p-2 -ml-2 rounded-xl text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors"
+        >
+          <Menu size={24} />
+        </button>
+        <div>
+          <h1 className="text-xl lg:text-2xl font-bold text-gray-800 dark:text-white">
+            👋 {greeting}, Ajeet!
+          </h1>
+          <div className="flex items-center gap-2 text-gray-500 dark:text-gray-400 text-xs lg:text-sm mt-1 font-medium">
+            <Calendar size={14} className="text-blue-500 dark:text-blue-400" />
+            <span>{dateStr}</span>
+          </div>
         </div>
       </div>
 

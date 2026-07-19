@@ -5,3 +5,19 @@
 body {
   @apply bg-slate-100 dark:bg-slate-900 text-gray-900 dark:text-gray-100 transition-colors duration-300;
 }
+
+@keyframes slideIn {
+  from { transform: translateX(100%); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+.animate-slide-in {
+  animation: slideIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes fadeInScale {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
+}
+.animate-fade-scale {
+  animation: fadeInScale 0.2s ease-out forwards;
+}

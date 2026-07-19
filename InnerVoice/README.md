@@ -1,16 +1,67 @@
-# React + Vite
+# 📝 InnerVoice
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+InnerVoice is a beautifully designed, modern web application that allows users to capture, organize, and analyze their thoughts seamlessly. 
 
-Currently, two official plugins are available:
+Built with a robust full-stack architecture (MySQL, Express, React, Node.js) and styled with Tailwind CSS v4, InnerVoice delivers a blazing fast and visually stunning journaling experience.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## ✨ Features
 
-## React Compiler
+- **Responsive Design:** Completely fluid UI that works flawlessly on desktop, tablet, and mobile.
+- **Dark Mode:** A meticulously crafted dark theme that respects your eyes during late-night journaling sessions.
+- **Rich Organization:** Categorize your notes and use the powerful search and filtering system to find exactly what you need instantly.
+- **Insights & Analytics:** Track your writing habits, most-used categories, and note frequency over time.
+- **Beautiful UI/UX:** Features smooth micro-interactions, toast notifications, skeleton loaders, and entry animations for a premium feel.
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## 🚀 Tech Stack
 
-## Expanding the Oxlint configuration
+**Frontend:**
+- React (Vite)
+- Tailwind CSS v4
+- React Router DOM
+- Lucide React (Icons)
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and Oxlint's TypeScript related rules in your project.
+**Backend:**
+- Node.js & Express
+- MySQL (Database)
+- JWT (Authentication)
+- bcrypt (Password Hashing)
+
+## 🛠️ Local Setup
+
+1. **Clone the repository:**
+   ```bash
+   git clone https://github.com/gajit9147-dev/innerVoice.git
+   cd innerVoice
+   ```
+
+2. **Backend Setup:**
+   ```bash
+   cd server
+   npm install
+   # Create a .env file with your MySQL credentials and a JWT_SECRET
+   npm run dev
+   ```
+
+3. **Frontend Setup:**
+   ```bash
+   cd client
+   npm install
+   npm run dev
+   ```
+
+4. Open `http://localhost:5173` in your browser.
+
+## 📦 Deployment Instructions
+
+### Frontend (Vercel)
+1. Push your code to GitHub.
+2. Import the project into Vercel, and set the **Root Directory** to `client`.
+3. Vercel will automatically detect Vite and run `npm run build`.
+4. Add any required frontend environment variables (like the production API URL).
+5. Deploy!
+
+### Backend (Render / Railway)
+1. Deploy your repository to a Node.js Web Service on Render or Railway.
+2. Set the **Root Directory** to `server` or configure the start command to `node server/server.js`.
+3. Set your environment variables (`DB_HOST`, `DB_USER`, `DB_PASSWORD`, `DB_NAME`, `JWT_SECRET`).
+4. **Crucial:** Update your backend CORS configuration to accept requests specifically from your deployed Vercel frontend URL.
