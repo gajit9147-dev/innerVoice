@@ -35,21 +35,21 @@ function AddNote({ onAdd }) {
   return (
     <form
       onSubmit={handleSubmit}
-      className="bg-white rounded-2xl shadow-lg p-6 space-y-5"
+      className="bg-white dark:bg-slate-800 rounded-2xl shadow-lg p-6 space-y-5 border border-transparent dark:border-slate-700 transition-colors"
     >
       <div>
-        <h2 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
+        <h2 className="text-2xl font-bold text-gray-800 dark:text-white flex items-center gap-2">
           <StickyNote className="text-blue-500" size={24} />
           Create New Note
         </h2>
-        <p className="text-gray-500 text-sm mt-1">
+        <p className="text-gray-500 dark:text-gray-400 text-sm mt-1">
           Capture your ideas before they disappear.
         </p>
       </div>
 
       {/* Title */}
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">
+        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
           Title
         </label>
         <input
@@ -58,16 +58,16 @@ function AddNote({ onAdd }) {
           value={note.title}
           onChange={handleChange}
           placeholder="Enter a catchy title..."
-          className="w-full rounded-xl border border-gray-300 px-4 py-3 outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
+          className="w-full bg-white dark:bg-slate-900 rounded-xl border border-gray-300 dark:border-slate-600 px-4 py-3 text-gray-800 dark:text-gray-100 outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-500 focus:border-blue-500 dark:focus:border-blue-500 transition placeholder-gray-400 dark:placeholder-gray-500"
           required
         />
       </div>
 
       {/* Content */}
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2 flex justify-between items-center">
+        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 flex justify-between items-center">
           <span>Content</span>
-          <span className="text-gray-400 text-xs font-normal bg-gray-100 px-2 py-1 rounded-md">{note.content.length} chars</span>
+          <span className="text-gray-500 dark:text-gray-400 text-xs font-normal bg-gray-100 dark:bg-slate-700 px-2 py-1 rounded-md transition-colors">{note.content.length} chars</span>
         </label>
         <textarea
           name="content"
@@ -75,21 +75,21 @@ function AddNote({ onAdd }) {
           onChange={handleChange}
           placeholder="Write your thoughts here..."
           rows={8}
-          className="w-full resize-none rounded-xl border border-gray-300 px-4 py-3 outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
+          className="w-full bg-white dark:bg-slate-900 resize-none rounded-xl border border-gray-300 dark:border-slate-600 px-4 py-3 text-gray-800 dark:text-gray-100 outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-500 focus:border-blue-500 dark:focus:border-blue-500 transition placeholder-gray-400 dark:placeholder-gray-500"
           required
         />
       </div>
 
       {/* Category */}
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">
+        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
           Category
         </label>
         <select
           name="category"
           value={note.category}
           onChange={handleChange}
-          className="w-full rounded-xl border border-gray-300 px-4 py-3 outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition appearance-none bg-white"
+          className="w-full bg-white dark:bg-slate-900 rounded-xl border border-gray-300 dark:border-slate-600 px-4 py-3 text-gray-800 dark:text-gray-100 outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-500 focus:border-blue-500 dark:focus:border-blue-500 transition appearance-none"
         >
           <option>General</option>
           <option>Personal</option>

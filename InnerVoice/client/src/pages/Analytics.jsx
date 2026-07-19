@@ -53,7 +53,7 @@ function Analytics() {
   });
 
   return (
-    <div className="min-h-screen bg-slate-100 flex">
+    <div className="min-h-screen bg-slate-100 dark:bg-slate-900 flex transition-colors duration-300 text-gray-900 dark:text-gray-100">
       {/* Sidebar */}
       <Sidebar />
 
@@ -62,11 +62,11 @@ function Analytics() {
         <Header />
 
         <div className="mt-8 mb-6">
-          <h2 className="text-3xl font-bold text-gray-800 flex items-center gap-3">
-            <TrendingUp className="text-blue-600" />
+          <h2 className="text-3xl font-bold text-gray-800 dark:text-white flex items-center gap-3">
+            <TrendingUp className="text-blue-600 dark:text-blue-500" />
             Analytics Overview
           </h2>
-          <p className="text-gray-500 mt-1 font-medium">Track your journaling habits and insights over time.</p>
+          <p className="text-gray-500 dark:text-gray-400 mt-1 font-medium">Track your journaling habits and insights over time.</p>
         </div>
 
         {/* Top Stats */}
@@ -99,23 +99,23 @@ function Analytics() {
 
         <div className="grid lg:grid-cols-2 gap-6 mt-8">
           {/* Mood Distribution Placeholder */}
-          <div className="bg-white rounded-2xl shadow-md p-6 border border-gray-100 flex flex-col items-center justify-center min-h-[300px]">
-            <div className="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mb-5">
-              <PieChart size={40} className="text-gray-400" />
+          <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-md p-6 border border-gray-100 dark:border-slate-700 flex flex-col items-center justify-center min-h-[300px] transition-colors">
+            <div className="w-20 h-20 bg-gray-50 dark:bg-slate-700 rounded-full flex items-center justify-center mb-5 transition-colors">
+              <PieChart size={40} className="text-gray-400 dark:text-gray-300" />
             </div>
-            <h3 className="text-xl font-bold text-gray-700">Mood Distribution</h3>
-            <p className="text-gray-400 text-sm mt-3 max-w-sm text-center leading-relaxed">
+            <h3 className="text-xl font-bold text-gray-700 dark:text-gray-100">Mood Distribution</h3>
+            <p className="text-gray-400 dark:text-gray-500 text-sm mt-3 max-w-sm text-center leading-relaxed">
               Start tagging your notes with moods to unlock insights into your emotional journey. (Coming soon)
             </p>
           </div>
 
           {/* Chart Placeholder */}
-          <div className="bg-white rounded-2xl shadow-md p-6 border border-gray-100 flex flex-col items-center justify-center min-h-[300px]">
-            <div className="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mb-5">
-              <BarChart size={40} className="text-gray-400" />
+          <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-md p-6 border border-gray-100 dark:border-slate-700 flex flex-col items-center justify-center min-h-[300px] transition-colors">
+            <div className="w-20 h-20 bg-gray-50 dark:bg-slate-700 rounded-full flex items-center justify-center mb-5 transition-colors">
+              <BarChart size={40} className="text-gray-400 dark:text-gray-300" />
             </div>
-            <h3 className="text-xl font-bold text-gray-700">Writing Frequency</h3>
-            <p className="text-gray-400 text-sm mt-3 max-w-sm text-center leading-relaxed">
+            <h3 className="text-xl font-bold text-gray-700 dark:text-gray-100">Writing Frequency</h3>
+            <p className="text-gray-400 dark:text-gray-500 text-sm mt-3 max-w-sm text-center leading-relaxed">
               Visual charts and graphs of your daily and weekly writing habits will appear here in a future update. (Coming soon)
             </p>
           </div>
