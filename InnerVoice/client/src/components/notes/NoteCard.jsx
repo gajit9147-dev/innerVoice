@@ -7,7 +7,7 @@ function NoteCard({ note, onEdit, onDelete }) {
 
       <div className="mt-4 flex gap-2">
         <button
-          onClick={() => onEdit(note.id, note)}
+          onClick={() => onEdit(note)}
           className="bg-blue-500 text-white px-3 py-1 rounded"
         >
           Edit

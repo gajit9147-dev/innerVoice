@@ -1,5 +1,14 @@
 import { useEffect, useState } from "react";
-import AddNote from "../components/AddNote";
+
+import Header from "../components/layout/Header";
+import Sidebar from "../components/layout/Sidebar";
+import StatsCard from "../components/dashboard/StatsCard";
+import SearchBar from "../components/dashboard/SearchBar";
+
+import AddNote from "../components/notes/AddNote";
+import NoteCard from "../components/notes/NoteCard";
+import EditNote from "../components/notes/EditNote";
+
 import {
   getNotes,
   createNote,
@@ -9,6 +18,8 @@ import {
 
 function Dashboard() {
   const [notes, setNotes] = useState([]);
+  const [editingNote, setEditingNote] = useState(null);
+  const [search, setSearch] = useState("");
 
   // Fetch Notes
   const fetchNotes = async () => {
@@ -36,6 +47,12 @@ function Dashboard() {
 
   // Delete Note
   const handleDelete = async (id) => {
+    const confirmDelete = window.confirm(
+      "Are you sure you want to delete this note?"
+    );
+
+    if (!confirmDelete) return;
+
     try {
       await deleteNote(id);
       fetchNotes();
@@ -44,71 +61,146 @@ function Dashboard() {
     }
   };
 
-  // Edit Note
-  const handleEdit = async (note) => {
-    const title = prompt("Edit title", note.title);
-    const content = prompt("Edit content", note.content);
+  // Open Edit Modal
+  const handleEdit = (note) => {
+    setEditingNote(note);
+  };
 
-    if (title === null || content === null) return;
-
+  // Save Edited Note
+  const handleSaveEdit = async (updatedNote) => {
     try {
-      await updateNote(note.id, {
-        title,
-        content,
+      await updateNote(updatedNote.id, {
+        title: updatedNote.title,
+        content: updatedNote.content,
       });
 
+      setEditingNote(null);
       fetchNotes();
     } catch (err) {
       console.error(err);
     }
   };
 
+  // Search Filter
+  const filteredNotes = notes.filter((note) => {
+    const keyword = search.toLowerCase();
+
+    return (
+      note.title.toLowerCase().includes(keyword) ||
+      note.content.toLowerCase().includes(keyword)
+    );
+  });
+
+  // Statistics
+  const totalNotes = notes.length;
+
+  const totalCategories = new Set(
+    notes.map((note) => note.category)
+  ).size;
+
+  const today = new Date().toDateString();
+
+  const todayNotes = notes.filter((note) => {
+    if (!note.created_at) return false;
+    return new Date(note.created_at).toDateString() === today;
+  }).length;
+
   return (
-    <div className="min-h-screen bg-gray-100 p-8">
-      <h1 className="text-4xl font-bold mb-8">
-        📝 InnerVoice Dashboard
-      </h1>
+    <div className="min-h-screen bg-slate-100 flex">
+      {/* Sidebar */}
+      <Sidebar />
 
-      <AddNote onAdd={handleAddNote} />
+      {/* Main Content */}
+      <div className="flex-1 p-6 h-screen overflow-y-auto">
 
-      <div className="mt-10">
-        <h2 className="text-2xl font-semibold mb-4">
-          Your Notes
-        </h2>
+        {/* Header */}
+        <Header />
 
-        {notes.length === 0 ? (
-          <p>No notes yet.</p>
-        ) : (
-          notes.map((note) => (
-            <div
-              key={note.id}
-              className="bg-white rounded-lg shadow p-4 mb-4"
-            >
-              <h3 className="font-bold text-xl">
-                {note.title}
-              </h3>
+        {/* Stats */}
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-5 mt-6">
+          <StatsCard
+            title="Total Notes"
+            value={totalNotes}
+            icon="📝"
+            color="bg-blue-500"
+          />
 
-              <p className="text-gray-600 mt-2">
-                {note.content}
-              </p>
+          <StatsCard
+            title="Today's Notes"
+            value={todayNotes}
+            icon="📅"
+            color="bg-green-500"
+          />
 
-              <div className="mt-4 flex gap-3">
-                <button
-                  onClick={() => handleEdit(note)}
-                  className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded"
-                >
-                  Edit
-                </button>
+          <StatsCard
+            title="Categories"
+            value={totalCategories}
+            icon="📂"
+            color="bg-purple-500"
+          />
 
-                <button
-                  onClick={() => handleDelete(note.id)}
-                  className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded"
-                >
-                  Delete
-                </button>
-              </div>
+          <StatsCard
+            title="Search Results"
+            value={filteredNotes.length}
+            icon="🔍"
+            color="bg-orange-500"
+          />
+        </div>
+
+        {/* Main Section */}
+        <div className="grid lg:grid-cols-3 gap-6 mt-8">
+
+          {/* Left Panel */}
+          <div className="lg:col-span-1">
+            <div className="bg-white rounded-xl shadow-md p-6">
+              <h2 className="text-2xl font-bold mb-5">
+                Create New Note
+              </h2>
+
+              <AddNote onAdd={handleAddNote} />
             </div>
-          ))
+          </div>
+
+          {/* Right Panel */}
+          <div className="lg:col-span-2">
+
+            <SearchBar
+              search={search}
+              setSearch={setSearch}
+            />
+
+            <h2 className="text-2xl font-bold mt-6 mb-5">
+              Your Notes
+            </h2>
+
+            {filteredNotes.length === 0 ? (
+              <div className="bg-white rounded-xl shadow-md p-10 text-center">
+                <p className="text-gray-500 text-lg">
+                  No matching notes found.
+                </p>
+              </div>
+            ) : (
+              <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-5">
+                {filteredNotes.map((note) => (
+                  <NoteCard
+                    key={note.id}
+                    note={note}
+                    onEdit={handleEdit}
+                    onDelete={handleDelete}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Edit Modal */}
+        {editingNote && (
+          <EditNote
+            note={editingNote}
+            onClose={() => setEditingNote(null)}
+            onSave={handleSaveEdit}
+          />
         )}
       </div>
     </div>
