@@ -20,6 +20,8 @@ function Dashboard() {
   const [notes, setNotes] = useState([]);
   const [editingNote, setEditingNote] = useState(null);
   const [search, setSearch] = useState("");
+  const [filterCategory, setFilterCategory] = useState("All");
+  const [sortBy, setSortBy] = useState("latest");
 
   // Fetch Notes
   const fetchNotes = async () => {
@@ -81,15 +83,31 @@ function Dashboard() {
     }
   };
 
-  // Search Filter
-  const filteredNotes = notes.filter((note) => {
-    const keyword = search.toLowerCase();
+  // Search, Filter, and Sort
+  const filteredNotes = notes
+    .filter((note) => {
+      const keyword = search.toLowerCase();
+      const matchesSearch =
+        note.title.toLowerCase().includes(keyword) ||
+        note.content.toLowerCase().includes(keyword);
+      
+      const matchesCategory =
+        filterCategory === "All" || note.category === filterCategory;
 
-    return (
-      note.title.toLowerCase().includes(keyword) ||
-      note.content.toLowerCase().includes(keyword)
-    );
-  });
+      return matchesSearch && matchesCategory;
+    })
+    .sort((a, b) => {
+      if (sortBy === "latest") {
+        return new Date(b.created_at || 0) - new Date(a.created_at || 0);
+      }
+      if (sortBy === "oldest") {
+        return new Date(a.created_at || 0) - new Date(b.created_at || 0);
+      }
+      if (sortBy === "a-z") {
+        return a.title.localeCompare(b.title);
+      }
+      return 0;
+    });
 
   // Statistics
   const totalNotes = notes.length;
@@ -169,9 +187,34 @@ function Dashboard() {
               setSearch={setSearch}
             />
 
-            <h2 className="text-2xl font-bold mt-6 mb-5">
-              Your Notes
-            </h2>
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between mt-6 mb-5 gap-4">
+              <h2 className="text-2xl font-bold">Your Notes</h2>
+              
+              <div className="flex gap-3">
+                <select
+                  value={filterCategory}
+                  onChange={(e) => setFilterCategory(e.target.value)}
+                  className="bg-white border border-gray-200 text-sm rounded-xl px-4 py-2 outline-none focus:ring-2 focus:ring-blue-500 shadow-sm transition"
+                >
+                  <option value="All">All Categories</option>
+                  <option value="General">General</option>
+                  <option value="Personal">Personal</option>
+                  <option value="Study">Study</option>
+                  <option value="Work">Work</option>
+                  <option value="Ideas">Ideas</option>
+                </select>
+
+                <select
+                  value={sortBy}
+                  onChange={(e) => setSortBy(e.target.value)}
+                  className="bg-white border border-gray-200 text-sm rounded-xl px-4 py-2 outline-none focus:ring-2 focus:ring-blue-500 shadow-sm transition"
+                >
+                  <option value="latest">Latest First</option>
+                  <option value="oldest">Oldest First</option>
+                  <option value="a-z">A-Z</option>
+                </select>
+              </div>
+            </div>
 
             {filteredNotes.length === 0 ? (
               <div className="bg-white rounded-xl shadow-md p-10 text-center">
