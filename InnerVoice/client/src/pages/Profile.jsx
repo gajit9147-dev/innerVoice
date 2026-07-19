@@ -1,10 +1,40 @@
+import { useState, useEffect } from "react";
 import Layout from "../components/layout/Layout";
 import AvatarUpload from "../components/profile/AvatarUpload";
 import ProfileForm from "../components/profile/ProfileForm";
 import ProfileStats from "../components/profile/ProfileStats";
-import { UserCog } from "lucide-react";
+import { UserCog, Loader2 } from "lucide-react";
+import { getProfileInfo } from "../api/profile";
 
 function Profile() {
+  const [profileData, setProfileData] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  const fetchProfile = async () => {
+    try {
+      const res = await getProfileInfo();
+      setProfileData(res.data.data);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchProfile();
+  }, []);
+
+  if (isLoading) {
+    return (
+      <Layout>
+        <div className="flex items-center justify-center min-h-[50vh]">
+          <Loader2 className="animate-spin text-blue-500" size={48} />
+        </div>
+      </Layout>
+    );
+  }
+
   return (
     <Layout>
       <div className="max-w-5xl mx-auto py-6 animate-fade-scale">
@@ -19,13 +49,13 @@ function Profile() {
           
           {/* Left Column: Avatar and Stats */}
           <div className="lg:col-span-1 space-y-8">
-            <AvatarUpload />
-            <ProfileStats />
+            <AvatarUpload user={profileData} />
+            <ProfileStats stats={profileData?.stats} createdAt={profileData?.created_at} />
           </div>
 
           {/* Right Column: Profile Form */}
           <div className="lg:col-span-2">
-            <ProfileForm />
+            <ProfileForm user={profileData} onUpdate={fetchProfile} />
           </div>
 
         </div>

@@ -1,6 +1,7 @@
 import { Calendar, NotebookPen, Flame } from "lucide-react";
 
-function ProfileStats() {
+function ProfileStats({ stats, createdAt }) {
+  const dateStr = createdAt ? new Date(createdAt).toLocaleDateString('en-US', { month: 'short', year: 'numeric' }) : 'N/A';
   return (
     <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-md p-6 border border-gray-100 dark:border-slate-700 transition-colors">
       <h3 className="text-xl font-bold text-gray-800 dark:text-white mb-6">
@@ -13,7 +14,7 @@ function ProfileStats() {
             <NotebookPen size={20} className="text-blue-500" />
             <span className="font-medium">Total Notes</span>
           </div>
-          <span className="text-xl font-bold text-gray-800 dark:text-white">42</span>
+          <span className="text-xl font-bold text-gray-800 dark:text-white">{stats?.totalNotes || 0}</span>
         </div>
 
         <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-slate-700/50 rounded-xl transition-colors hover:shadow-sm">
@@ -21,7 +22,7 @@ function ProfileStats() {
             <Calendar size={20} className="text-purple-500" />
             <span className="font-medium">Member Since</span>
           </div>
-          <span className="text-xl font-bold text-gray-800 dark:text-white">Jul 2026</span>
+          <span className="text-xl font-bold text-gray-800 dark:text-white">{dateStr}</span>
         </div>
 
         <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-slate-700/50 rounded-xl transition-colors hover:shadow-sm">
