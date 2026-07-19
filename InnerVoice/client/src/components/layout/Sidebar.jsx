@@ -6,9 +6,11 @@ import {
   Trash2,
   BarChart3,
   Settings,
-  X
+  X,
+  LogOut,
+  ShieldAlert
 } from "lucide-react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 
 const menu = [
   { name: "Dashboard", path: "/dashboard", icon: <LayoutDashboard size={20} /> },
@@ -22,6 +24,17 @@ const menu = [
 
 function Sidebar({ onClose }) {
   const location = useLocation();
+  const navigate = useNavigate();
+
+  const userStr = localStorage.getItem("user");
+  const user = userStr ? JSON.parse(userStr) : { full_name: "Guest", email: "guest@example.com" };
+  const initials = user.full_name ? user.full_name.substring(0, 2).toUpperCase() : "GU";
+
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+    navigate("/login");
+  };
 
   return (
     <aside className="w-64 h-screen bg-white dark:bg-slate-800 shadow-lg border-r border-gray-100 dark:border-slate-700 flex flex-col transition-colors duration-300">
@@ -64,22 +77,48 @@ function Sidebar({ onClose }) {
             </Link>
           );
         })}
+
+        {user.role === 'admin' && (
+          <div className="px-4 mt-6">
+            <Link
+              to="/admin"
+              onClick={onClose}
+              className={`flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-all ${
+                location.pathname === "/admin"
+                  ? "bg-red-50 text-red-600 dark:bg-red-900/20 dark:text-red-400"
+                  : "text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-700/50 hover:text-gray-900 dark:hover:text-white"
+              }`}
+            >
+              <ShieldAlert size={20} />
+              Admin Panel
+            </Link>
+          </div>
+        )}
       </nav>
 
       {/* User */}
       <div className="border-t border-gray-100 dark:border-slate-700 p-4 transition-colors">
-        <div className="flex items-center gap-3">
-          <div className="w-12 h-12 rounded-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white flex items-center justify-center text-lg font-bold shadow-md">
-            AG
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3 overflow-hidden">
+            <div className="w-10 h-10 shrink-0 rounded-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white flex items-center justify-center text-sm font-bold shadow-md">
+              {initials}
+            </div>
+            <div className="overflow-hidden">
+              <h3 className="font-semibold text-gray-800 dark:text-gray-100 text-sm truncate">
+                {user.full_name}
+              </h3>
+              <p className="text-gray-500 dark:text-gray-400 text-xs truncate">
+                {user.email}
+              </p>
+            </div>
           </div>
-          <div>
-            <h3 className="font-semibold text-gray-800 dark:text-gray-100">
-              Ajeet Gupta
-            </h3>
-            <p className="text-gray-500 dark:text-gray-400 text-sm">
-              AI/ML Student
-            </p>
-          </div>
+          <button 
+            onClick={handleLogout}
+            className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg transition-colors ml-2"
+            title="Logout"
+          >
+            <LogOut size={18} />
+          </button>
         </div>
       </div>
 

@@ -4,7 +4,11 @@ import { Link } from "react-router-dom";
 
 function Header({ onMenuClick }) {
   const { theme, toggleTheme } = useTheme();
-
+  
+  const userStr = localStorage.getItem("user");
+  const user = userStr ? JSON.parse(userStr) : { full_name: "Guest" };
+  const initials = user.full_name ? user.full_name.substring(0, 2).toUpperCase() : "GU";
+  
   // Generate greeting based on time of day
   const hour = new Date().getHours();
   let greeting = "Good evening";
@@ -32,7 +36,7 @@ function Header({ onMenuClick }) {
         </button>
         <div>
           <h1 className="text-xl lg:text-2xl font-bold text-gray-800 dark:text-white">
-            👋 {greeting}, Ajeet!
+            👋 {greeting}, {user.full_name.split(" ")[0]}!
           </h1>
           <div className="flex items-center gap-2 text-gray-500 dark:text-gray-400 text-xs lg:text-sm mt-1 font-medium">
             <Calendar size={14} className="text-blue-500 dark:text-blue-400" />
@@ -67,11 +71,11 @@ function Header({ onMenuClick }) {
           className="flex items-center gap-3 hover:bg-gray-50 dark:hover:bg-slate-700/50 p-1.5 pr-3 rounded-2xl transition-colors cursor-pointer"
         >
           <div className="w-10 h-10 lg:w-11 lg:h-11 rounded-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white flex items-center justify-center text-sm lg:text-base font-bold shadow-sm">
-            AG
+            {initials}
           </div>
           <div className="hidden sm:block">
-            <h3 className="font-semibold text-gray-800 dark:text-white text-sm">
-              Ajeet Gupta
+            <h3 className="font-semibold text-gray-800 dark:text-white text-sm truncate max-w-[120px]">
+              {user.full_name}
             </h3>
             <p className="text-gray-500 dark:text-gray-400 text-xs mt-0.5">
               Free Plan

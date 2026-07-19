@@ -1,8 +1,9 @@
 import { useState } from "react";
 import { Camera, Upload, Trash2 } from "lucide-react";
 
-function AvatarUpload() {
+function AvatarUpload({ user }) {
   const [avatar, setAvatar] = useState(null);
+  const initials = user?.full_name ? user.full_name.substring(0, 2).toUpperCase() : "GU";
 
   const handleUploadClick = () => {
     alert("Upload functionality will be wired to the backend soon!");
@@ -21,7 +22,7 @@ function AvatarUpload() {
           {avatar ? (
             <img src={avatar} alt="User Avatar" className="w-full h-full object-cover" />
           ) : (
-            "AG"
+            initials
           )}
         </div>
         
@@ -34,8 +35,8 @@ function AvatarUpload() {
         </button>
       </div>
 
-      <h2 className="text-2xl font-bold text-gray-800 dark:text-white mb-1">Ajeet Gupta</h2>
-      <p className="text-gray-500 dark:text-gray-400 text-sm mb-6">AI/ML Student</p>
+      <h2 className="text-2xl font-bold text-gray-800 dark:text-white mb-1">{user?.full_name || "User"}</h2>
+      <p className="text-gray-500 dark:text-gray-400 text-sm mb-6">Journaler</p>
 
       {/* Action Buttons */}
       <div className="flex gap-3 w-full">
