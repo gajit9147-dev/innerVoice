@@ -7,11 +7,16 @@ import authRoutes from "./routes/authRoutes.js";
 
 dotenv.config();
 
-// Create Express app FIRST
 const app = express();
 
 // Middleware
-app.use(cors());
+app.use(
+  cors({
+    origin: ["http://localhost:5173", "http://127.0.0.1:5173"],
+    credentials: true,
+  }),
+);
+
 app.use(express.json());
 
 // Routes
@@ -35,8 +40,16 @@ try {
   console.error(error.message);
 }
 
-const PORT = process.env.PORT || 5000;
+const PORT = 5000;
 
-app.listen(PORT, () => {
-  console.log(`🚀 Server running on http://localhost:${PORT}`);
+const server = app.listen(PORT, "127.0.0.1", () => {
+  console.log(`🚀 Server running on http://127.0.0.1:${PORT}`);
+});
+
+server.on("error", (err) => {
+  console.error("❌ Server Error:", err);
+});
+
+server.on("listening", () => {
+  console.log("✅ Express is actually listening");
 });
