@@ -36,3 +36,7 @@ export const getNote = (id) =>
 // Search notes
 export const searchNotes = (query) =>
   API.get(`/notes/search?q=${encodeURIComponent(query)}`);
+
+// Toggle Pin note
+export const togglePinNote = (id) =>
+  API.put(`/notes/pin/${id}`);
