@@ -194,7 +194,7 @@ export const getProfile = async (req, res) => {
 
 export const updateProfile = async (req, res) => {
   try {
-    const { full_name, username, phone, bio } = req.body;
+    const { full_name, username, phone, bio } = req.body || {};
 
     await pool.query(
       `UPDATE users

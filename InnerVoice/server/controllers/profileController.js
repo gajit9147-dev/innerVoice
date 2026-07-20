@@ -50,7 +50,7 @@ const updateProfile = async (req, res) => {
   try {
     const userId = req.user.id;
 
-    const { full_name, username, phone, bio } = req.body;
+    const { full_name, username, phone, bio } = req.body || {};
 
     if (!full_name) {
       return res.status(400).json({
