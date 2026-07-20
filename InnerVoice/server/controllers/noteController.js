@@ -57,6 +57,38 @@ export const getNotes = async (req, res) => {
   }
 };
 
+// Get Single Note
+export const getNoteById = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const userId = req.user.id;
+
+    const [notes] = await pool.query(
+      "SELECT * FROM notes WHERE id = ? AND user_id = ?",
+      [id, userId]
+    );
+
+    if (notes.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "Note not found",
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      note: notes[0],
+    });
+  } catch (error) {
+    console.error(error);
+
+    res.status(500).json({
+      success: false,
+      message: "Server Error",
+    });
+  }
+};
+
 export const updateNote = async (req, res) => {
   try {
     const { title, content } = req.body;
