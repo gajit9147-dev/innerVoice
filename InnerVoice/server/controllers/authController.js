@@ -196,15 +196,31 @@ export const updateProfile = async (req, res) => {
   try {
     const { full_name, username, phone, bio } = req.body || {};
 
+    const cleanUsername = username && username.trim() !== "" ? username.trim() : null;
+
+    if (cleanUsername) {
+      const [existingUser] = await pool.query(
+        "SELECT id FROM users WHERE username = ? AND id != ?",
+        [cleanUsername, req.user.id]
+      );
+
+      if (existingUser.length > 0) {
+        return res.status(400).json({
+          success: false,
+          message: "Username is already taken by another account.",
+        });
+      }
+    }
+
     await pool.query(
       `UPDATE users
        SET full_name = ?, username = ?, phone = ?, bio = ?
        WHERE id = ?`,
       [
-        full_name ?? null,
-        username ?? null,
-        phone ?? null,
-        bio ?? null,
+        full_name || null,
+        cleanUsername,
+        phone || null,
+        bio || null,
         req.user.id
       ]
     );
@@ -223,6 +239,13 @@ export const updateProfile = async (req, res) => {
     });
   } catch (error) {
     console.error("Update Profile Error:", error);
+
+    if (error.code === "ER_DUP_ENTRY") {
+      return res.status(400).json({
+        success: false,
+        message: "Username or email already exists.",
+      });
+    }
 
     return res.status(500).json({
       success: false,

@@ -49,7 +49,6 @@ const getProfile = async (req, res) => {
 const updateProfile = async (req, res) => {
   try {
     const userId = req.user.id;
-
     const { full_name, username, phone, bio } = req.body || {};
 
     if (!full_name) {
@@ -57,6 +56,22 @@ const updateProfile = async (req, res) => {
         success: false,
         message: "Full name is required.",
       });
+    }
+
+    const cleanUsername = username && username.trim() !== "" ? username.trim() : null;
+
+    if (cleanUsername) {
+      const [existingUser] = await db.query(
+        "SELECT id FROM users WHERE username = ? AND id != ?",
+        [cleanUsername, userId]
+      );
+
+      if (existingUser.length > 0) {
+        return res.status(400).json({
+          success: false,
+          message: "Username is already taken by another account.",
+        });
+      }
     }
 
     const sql = `
@@ -70,10 +85,10 @@ const updateProfile = async (req, res) => {
     `;
 
     await db.query(sql, [
-      full_name ?? null,
-      username ?? null,
-      phone ?? null,
-      bio ?? null,
+      full_name || null,
+      cleanUsername,
+      phone || null,
+      bio || null,
       userId,
     ]);
 
@@ -84,6 +99,13 @@ const updateProfile = async (req, res) => {
 
   } catch (error) {
     console.error("Update Profile Error:", error);
+
+    if (error.code === "ER_DUP_ENTRY") {
+      return res.status(400).json({
+        success: false,
+        message: "Username or email already exists.",
+      });
+    }
 
     return res.status(500).json({
       success: false,
