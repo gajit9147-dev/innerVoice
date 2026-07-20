@@ -3,7 +3,7 @@ import Layout from "../components/layout/Layout";
 import NoteCard from "../components/notes/NoteCard";
 import NoteForm from "../components/notes/NoteForm";
 import Modal from "../components/common/Modal";
-import { getNotes, createNote } from "../api/note";
+import { getNotes, createNote, deleteNote } from "../api/note";
 
 function Dashboard() {
   const [notes, setNotes] = useState([]);
@@ -38,6 +38,19 @@ function Dashboard() {
     }
   };
 
+  const handleDeleteNote = async (id) => {
+    const confirmDelete = window.confirm("Are you sure you want to delete this note?");
+    if (!confirmDelete) return;
+
+    try {
+      await deleteNote(id);
+      fetchNotes();
+    } catch (error) {
+      console.error(error);
+      alert("Unable to delete note");
+    }
+  };
+
   return (
     <Layout>
       <div className="max-w-6xl mx-auto p-6">
@@ -67,6 +80,7 @@ function Dashboard() {
               <NoteCard
                 key={note.id}
                 note={note}
+                onDelete={handleDeleteNote}
               />
             ))}
           </div>
