@@ -3,7 +3,13 @@ import Layout from "../components/layout/Layout";
 import NoteCard from "../components/notes/NoteCard";
 import NoteForm from "../components/notes/NoteForm";
 import Modal from "../components/common/Modal";
-import { getNotes, createNote, updateNote, deleteNote } from "../api/note";
+import {
+  getNotes,
+  createNote,
+  updateNote,
+  deleteNote,
+  searchNotes,
+} from "../api/note";
 
 function Dashboard() {
   const [notes, setNotes] = useState([]);
