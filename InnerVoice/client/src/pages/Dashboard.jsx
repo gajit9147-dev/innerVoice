@@ -77,6 +77,23 @@ function Dashboard() {
     }
   };
 
+  const handleSearch = async (query) => {
+    setSearchQuery(query);
+
+    try {
+      if (query.trim() === "") {
+        fetchNotes();
+        return;
+      }
+
+      const res = await searchNotes(query);
+
+      setNotes(res.data.notes);
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
   return (
     <Layout>
       <div className="max-w-6xl mx-auto p-6">
