@@ -116,6 +116,16 @@ function Dashboard() {
 
         </div>
 
+        <div className="mb-6">
+          <input
+            type="text"
+            placeholder="🔍 Search notes..."
+            value={searchQuery}
+            onChange={(e) => handleSearch(e.target.value)}
+            className="w-full rounded-xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
+          />
+        </div>
+
         {loading ? (
           <p className="text-gray-500 dark:text-slate-400">Loading...</p>
         ) : notes.length === 0 ? (
