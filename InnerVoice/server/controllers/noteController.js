@@ -211,18 +211,20 @@ export const togglePinNote = async (req, res) => {
       });
     }
 
-    const current = rows[0].is_pinned;
+    const current = Number(rows[0].is_pinned);
+    const newValue = current === 1 ? 0 : 1;
 
-    await pool.query(
+    const [result] = await pool.query(
       "UPDATE notes SET is_pinned = ? WHERE id = ? AND user_id = ?",
-      [!current, id, userId]
+      [newValue, id, userId]
     );
+
+    console.log("Affected Rows:", result.affectedRows);
 
     res.json({
       success: true,
-      pinned: !current,
+      pinned: Boolean(newValue),
     });
-
   } catch (err) {
     console.error(err);
 
