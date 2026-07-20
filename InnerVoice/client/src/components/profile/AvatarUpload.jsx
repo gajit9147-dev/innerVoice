@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Camera, Upload, Trash2, X, Eye, Sparkles, Loader2 } from "lucide-react";
+import { Camera, Upload, Trash2, X, Sparkles, Loader2 } from "lucide-react";
 import { uploadProfileImage } from "../../api/upload";
 import { updateProfileInfo } from "../../api/profile";
 import { useToast } from "../../context/ToastContext";
@@ -7,7 +7,7 @@ import { useToast } from "../../context/ToastContext";
 function AvatarUpload({ user, onUploadSuccess }) {
   const { addToast } = useToast();
   const [avatar, setAvatar] = useState(user?.profile_image || null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isZoomed, setIsZoomed] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
@@ -47,7 +47,6 @@ function AvatarUpload({ user, onUploadSuccess }) {
       }
 
       addToast("Profile picture updated successfully!", "success");
-      setIsModalOpen(false);
     } catch (err) {
       console.error(err);
       addToast(err.response?.data?.message || "Failed to upload profile picture.", "error");
@@ -67,7 +66,6 @@ function AvatarUpload({ user, onUploadSuccess }) {
       }
 
       addToast("Profile picture removed.", "success");
-      setIsModalOpen(false);
     } catch (err) {
       console.error(err);
       addToast("Failed to remove profile picture.", "error");
@@ -89,11 +87,11 @@ function AvatarUpload({ user, onUploadSuccess }) {
           onChange={handleFileChange}
         />
 
-        {/* Profile Avatar Click Trigger */}
+        {/* Profile Avatar Click Trigger -> Zoom Pic */}
         <div 
           className="relative group/avatar mb-5 cursor-pointer" 
-          onClick={() => setIsModalOpen(true)}
-          title="Click to view profile picture"
+          onClick={() => setIsZoomed(true)}
+          title="Click to zoom profile picture"
         >
           <div className="w-32 h-32 rounded-full overflow-hidden border-4 border-white dark:border-slate-700 shadow-2xl bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center text-4xl font-extrabold text-white transition-transform duration-300 group-hover/avatar:scale-105">
             {avatar ? (
@@ -105,12 +103,6 @@ function AvatarUpload({ user, onUploadSuccess }) {
             ) : (
               initials
             )}
-          </div>
-
-          {/* Hover Overlay */}
-          <div className="absolute inset-0 bg-slate-900/60 rounded-full flex flex-col items-center justify-center opacity-0 group-hover/avatar:opacity-100 transition-all duration-300 backdrop-blur-[2px]">
-            <Eye size={26} className="text-white mb-1 animate-pulse" />
-            <span className="text-[11px] font-bold text-white uppercase tracking-wider">View Photo</span>
           </div>
 
           <div className="absolute bottom-1 right-1 bg-blue-600 dark:bg-blue-500 text-white p-2 rounded-full shadow-lg border-2 border-white dark:border-slate-800 transition-transform group-hover/avatar:scale-110">
@@ -126,45 +118,60 @@ function AvatarUpload({ user, onUploadSuccess }) {
           <Sparkles size={12} /> {user?.username ? `@${user.username}` : "Journaler"}
         </p>
 
+        {/* Action Buttons */}
         <div className="flex gap-3 w-full">
-          <button
-            onClick={() => setIsModalOpen(true)}
-            className="flex-1 flex justify-center items-center gap-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-xl py-2.5 font-semibold text-sm shadow-md shadow-blue-500/20 transition-all duration-300 hover:scale-[1.02] active:scale-[0.98]"
-          >
-            <Eye size={16} />
-            View Photo
-          </button>
-
           <button
             onClick={handleUploadClick}
             disabled={isUploading}
-            className="flex justify-center items-center gap-2 bg-gray-100 dark:bg-slate-700/60 hover:bg-gray-200 dark:hover:bg-slate-700 text-gray-700 dark:text-slate-200 rounded-xl px-4 py-2.5 font-semibold text-sm transition-all duration-300 disabled:opacity-50"
+            className="flex-1 flex justify-center items-center gap-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-xl py-2.5 font-semibold text-sm shadow-md shadow-blue-500/20 transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50"
           >
-            {isUploading ? <Loader2 size={16} className="animate-spin" /> : <Upload size={16} />}
+            {isUploading ? (
+              <>
+                <Loader2 size={16} className="animate-spin" />
+                Uploading...
+              </>
+            ) : (
+              <>
+                <Upload size={16} />
+                Upload New
+              </>
+            )}
           </button>
+
+          {avatar && (
+            <button
+              onClick={handleRemove}
+              disabled={isDeleting}
+              className="flex justify-center items-center gap-2 bg-red-50 dark:bg-red-950/40 hover:bg-red-100 dark:hover:bg-red-900/50 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-800/40 rounded-xl px-4 py-2.5 font-semibold text-sm transition-all duration-300 disabled:opacity-50"
+              title="Remove Profile Picture"
+            >
+              {isDeleting ? <Loader2 size={16} className="animate-spin" /> : <Trash2 size={16} />}
+            </button>
+          )}
         </div>
       </div>
 
-      {/* Instagram-Style Pure Photo Lightbox Modal */}
-      {isModalOpen && (
+      {/* Pure Fullscreen Photo Zoom Lightbox (No cards or text) */}
+      {isZoomed && (
         <div 
-          className="fixed inset-0 z-50 bg-black/90 backdrop-blur-xl flex flex-col items-center justify-center p-4 animate-fade-in"
-          onClick={(e) => {
-            if (e.target === e.currentTarget) setIsModalOpen(false);
-          }}
+          className="fixed inset-0 z-50 bg-black/90 backdrop-blur-md flex items-center justify-center p-4 cursor-zoom-out animate-fade-in"
+          onClick={() => setIsZoomed(false)}
         >
-          {/* Top Close Button */}
+          {/* Top Right Close Button */}
           <button
-            onClick={() => setIsModalOpen(false)}
+            onClick={() => setIsZoomed(false)}
             className="absolute top-6 right-6 text-white/80 hover:text-white p-3 rounded-full bg-white/10 hover:bg-white/20 backdrop-blur-md transition-all duration-300"
-            title="Close"
+            title="Close Zoom"
           >
-            <X size={24} />
+            <X size={26} />
           </button>
 
-          {/* Standalone Instagram Circular Photo View */}
-          <div className="relative group mb-8 animate-fade-scale">
-            <div className="w-64 h-64 sm:w-80 sm:h-80 rounded-full overflow-hidden border-4 border-white/20 shadow-[0_0_50px_rgba(59,130,246,0.3)] bg-gradient-to-br from-blue-600 to-indigo-600 flex items-center justify-center text-7xl font-extrabold text-white">
+          {/* Standalone Zoomed Image Only */}
+          <div 
+            className="relative transition-all duration-300 animate-fade-scale"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="w-72 h-72 sm:w-96 sm:h-96 md:w-[420px] md:h-[420px] rounded-full overflow-hidden border-4 border-white/20 shadow-[0_0_80px_rgba(59,130,246,0.35)] bg-gradient-to-br from-blue-600 to-indigo-600 flex items-center justify-center text-8xl font-extrabold text-white">
               {avatar ? (
                 <img
                   src={avatar}
@@ -175,57 +182,6 @@ function AvatarUpload({ user, onUploadSuccess }) {
                 initials
               )}
             </div>
-          </div>
-
-          <p className="text-white font-bold text-lg mb-1">{user?.full_name}</p>
-          <p className="text-white/60 text-xs mb-8">@{user?.username || "profile"}</p>
-
-          {/* Instagram Action Buttons */}
-          <div className="flex flex-col gap-3 w-full max-w-xs animate-fade-scale">
-            <button
-              onClick={handleUploadClick}
-              disabled={isUploading}
-              className="w-full flex justify-center items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white rounded-full py-3.5 font-bold text-sm shadow-lg shadow-blue-600/30 transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50"
-            >
-              {isUploading ? (
-                <>
-                  <Loader2 size={18} className="animate-spin" />
-                  Uploading Photo...
-                </>
-              ) : (
-                <>
-                  <Upload size={18} />
-                  Upload New Photo
-                </>
-              )}
-            </button>
-
-            {avatar && (
-              <button
-                onClick={handleRemove}
-                disabled={isDeleting}
-                className="w-full flex justify-center items-center gap-2 bg-red-500/20 hover:bg-red-500/30 text-red-400 border border-red-500/30 rounded-full py-3.5 font-bold text-sm backdrop-blur-md transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50"
-              >
-                {isDeleting ? (
-                  <>
-                    <Loader2 size={18} className="animate-spin" />
-                    Removing...
-                  </>
-                ) : (
-                  <>
-                    <Trash2 size={18} />
-                    Remove Current Photo
-                  </>
-                )}
-              </button>
-            )}
-
-            <button
-              onClick={() => setIsModalOpen(false)}
-              className="w-full flex justify-center items-center bg-white/10 hover:bg-white/20 text-white/80 hover:text-white rounded-full py-3 font-semibold text-sm backdrop-blur-md transition-all duration-300"
-            >
-              Cancel
-            </button>
           </div>
         </div>
       )}
