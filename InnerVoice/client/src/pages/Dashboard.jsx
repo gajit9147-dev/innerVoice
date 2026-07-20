@@ -39,15 +39,19 @@ function Dashboard() {
   };
 
   const handleDeleteNote = async (id) => {
-    const confirmDelete = window.confirm("Are you sure you want to delete this note?");
+    const confirmDelete = window.confirm(
+      "Are you sure you want to delete this note?"
+    );
+
     if (!confirmDelete) return;
 
     try {
       await deleteNote(id);
+
       fetchNotes();
     } catch (error) {
       console.error(error);
-      alert("Unable to delete note");
+      alert("Unable to delete note.");
     }
   };
 
@@ -81,6 +85,7 @@ function Dashboard() {
                 key={note.id}
                 note={note}
                 onDelete={handleDeleteNote}
+                onEdit={() => {}}
               />
             ))}
           </div>
