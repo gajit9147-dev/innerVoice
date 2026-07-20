@@ -192,3 +192,43 @@ export const deleteNote = async (req, res) => {
     });
   }
 };
+
+// Toggle Pin Note
+export const togglePinNote = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const userId = req.user.id;
+
+    const [rows] = await pool.query(
+      "SELECT is_pinned FROM notes WHERE id = ? AND user_id = ?",
+      [id, userId]
+    );
+
+    if (rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "Note not found",
+      });
+    }
+
+    const current = rows[0].is_pinned;
+
+    await pool.query(
+      "UPDATE notes SET is_pinned = ? WHERE id = ? AND user_id = ?",
+      [!current, id, userId]
+    );
+
+    res.json({
+      success: true,
+      pinned: !current,
+    });
+
+  } catch (err) {
+    console.error(err);
+
+    res.status(500).json({
+      success: false,
+      message: "Server Error",
+    });
+  }
+};
