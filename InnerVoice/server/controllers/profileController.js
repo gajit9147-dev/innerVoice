@@ -52,10 +52,10 @@ const updateProfile = async (req, res) => {
 
     const { full_name, username, phone, bio } = req.body;
 
-    if (!full_name || !username) {
+    if (!full_name) {
       return res.status(400).json({
         success: false,
-        message: "Full name and username are required.",
+        message: "Full name is required.",
       });
     }
 
@@ -70,10 +70,10 @@ const updateProfile = async (req, res) => {
     `;
 
     await db.query(sql, [
-      full_name,
-      username,
-      phone,
-      bio,
+      full_name ?? null,
+      username ?? null,
+      phone ?? null,
+      bio ?? null,
       userId,
     ]);
 
@@ -83,11 +83,11 @@ const updateProfile = async (req, res) => {
     });
 
   } catch (error) {
-    console.error(error);
+    console.error("Update Profile Error:", error);
 
     return res.status(500).json({
       success: false,
-      message: "Server Error",
+      message: error.message || "Server Error",
     });
   }
 };

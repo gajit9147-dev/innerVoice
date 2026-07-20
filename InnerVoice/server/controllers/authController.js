@@ -165,7 +165,7 @@ export const uploadProfileImage = async (req, res) => {
 export const getProfile = async (req, res) => {
   try {
     const [rows] = await pool.query(
-      `SELECT id, full_name, email, role, profile_image
+      `SELECT id, full_name, email, username, phone, bio, role, profile_image
        FROM users
        WHERE id = ?`,
       [req.user.id]
@@ -183,11 +183,11 @@ export const getProfile = async (req, res) => {
       profile: rows[0],
     });
   } catch (error) {
-    console.error(error);
+    console.error("Get Profile Error:", error);
 
     return res.status(500).json({
       success: false,
-      message: "Server Error",
+      message: error.message || "Server Error",
     });
   }
 };
@@ -200,7 +200,13 @@ export const updateProfile = async (req, res) => {
       `UPDATE users
        SET full_name = ?, username = ?, phone = ?, bio = ?
        WHERE id = ?`,
-      [full_name, username, phone, bio, req.user.id]
+      [
+        full_name ?? null,
+        username ?? null,
+        phone ?? null,
+        bio ?? null,
+        req.user.id
+      ]
     );
 
     const [rows] = await pool.query(
@@ -220,7 +226,7 @@ export const updateProfile = async (req, res) => {
 
     return res.status(500).json({
       success: false,
-      message: "Server Error",
+      message: error.message || "Server Error",
     });
   }
 };
