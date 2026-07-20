@@ -16,6 +16,7 @@ function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [editingNote, setEditingNote] = useState(null);
+  const [searchQuery, setSearchQuery] = useState("");
 
   const fetchNotes = async () => {
     try {
