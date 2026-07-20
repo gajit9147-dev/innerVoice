@@ -13,7 +13,7 @@ function Profile() {
   const fetchProfile = async () => {
     try {
       const res = await getProfileInfo();
-      setProfileData(res.data.data);
+      setProfileData(res.data.profile);
     } catch (err) {
       console.error(err);
     } finally {
@@ -49,7 +49,10 @@ function Profile() {
           
           {/* Left Column: Avatar and Stats */}
           <div className="lg:col-span-1 space-y-8">
-            <AvatarUpload user={profileData} />
+            <AvatarUpload
+              user={profileData}
+              onUploadSuccess={fetchProfile}
+            />
             <ProfileStats stats={profileData?.stats} createdAt={profileData?.created_at} />
           </div>
 
