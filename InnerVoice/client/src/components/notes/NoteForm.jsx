@@ -1,10 +1,19 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
-function NoteForm({ onSave, onCancel }) {
+function NoteForm({ onSave, onCancel, initialData }) {
   const [formData, setFormData] = useState({
     title: "",
     content: "",
   });
+
+  useEffect(() => {
+    if (initialData) {
+      setFormData({
+        title: initialData.title || "",
+        content: initialData.content || "",
+      });
+    }
+  }, [initialData]);
 
   const handleChange = (e) => {
     setFormData((prev) => ({
@@ -23,17 +32,16 @@ function NoteForm({ onSave, onCancel }) {
 
     onSave(formData);
 
-    setFormData({
-      title: "",
-      content: "",
-    });
+    if (!initialData) {
+      setFormData({
+        title: "",
+        content: "",
+      });
+    }
   };
 
   return (
-    <form
-      onSubmit={handleSubmit}
-      className="space-y-4"
-    >
+    <form onSubmit={handleSubmit} className="space-y-4">
       <input
         type="text"
         name="title"
@@ -65,7 +73,7 @@ function NoteForm({ onSave, onCancel }) {
           type="submit"
           className="px-5 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-medium transition"
         >
-          Save Note
+          {initialData ? "Update Note" : "Save Note"}
         </button>
       </div>
     </form>
