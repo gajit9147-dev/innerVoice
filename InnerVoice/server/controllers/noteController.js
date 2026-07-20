@@ -57,6 +57,45 @@ export const getNotes = async (req, res) => {
   }
 };
 
+// Search Notes
+export const searchNotes = async (req, res) => {
+  try {
+    const { q } = req.query;
+    const userId = req.user.id;
+
+    if (!q || q.trim() === "") {
+      return res.status(200).json({
+        success: true,
+        notes: [],
+      });
+    }
+
+    const search = `%${q}%`;
+
+    const [notes] = await pool.query(
+      `SELECT *
+       FROM notes
+       WHERE user_id = ?
+       AND (title LIKE ? OR content LIKE ?)
+       ORDER BY updated_at DESC`,
+      [userId, search, search]
+    );
+
+    res.status(200).json({
+      success: true,
+      notes,
+    });
+
+  } catch (error) {
+    console.error(error);
+
+    res.status(500).json({
+      success: false,
+      message: "Server Error",
+    });
+  }
+};
+
 // Get Single Note
 export const getNoteById = async (req, res) => {
   try {
@@ -146,42 +185,6 @@ export const deleteNote = async (req, res) => {
     });
   } catch (error) {
     console.error(error);
-
-    res.status(500).json({
-      success: false,
-      message: "Server Error",
-    });
-  }
-};
-
-export const searchNotes = async (req, res) => {
-  try {
-    const { q } = req.query;
-    const userId = req.user.id;
-
-    const search = `%${q || ""}%`;
-
-    const [notes] = await pool.query(
-      `
-      SELECT *
-      FROM notes
-      WHERE user_id = ?
-      AND (
-        title LIKE ?
-        OR content LIKE ?
-      )
-      ORDER BY updated_at DESC
-      `,
-      [userId, search, search]
-    );
-
-    res.json({
-      success: true,
-      notes,
-    });
-
-  } catch (err) {
-    console.error(err);
 
     res.status(500).json({
       success: false,
