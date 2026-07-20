@@ -32,3 +32,7 @@ export const deleteNote = (id) =>
 // Get single note
 export const getNote = (id) =>
   API.get(`/notes/${id}`);
+
+// Search notes
+export const searchNotes = (query) =>
+  API.get(`/notes/search?q=${encodeURIComponent(query)}`);
