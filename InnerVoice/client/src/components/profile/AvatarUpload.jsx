@@ -1,12 +1,44 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Camera, Upload, Trash2 } from "lucide-react";
+import { uploadProfileImage } from "../../api/upload";
 
-function AvatarUpload({ user }) {
-  const [avatar, setAvatar] = useState(null);
-  const initials = user?.full_name ? user.full_name.substring(0, 2).toUpperCase() : "GU";
+function AvatarUpload({ user, onUploadSuccess }) {
+  const [avatar, setAvatar] = useState(user?.profile_image || null);
+  
+  useEffect(() => {
+    setAvatar(user?.profile_image || null);
+  }, [user]);
+
+  const initials = user?.full_name
+    ? user.full_name.substring(0, 2).toUpperCase()
+    : "GU";
 
   const handleUploadClick = () => {
-    alert("Upload functionality will be wired to the backend soon!");
+    document.getElementById("avatarInput").click();
+  };
+
+  const handleFileChange = async (e) => {
+    const file = e.target.files[0];
+
+    if (!file) return;
+
+    const formData = new FormData();
+    formData.append("image", file);
+
+    try {
+      const res = await uploadProfileImage(formData);
+
+      setAvatar(res.data.image);
+
+      if (onUploadSuccess) {
+        onUploadSuccess();
+      }
+
+      alert("Profile image updated successfully.");
+    } catch (err) {
+      console.error(err);
+      alert("Upload failed.");
+    }
   };
 
   const handleRemove = () => {
@@ -14,47 +46,67 @@ function AvatarUpload({ user }) {
   };
 
   return (
-    <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-md p-8 border border-gray-100 dark:border-slate-700 flex flex-col items-center transition-colors">
-      
-      {/* Avatar Display */}
+    <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-md p-8 border border-gray-100 dark:border-slate-700 flex flex-col items-center">
+
+      <input
+        id="avatarInput"
+        type="file"
+        accept="image/*"
+        hidden
+        onChange={handleFileChange}
+      />
+
       <div className="relative group mb-6">
-        <div className="w-32 h-32 rounded-full overflow-hidden border-4 border-white dark:border-slate-700 shadow-xl bg-gradient-to-r from-blue-600 to-indigo-600 flex items-center justify-center text-4xl font-bold text-white transition-colors">
+        <div className="w-32 h-32 rounded-full overflow-hidden border-4 border-white shadow-xl bg-gradient-to-r from-blue-600 to-indigo-600 flex items-center justify-center text-4xl font-bold text-white">
+
           {avatar ? (
-            <img src={avatar} alt="User Avatar" className="w-full h-full object-cover" />
+            <img
+              src={avatar}
+              alt="Avatar"
+              className="w-full h-full object-cover"
+            />
           ) : (
             initials
           )}
+
         </div>
-        
-        {/* Hover Overlay */}
-        <button 
+
+        <button
           onClick={handleUploadClick}
-          className="absolute inset-0 bg-black/40 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer backdrop-blur-sm"
+          className="absolute inset-0 bg-black/40 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition"
         >
           <Camera size={28} className="text-white" />
         </button>
       </div>
 
-      <h2 className="text-2xl font-bold text-gray-800 dark:text-white mb-1">{user?.full_name || "User"}</h2>
-      <p className="text-gray-500 dark:text-gray-400 text-sm mb-6">Journaler</p>
+      <h2 className="text-2xl font-bold">
+        {user?.full_name}
+      </h2>
 
-      {/* Action Buttons */}
+      <p className="text-gray-500 mb-6">
+        Journaler
+      </p>
+
       <div className="flex gap-3 w-full">
-        <button 
+
+        <button
           onClick={handleUploadClick}
-          className="flex-1 flex items-center justify-center gap-2 bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 py-2.5 rounded-xl font-medium hover:bg-blue-100 dark:hover:bg-blue-900/50 transition-colors"
+          className="flex-1 flex justify-center items-center gap-2 bg-blue-500 text-white rounded-xl py-2"
         >
           <Upload size={18} />
           Upload New
         </button>
-        <button 
+
+        <button
           onClick={handleRemove}
-          className="flex-1 flex items-center justify-center gap-2 bg-gray-50 dark:bg-slate-700/50 text-gray-600 dark:text-gray-300 hover:text-red-500 dark:hover:text-red-400 py-2.5 rounded-xl font-medium hover:bg-red-50 dark:hover:bg-red-900/30 transition-colors"
+          className="flex-1 flex justify-center items-center gap-2 bg-red-500 text-white rounded-xl py-2"
         >
           <Trash2 size={18} />
           Remove
         </button>
+
       </div>
+
     </div>
   );
 }

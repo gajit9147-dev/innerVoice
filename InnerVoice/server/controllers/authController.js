@@ -1,7 +1,8 @@
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import pool from "../config/db.js";
-
+import cloudinary from "../config/cloudinary.js";
+import streamifier from "streamifier";  
 // =========================
 // SIGNUP
 // =========================
@@ -108,6 +109,114 @@ export const login = async (req, res) => {
     });
   } catch (error) {
     console.error("Login Error:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Server Error",
+    });
+  }
+};
+
+export const uploadProfileImage = async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({
+        success: false,
+        message: "No image uploaded",
+      });
+    }
+
+    const uploadFromBuffer = () =>
+      new Promise((resolve, reject) => {
+        const stream = cloudinary.uploader.upload_stream(
+          {
+            folder: "innervoice/profile-images",
+          },
+          (error, result) => {
+            if (error) return reject(error);
+            resolve(result);
+          }
+        );
+
+        streamifier.createReadStream(req.file.buffer).pipe(stream);
+      });
+
+    const result = await uploadFromBuffer();
+
+    await pool.query(
+      "UPDATE users SET profile_image = ? WHERE id = ?",
+      [result.secure_url, req.user.id]
+    );
+
+    return res.json({
+      success: true,
+      image: result.secure_url,
+    });
+  } catch (error) {
+    console.error(error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Upload failed",
+    });
+  }
+};
+
+export const getProfile = async (req, res) => {
+  try {
+    const [rows] = await pool.query(
+      `SELECT id, full_name, email, role, profile_image
+       FROM users
+       WHERE id = ?`,
+      [req.user.id]
+    );
+
+    if (rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
+    }
+
+    return res.json({
+      success: true,
+      profile: rows[0],
+    });
+  } catch (error) {
+    console.error(error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Server Error",
+    });
+  }
+};
+
+export const updateProfile = async (req, res) => {
+  try {
+    const { full_name, username, phone, bio } = req.body;
+
+    await pool.query(
+      `UPDATE users
+       SET full_name = ?, username = ?, phone = ?, bio = ?
+       WHERE id = ?`,
+      [full_name, username, phone, bio, req.user.id]
+    );
+
+    const [rows] = await pool.query(
+      `SELECT id, full_name, email, username, phone, bio, profile_image, role
+       FROM users
+       WHERE id = ?`,
+      [req.user.id]
+    );
+
+    return res.status(200).json({
+      success: true,
+      message: "Profile updated successfully",
+      profile: rows[0],
+    });
+  } catch (error) {
+    console.error("Update Profile Error:", error);
 
     return res.status(500).json({
       success: false,

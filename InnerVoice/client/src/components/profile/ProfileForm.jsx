@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useToast } from "../../context/ToastContext";
-import { Save, User, Mail, Lock, AlertTriangle } from "lucide-react";
-import { updateProfileInfo, deleteAccount } from "../../api/profile";
+import { Save, User, Mail, Lock, AlertTriangle, AtSign, Phone, FileText } from "lucide-react";
+import { updateProfileInfo, changePassword, deleteAccount } from "../../api/profile";
 import { useNavigate } from "react-router-dom";
 
 function ProfileForm({ user, onUpdate }) {
@@ -10,6 +10,9 @@ function ProfileForm({ user, onUpdate }) {
   const [isSaving, setIsSaving] = useState(false);
   const [formData, setFormData] = useState({
     fullName: user?.full_name || "",
+    username: user?.username || "",
+    phone: user?.phone || "",
+    bio: user?.bio || "",
     email: user?.email || "",
     currentPassword: "",
     newPassword: ""
@@ -19,14 +22,18 @@ function ProfileForm({ user, onUpdate }) {
     if (user) {
       setFormData(prev => ({
         ...prev,
-        fullName: user.full_name,
-        email: user.email
+        fullName: user.full_name || "",
+        username: user.username || "",
+        phone: user.phone || "",
+        bio: user.bio || "",
+        email: user.email || ""
       }));
     }
   }, [user]);
 
   const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    setFormData({ ...formData, [name]: value });
   };
 
   const handleSubmit = async (e) => {
@@ -34,19 +41,24 @@ function ProfileForm({ user, onUpdate }) {
     setIsSaving(true);
     
     try {
-      const res = await updateProfileInfo({
+      const payload = {
         full_name: formData.fullName,
-        currentPassword: formData.currentPassword,
-        newPassword: formData.newPassword
-      });
+        username: formData.username,
+        phone: formData.phone,
+        bio: formData.bio
+      };
+      const res = await updateProfileInfo(payload);
       
-      // Update local storage so Header/Sidebar updates immediately
       const savedUser = JSON.parse(localStorage.getItem("user") || "{}");
-      localStorage.setItem("user", JSON.stringify({ ...savedUser, full_name: res.data.data.full_name }));
+      localStorage.setItem("user", JSON.stringify({
+        ...savedUser,
+        full_name: formData.fullName,
+        username: formData.username,
+        phone: formData.phone,
+        bio: formData.bio
+      }));
       
       addToast(res.data.message || "Profile updated successfully!", "success");
-      
-      // Clear password fields
       setFormData(prev => ({ ...prev, currentPassword: "", newPassword: "" }));
       
       if (onUpdate) onUpdate();
@@ -54,6 +66,31 @@ function ProfileForm({ user, onUpdate }) {
       addToast(err.response?.data?.message || "Failed to update profile.", "error");
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  // Password change handler – now inside the component
+  const handlePasswordChange = async () => {
+    try {
+      if (!formData.currentPassword || !formData.newPassword) {
+        addToast("Please fill in both password fields.", "error");
+        return;
+      }
+
+      const res = await changePassword({
+        currentPassword: formData.currentPassword,
+        newPassword: formData.newPassword,
+      });
+
+      addToast(res.data.message || "Password changed successfully!", "success");
+
+      setFormData((prev) => ({
+        ...prev,
+        currentPassword: "",
+        newPassword: "",
+      }));
+    } catch (error) {
+      addToast(error.response?.data?.message || "Something went wrong.", "error");
     }
   };
 
@@ -99,6 +136,58 @@ function ProfileForm({ user, onUpdate }) {
           </div>
         </div>
 
+        {/* Username */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            Username
+          </label>
+          <div className="relative">
+            <AtSign className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+            <input
+              type="text"
+              name="username"
+              value={formData.username}
+              onChange={handleChange}
+              className="w-full bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-600 rounded-xl py-3 pl-11 pr-4 outline-none focus:ring-2 focus:ring-blue-500 text-gray-800 dark:text-gray-100 transition-colors"
+            />
+          </div>
+        </div>
+
+        {/* Phone */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            Phone Number
+          </label>
+          <div className="relative">
+            <Phone className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+            <input
+              type="text"
+              name="phone"
+              value={formData.phone}
+              onChange={handleChange}
+              className="w-full bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-600 rounded-xl py-3 pl-11 pr-4 outline-none focus:ring-2 focus:ring-blue-500 text-gray-800 dark:text-gray-100 transition-colors"
+            />
+          </div>
+        </div>
+
+        {/* Bio */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            Bio
+          </label>
+          <div className="relative">
+            <FileText className="absolute left-4 top-4 text-gray-400" size={18} />
+            <textarea
+              name="bio"
+              value={formData.bio}
+              onChange={handleChange}
+              rows={3}
+              className="w-full bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-600 rounded-xl py-3 pl-11 pr-4 outline-none focus:ring-2 focus:ring-blue-500 text-gray-800 dark:text-gray-100 transition-colors resize-none"
+              placeholder="Tell us something about yourself..."
+            />
+          </div>
+        </div>
+
         {/* Email */}
         <div>
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
@@ -110,7 +199,6 @@ function ProfileForm({ user, onUpdate }) {
               type="email"
               name="email"
               value={formData.email}
-              onChange={handleChange}
               disabled
               className="w-full bg-gray-50 dark:bg-slate-900/50 border border-gray-200 dark:border-slate-700 rounded-xl py-3 pl-11 pr-4 text-gray-500 dark:text-gray-400 cursor-not-allowed transition-colors"
             />
@@ -124,7 +212,7 @@ function ProfileForm({ user, onUpdate }) {
           Change Password
         </h3>
 
-        {/* Current Password */}
+        {/* Current Password - now enabled */}
         <div>
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
             Current Password
@@ -136,13 +224,13 @@ function ProfileForm({ user, onUpdate }) {
               name="currentPassword"
               value={formData.currentPassword}
               onChange={handleChange}
-              placeholder="••••••••"
+              placeholder="Enter current password"
               className="w-full bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-600 rounded-xl py-3 pl-11 pr-4 outline-none focus:ring-2 focus:ring-blue-500 text-gray-800 dark:text-gray-100 transition-colors placeholder-gray-400 dark:placeholder-gray-500"
             />
           </div>
         </div>
 
-        {/* New Password */}
+        {/* New Password - now enabled */}
         <div>
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
             New Password
@@ -154,10 +242,22 @@ function ProfileForm({ user, onUpdate }) {
               name="newPassword"
               value={formData.newPassword}
               onChange={handleChange}
-              placeholder="Leave blank to keep current"
+              placeholder="Enter new password"
               className="w-full bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-600 rounded-xl py-3 pl-11 pr-4 outline-none focus:ring-2 focus:ring-blue-500 text-gray-800 dark:text-gray-100 transition-colors placeholder-gray-400 dark:placeholder-gray-500"
             />
           </div>
+        </div>
+
+        {/* Change Password button */}
+        <div className="mt-6 flex justify-end">
+          <button
+            type="button"
+            onClick={handlePasswordChange}
+            className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-xl font-semibold transition-colors"
+          >
+            <Lock size={18} />
+            Change Password
+          </button>
         </div>
       </div>
 
