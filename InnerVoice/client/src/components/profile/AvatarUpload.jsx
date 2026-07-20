@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Camera, Upload, Trash2, X, Eye, Sparkles, Loader2, CheckCircle2 } from "lucide-react";
+import { Camera, Upload, Trash2, X, Eye, Sparkles, Loader2 } from "lucide-react";
 import { uploadProfileImage } from "../../api/upload";
 import { updateProfileInfo } from "../../api/profile";
 import { useToast } from "../../context/ToastContext";
@@ -28,7 +28,6 @@ function AvatarUpload({ user, onUploadSuccess }) {
 
     if (!file) return;
 
-    // Validate image file type
     if (!file.type.startsWith("image/")) {
       addToast("Please select a valid image file.", "error");
       return;
@@ -90,8 +89,12 @@ function AvatarUpload({ user, onUploadSuccess }) {
           onChange={handleFileChange}
         />
 
-        {/* Profile Avatar Trigger Button */}
-        <div className="relative group/avatar mb-5 cursor-pointer" onClick={() => setIsModalOpen(true)}>
+        {/* Profile Avatar Click Trigger */}
+        <div 
+          className="relative group/avatar mb-5 cursor-pointer" 
+          onClick={() => setIsModalOpen(true)}
+          title="Click to view profile picture"
+        >
           <div className="w-32 h-32 rounded-full overflow-hidden border-4 border-white dark:border-slate-700 shadow-2xl bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center text-4xl font-extrabold text-white transition-transform duration-300 group-hover/avatar:scale-105">
             {avatar ? (
               <img
@@ -107,7 +110,7 @@ function AvatarUpload({ user, onUploadSuccess }) {
           {/* Hover Overlay */}
           <div className="absolute inset-0 bg-slate-900/60 rounded-full flex flex-col items-center justify-center opacity-0 group-hover/avatar:opacity-100 transition-all duration-300 backdrop-blur-[2px]">
             <Eye size={26} className="text-white mb-1 animate-pulse" />
-            <span className="text-[11px] font-bold text-white uppercase tracking-wider">View / Edit</span>
+            <span className="text-[11px] font-bold text-white uppercase tracking-wider">View Photo</span>
           </div>
 
           <div className="absolute bottom-1 right-1 bg-blue-600 dark:bg-blue-500 text-white p-2 rounded-full shadow-lg border-2 border-white dark:border-slate-800 transition-transform group-hover/avatar:scale-110">
@@ -142,81 +145,87 @@ function AvatarUpload({ user, onUploadSuccess }) {
         </div>
       </div>
 
-      {/* Modern Lightbox Preview Modal */}
+      {/* Instagram-Style Pure Photo Lightbox Modal */}
       {isModalOpen && (
-        <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4 animate-fade-in">
-          <div className="bg-white dark:bg-slate-800 border border-gray-100 dark:border-slate-700/80 rounded-3xl p-6 sm:p-8 max-w-md w-full shadow-2xl flex flex-col items-center relative animate-fade-scale">
-            
-            {/* Close Button */}
-            <button
-              onClick={() => setIsModalOpen(false)}
-              className="absolute top-4 right-4 text-gray-400 hover:text-gray-700 dark:hover:text-white p-2 rounded-full hover:bg-gray-100 dark:hover:bg-slate-700/60 transition-colors"
-            >
-              <X size={20} />
-            </button>
+        <div 
+          className="fixed inset-0 z-50 bg-black/90 backdrop-blur-xl flex flex-col items-center justify-center p-4 animate-fade-in"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setIsModalOpen(false);
+          }}
+        >
+          {/* Top Close Button */}
+          <button
+            onClick={() => setIsModalOpen(false)}
+            className="absolute top-6 right-6 text-white/80 hover:text-white p-3 rounded-full bg-white/10 hover:bg-white/20 backdrop-blur-md transition-all duration-300"
+            title="Close"
+          >
+            <X size={24} />
+          </button>
 
-            <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-6 flex items-center gap-2">
-              Profile Photo
-            </h3>
-
-            {/* High-Res Image Preview Frame */}
-            <div className="w-56 h-56 sm:w-64 sm:h-64 rounded-full overflow-hidden border-4 border-blue-500/30 dark:border-blue-400/20 shadow-2xl bg-gradient-to-br from-blue-600 to-indigo-600 flex items-center justify-center text-6xl font-extrabold text-white mb-6 relative group">
+          {/* Standalone Instagram Circular Photo View */}
+          <div className="relative group mb-8 animate-fade-scale">
+            <div className="w-64 h-64 sm:w-80 sm:h-80 rounded-full overflow-hidden border-4 border-white/20 shadow-[0_0_50px_rgba(59,130,246,0.3)] bg-gradient-to-br from-blue-600 to-indigo-600 flex items-center justify-center text-7xl font-extrabold text-white">
               {avatar ? (
                 <img
                   src={avatar}
-                  alt="Full Avatar Preview"
-                  className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                  alt={user?.full_name || "Profile Photo"}
+                  className="w-full h-full object-cover"
                 />
               ) : (
                 initials
               )}
             </div>
+          </div>
 
-            <p className="text-sm font-semibold text-gray-800 dark:text-slate-200 mb-1">
-              {user?.full_name}
-            </p>
-            <p className="text-xs text-gray-400 dark:text-slate-400 mb-6">
-              {avatar ? "Full Quality Profile Image" : "Default Avatar Initials"}
-            </p>
+          <p className="text-white font-bold text-lg mb-1">{user?.full_name}</p>
+          <p className="text-white/60 text-xs mb-8">@{user?.username || "profile"}</p>
 
-            {/* Action Buttons */}
-            <div className="flex flex-col sm:flex-row gap-3 w-full">
+          {/* Instagram Action Buttons */}
+          <div className="flex flex-col gap-3 w-full max-w-xs animate-fade-scale">
+            <button
+              onClick={handleUploadClick}
+              disabled={isUploading}
+              className="w-full flex justify-center items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white rounded-full py-3.5 font-bold text-sm shadow-lg shadow-blue-600/30 transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50"
+            >
+              {isUploading ? (
+                <>
+                  <Loader2 size={18} className="animate-spin" />
+                  Uploading Photo...
+                </>
+              ) : (
+                <>
+                  <Upload size={18} />
+                  Upload New Photo
+                </>
+              )}
+            </button>
+
+            {avatar && (
               <button
-                onClick={handleUploadClick}
-                disabled={isUploading}
-                className="flex-1 flex justify-center items-center gap-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-xl py-3 font-semibold text-sm shadow-lg shadow-blue-500/25 transition-all duration-300 disabled:opacity-50"
+                onClick={handleRemove}
+                disabled={isDeleting}
+                className="w-full flex justify-center items-center gap-2 bg-red-500/20 hover:bg-red-500/30 text-red-400 border border-red-500/30 rounded-full py-3.5 font-bold text-sm backdrop-blur-md transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50"
               >
-                {isUploading ? (
+                {isDeleting ? (
                   <>
                     <Loader2 size={18} className="animate-spin" />
-                    Uploading...
+                    Removing...
                   </>
                 ) : (
                   <>
-                    <Upload size={18} />
-                    Upload New
+                    <Trash2 size={18} />
+                    Remove Current Photo
                   </>
                 )}
               </button>
+            )}
 
-              {avatar && (
-                <button
-                  onClick={handleRemove}
-                  disabled={isDeleting}
-                  className="flex justify-center items-center gap-2 bg-red-50 dark:bg-red-950/40 hover:bg-red-100 dark:hover:bg-red-900/50 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-800/40 rounded-xl px-5 py-3 font-semibold text-sm transition-all duration-300 disabled:opacity-50"
-                >
-                  {isDeleting ? (
-                    <Loader2 size={18} className="animate-spin" />
-                  ) : (
-                    <>
-                      <Trash2 size={18} />
-                      Remove
-                    </>
-                  )}
-                </button>
-              )}
-            </div>
-
+            <button
+              onClick={() => setIsModalOpen(false)}
+              className="w-full flex justify-center items-center bg-white/10 hover:bg-white/20 text-white/80 hover:text-white rounded-full py-3 font-semibold text-sm backdrop-blur-md transition-all duration-300"
+            >
+              Cancel
+            </button>
           </div>
         </div>
       )}
