@@ -3,12 +3,13 @@ import Layout from "../components/layout/Layout";
 import NoteCard from "../components/notes/NoteCard";
 import NoteForm from "../components/notes/NoteForm";
 import Modal from "../components/common/Modal";
-import { getNotes, createNote, deleteNote } from "../api/note";
+import { getNotes, createNote, updateNote, deleteNote } from "../api/note";
 
 function Dashboard() {
   const [notes, setNotes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
+  const [editingNote, setEditingNote] = useState(null);
 
   const fetchNotes = async () => {
     try {
@@ -35,6 +36,20 @@ function Dashboard() {
     } catch (error) {
       console.error(error);
       alert("Unable to create note");
+    }
+  };
+
+  const handleEditNote = async (data) => {
+    try {
+      await updateNote(editingNote.id, data);
+
+      setEditingNote(null);
+      setShowModal(false);
+
+      fetchNotes();
+    } catch (error) {
+      console.error(error);
+      alert("Unable to update note");
     }
   };
 
@@ -66,7 +81,10 @@ function Dashboard() {
           </h1>
 
           <button
-            onClick={() => setShowModal(true)}
+            onClick={() => {
+              setEditingNote(null);
+              setShowModal(true);
+            }}
             className="bg-blue-600 hover:bg-blue-700 text-white font-medium px-5 py-3 rounded-lg shadow-md transition"
           >
             + New Note
@@ -85,21 +103,37 @@ function Dashboard() {
                 key={note.id}
                 note={note}
                 onDelete={handleDeleteNote}
-                onEdit={() => {}}
+                onEdit={(noteToEdit) => {
+                  setEditingNote(noteToEdit);
+                  setShowModal(true);
+                }}
               />
             ))}
           </div>
         )}
 
         {showModal && (
-          <Modal onClose={() => setShowModal(false)}>
+          <Modal
+            onClose={() => {
+              setShowModal(false);
+              setEditingNote(null);
+            }}
+          >
             <h2 className="text-2xl font-bold mb-6 text-gray-900 dark:text-white">
-              Create Note
+              {editingNote ? "Edit Note" : "Create Note"}
             </h2>
 
             <NoteForm
-              onSave={handleCreateNote}
-              onCancel={() => setShowModal(false)}
+              initialData={editingNote}
+              onCancel={() => {
+                setShowModal(false);
+                setEditingNote(null);
+              }}
+              onSave={
+                editingNote
+                  ? handleEditNote
+                  : handleCreateNote
+              }
             />
           </Modal>
         )}
