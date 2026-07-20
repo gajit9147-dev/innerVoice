@@ -35,9 +35,13 @@ function NoteCard({ note, onEdit, onDelete }) {
         <div className="flex items-center gap-1.5 text-gray-400 dark:text-gray-500 text-xs font-medium">
           <Calendar size={14} />
           <span>
-            {note.created_at
-              ? new Date(note.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })
-              : "Today"}
+            {(() => {
+              if (!note.created_at) return "Today";
+              const d = new Date(note.created_at);
+              return isNaN(d.getTime())
+                ? "Today"
+                : d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+            })()}
           </span>
         </div>
       </div>
