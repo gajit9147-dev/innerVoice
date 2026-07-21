@@ -164,7 +164,7 @@ export const updateNote = async (req, res) => {
   }
 };
 
-
+// Delete Note
 export const deleteNote = async (req, res) => {
   try {
     const { id } = req.params;
@@ -278,6 +278,46 @@ export const toggleFavoriteNote = async (req, res) => {
       favorite: Boolean(newValue),
     });
 
+  } catch (error) {
+    console.error(error);
+
+    res.status(500).json({
+      success: false,
+      message: "Server Error",
+    });
+  }
+};
+
+// Toggle Lock Note
+export const toggleLockNote = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const userId = req.user.id;
+
+    const [rows] = await pool.query(
+      "SELECT is_locked FROM notes WHERE id = ? AND user_id = ?",
+      [id, userId]
+    );
+
+    if (rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "Note not found",
+      });
+    }
+
+    const current = Number(rows[0].is_locked);
+    const newValue = current === 1 ? 0 : 1;
+
+    await pool.query(
+      "UPDATE notes SET is_locked = ? WHERE id = ? AND user_id = ?",
+      [newValue, id, userId]
+    );
+
+    res.json({
+      success: true,
+      locked: Boolean(newValue),
+    });
   } catch (error) {
     console.error(error);
 
