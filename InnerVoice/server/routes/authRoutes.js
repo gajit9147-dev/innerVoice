@@ -8,6 +8,8 @@ import {
   uploadProfileImage,
   getProfile,
   updateProfile,
+  setVaultPin,
+  verifyVaultPin,
 } from "../controllers/authController.js";
 
 const router = express.Router();
@@ -24,6 +26,16 @@ router.post("/login", login);
 router.get("/profile", authMiddleware, getProfile);
 
 router.put("/profile", authMiddleware, updateProfile);
+
+
+
+// =========================
+// VAULT PIN
+// =========================
+router.put("/set-vault-pin", authMiddleware, setVaultPin);
+
+router.post("/verify-vault-pin", authMiddleware, verifyVaultPin);
+
 
 // =========================
 // UPLOAD PROFILE IMAGE

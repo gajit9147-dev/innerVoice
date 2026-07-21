@@ -253,3 +253,88 @@ export const updateProfile = async (req, res) => {
     });
   }
 };
+
+
+// =========================
+// SET VAULT PIN
+// =========================
+export const setVaultPin = async (req, res) => {
+  try {
+    const { pin } = req.body;
+
+    if (!pin || !/^\d{4}$/.test(pin)) {
+      return res.status(400).json({
+        success: false,
+        message: "PIN must be exactly 4 digits.",
+      });
+    }
+
+    const hashedPin = await bcrypt.hash(pin, 10);
+
+    await pool.query(
+      "UPDATE users SET vault_pin = ? WHERE id = ?",
+      [hashedPin, req.user.id]
+    );
+
+    return res.json({
+      success: true,
+      message: "Vault PIN set successfully.",
+    });
+  } catch (error) {
+    console.error("Set Vault PIN Error:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Server Error",
+    });
+  }
+};
+
+// =========================
+// VERIFY VAULT PIN
+// =========================
+export const verifyVaultPin = async (req, res) => {
+  try {
+    const { pin } = req.body;
+
+    const [rows] = await pool.query(
+      "SELECT vault_pin FROM users WHERE id = ?",
+      [req.user.id]
+    );
+
+    if (rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
+    }
+
+    if (!rows[0].vault_pin) {
+      return res.status(400).json({
+        success: false,
+        message: "Vault PIN not set.",
+      });
+    }
+
+    const isMatch = await bcrypt.compare(pin, rows[0].vault_pin);
+
+    if (!isMatch) {
+      return res.status(401).json({
+        success: false,
+        message: "Incorrect PIN",
+      });
+    }
+
+    return res.json({
+      success: true,
+      message: "PIN verified.",
+    });
+  } catch (error) {
+    console.error("Verify Vault PIN Error:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Server Error",
+    });
+  }
+};
