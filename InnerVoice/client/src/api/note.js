@@ -40,3 +40,6 @@ export const searchNotes = (query) =>
 // Toggle Pin note
 export const togglePinNote = (id) =>
   API.put(`/notes/pin/${id}`);
+// Toggle Favorite note
+export const toggleFavoriteNote = (id) =>
+  API.put(`/notes/favorite/${id}`);

@@ -3,7 +3,7 @@ import pool from "../config/db.js";
 // Create Note
 export const createNote = async (req, res) => {
   try {
-    const { title, content } = req.body;
+    const { title, content, category, feeling } = req.body;
     const userId = req.user.id;
 
     if (!title || !content) {
@@ -14,8 +14,9 @@ export const createNote = async (req, res) => {
     }
 
     const [result] = await pool.query(
-      "INSERT INTO notes (user_id, title, content) VALUES (?, ?, ?)",
-      [userId, title, content]
+      `INSERT INTO notes (user_id, title, content, category, feeling)
+       VALUES (?, ?, ?, ?, ?)`,
+      [userId, title, content, category || "General", feeling || "Neutral"]
     );
 
     res.status(201).json({
@@ -128,17 +129,18 @@ export const getNoteById = async (req, res) => {
   }
 };
 
+// Update Note
 export const updateNote = async (req, res) => {
   try {
-    const { title, content } = req.body;
+    const { title, content, category, feeling } = req.body;
     const { id } = req.params;
     const userId = req.user.id;
 
     const [result] = await pool.query(
       `UPDATE notes
-       SET title = ?, content = ?
+       SET title = ?, content = ?, category = ?, feeling = ?
        WHERE id = ? AND user_id = ?`,
-      [title, content, id, userId]
+      [title, content, category || "General", feeling || "Neutral", id, userId]
     );
 
     if (result.affectedRows === 0) {
@@ -154,6 +156,7 @@ export const updateNote = async (req, res) => {
     });
   } catch (error) {
     console.error(error);
+
     res.status(500).json({
       success: false,
       message: "Server Error",
@@ -194,15 +197,21 @@ export const deleteNote = async (req, res) => {
 };
 
 // Toggle Pin Note
+
 export const togglePinNote = async (req, res) => {
   try {
     const { id } = req.params;
     const userId = req.user.id;
 
+    console.log("ID:", id);
+    console.log("User ID:", userId);
+
     const [rows] = await pool.query(
-      "SELECT is_pinned FROM notes WHERE id = ? AND user_id = ?",
+      "SELECT * FROM notes WHERE id = ? AND user_id = ?",
       [id, userId]
     );
+
+    console.log("Rows:", rows);
 
     if (rows.length === 0) {
       return res.status(404).json({
@@ -213,6 +222,9 @@ export const togglePinNote = async (req, res) => {
 
     const current = Number(rows[0].is_pinned);
     const newValue = current === 1 ? 0 : 1;
+
+    console.log("Current:", current);
+    console.log("New Value:", newValue);
 
     const [result] = await pool.query(
       "UPDATE notes SET is_pinned = ? WHERE id = ? AND user_id = ?",
@@ -227,6 +239,47 @@ export const togglePinNote = async (req, res) => {
     });
   } catch (err) {
     console.error(err);
+    res.status(500).json({
+      success: false,
+      message: "Server Error",
+    });
+  }
+};
+
+
+// Toggle Favorite Note
+export const toggleFavoriteNote = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const userId = req.user.id;
+
+    const [rows] = await pool.query(
+      "SELECT is_favorite FROM notes WHERE id = ? AND user_id = ?",
+      [id, userId]
+    );
+
+    if (rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "Note not found",
+      });
+    }
+
+    const current = Number(rows[0].is_favorite);
+    const newValue = current === 1 ? 0 : 1;
+
+    await pool.query(
+      "UPDATE notes SET is_favorite = ? WHERE id = ? AND user_id = ?",
+      [newValue, id, userId]
+    );
+
+    res.json({
+      success: true,
+      favorite: Boolean(newValue),
+    });
+
+  } catch (error) {
+    console.error(error);
 
     res.status(500).json({
       success: false,
