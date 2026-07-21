@@ -9,6 +9,8 @@ import {
   updateNote,
   deleteNote,
   searchNotes,
+  togglePinNote,
+  toggleFavoriteNote,
 } from "../api/note";
 
 function Dashboard() {
@@ -17,11 +19,17 @@ function Dashboard() {
   const [showModal, setShowModal] = useState(false);
   const [editingNote, setEditingNote] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState("All");
 
   const fetchNotes = async () => {
     try {
       const res = await getNotes();
-      setNotes(res.data.notes);
+
+      const sortedNotes = [...res.data.notes].sort(
+        (a, b) => b.is_pinned - a.is_pinned,
+      );
+
+      setNotes(sortedNotes);
     } catch (error) {
       console.error(error);
     } finally {
@@ -38,7 +46,6 @@ function Dashboard() {
       await createNote(data);
 
       setShowModal(false);
-
       fetchNotes();
     } catch (error) {
       console.error(error);
@@ -62,7 +69,7 @@ function Dashboard() {
 
   const handleDeleteNote = async (id) => {
     const confirmDelete = window.confirm(
-      "Are you sure you want to delete this note?"
+      "Are you sure you want to delete this note?",
     );
 
     if (!confirmDelete) return;
@@ -77,6 +84,26 @@ function Dashboard() {
     }
   };
 
+  const handlePin = async (id) => {
+    try {
+      await togglePinNote(id);
+      fetchNotes();
+    } catch (error) {
+      console.error(error);
+      alert("Unable to pin note.");
+    }
+  };
+
+  const handleFavorite = async (id) => {
+    try {
+      await toggleFavoriteNote(id);
+      fetchNotes();
+    } catch (error) {
+      console.error(error);
+      alert("Unable to favorite note.");
+    }
+  };
+
   const handleSearch = async (query) => {
     setSearchQuery(query);
 
@@ -88,18 +115,36 @@ function Dashboard() {
 
       const res = await searchNotes(query);
 
-      setNotes(res.data.notes);
+      const sortedNotes = [...res.data.notes].sort(
+        (a, b) => b.is_pinned - a.is_pinned,
+      );
+
+      setNotes(sortedNotes);
     } catch (error) {
       console.error(error);
     }
   };
 
+  const categories = [
+    "All",
+    "General",
+    "Work",
+    "Study",
+    "Personal",
+    "Ideas",
+    "Journal",
+  ];
+
+  const filteredNotes =
+    selectedCategory === "All"
+      ? notes
+      : notes.filter((note) => note.category === selectedCategory);
+
   return (
     <Layout>
       <div className="max-w-6xl mx-auto p-6">
-
+        {/* Header */}
         <div className="flex justify-between items-center mb-8">
-
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
             My Notes
           </h1>
@@ -113,9 +158,9 @@ function Dashboard() {
           >
             + New Note
           </button>
-
         </div>
 
+        {/* Search */}
         <div className="mb-6">
           <input
             type="text"
@@ -126,17 +171,37 @@ function Dashboard() {
           />
         </div>
 
+        {/* Categories */}
+        <div className="flex flex-wrap gap-3 mb-6">
+          {categories.map((category) => (
+            <button
+              key={category}
+              onClick={() => setSelectedCategory(category)}
+              className={`px-4 py-2 rounded-full text-sm font-medium transition ${
+                selectedCategory === category
+                  ? "bg-blue-600 text-white"
+                  : "bg-gray-200 dark:bg-slate-800 text-gray-700 dark:text-gray-300 hover:bg-blue-100 dark:hover:bg-slate-700"
+              }`}
+            >
+              {category}
+            </button>
+          ))}
+        </div>
+
+        {/* Notes */}
         {loading ? (
           <p className="text-gray-500 dark:text-slate-400">Loading...</p>
-        ) : notes.length === 0 ? (
+        ) : filteredNotes.length === 0 ? (
           <p className="text-gray-500 dark:text-slate-400">No notes found.</p>
         ) : (
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {notes.map((note) => (
+            {filteredNotes.map((note) => (
               <NoteCard
                 key={note.id}
                 note={note}
                 onDelete={handleDeleteNote}
+                onPin={handlePin}
+                onFavorite={handleFavorite}
                 onEdit={(noteToEdit) => {
                   setEditingNote(noteToEdit);
                   setShowModal(true);
@@ -146,6 +211,7 @@ function Dashboard() {
           </div>
         )}
 
+        {/* Modal */}
         {showModal && (
           <Modal
             onClose={() => {
@@ -163,11 +229,7 @@ function Dashboard() {
                 setShowModal(false);
                 setEditingNote(null);
               }}
-              onSave={
-                editingNote
-                  ? handleEditNote
-                  : handleCreateNote
-              }
+              onSave={editingNote ? handleEditNote : handleCreateNote}
             />
           </Modal>
         )}

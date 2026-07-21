@@ -31,7 +31,7 @@ app.use("/api/admin", adminRoutes);
 // Test Route
 app.get("/", (req, res) => {
   res.json({
-    message: "InnerVoice API Running 🚀",
+    message: "Hey Ajeet You are connected to the server",
   });
 });
 
