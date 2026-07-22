@@ -47,6 +47,7 @@ try {
 
 const PORT = 5000;
 
+// Server start
 const server = app.listen(PORT, "127.0.0.1", () => {
   console.log(`🚀 Server running on http://127.0.0.1:${PORT}`);
 });

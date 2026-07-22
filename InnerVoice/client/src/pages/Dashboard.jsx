@@ -3,6 +3,7 @@ import Layout from "../components/layout/Layout";
 import NoteCard from "../components/notes/NoteCard";
 import NoteForm from "../components/notes/NoteForm";
 import Modal from "../components/common/Modal";
+import UnlockNoteModal from "../components/notes/UnlockNoteModal";
 import {
   getNotes,
   createNote,
@@ -21,6 +22,8 @@ function Dashboard() {
   const [editingNote, setEditingNote] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("All");
+  const [showUnlockModal, setShowUnlockModal] = useState(false);
+  const [selectedNoteId, setSelectedNoteId] = useState(null);
 
   const fetchNotes = async () => {
     try {
@@ -108,13 +111,19 @@ function Dashboard() {
     }
   };
   // Toggle Lock Note
-  const handleLock = async (id) => {
+  const handleLock = async (note) => {
     try {
-      await toggleLockNote(id);
+      if (note.is_locked) {
+        setSelectedNoteId(note.id);
+        setShowUnlockModal(true);
+        return;
+      }
+
+      await toggleLockNote(note.id);
       fetchNotes();
     } catch (error) {
       console.error(error);
-      alert("Unable to lock note.");
+      alert("Unable to update lock status.");
     }
   };
 
@@ -250,6 +259,21 @@ function Dashboard() {
           </Modal>
         )}
       </div>
+
+      {showUnlockModal && (
+        <UnlockNoteModal
+          onClose={() => {
+            setShowUnlockModal(false);
+            setSelectedNoteId(null);
+          }}
+          onSuccess={async () => {
+            await toggleLockNote(selectedNoteId);
+            fetchNotes();
+            setShowUnlockModal(false);
+            setSelectedNoteId(null);
+          }}
+        />
+      )}
     </Layout>
   );
 }
