@@ -1,8 +1,4 @@
-import axios from "axios";
-
-const API = axios.create({
-  baseURL: "/api",
-});
+import API from "./axios";
 
 export const signupUser = (userData) => API.post("/auth/signup", userData);
 

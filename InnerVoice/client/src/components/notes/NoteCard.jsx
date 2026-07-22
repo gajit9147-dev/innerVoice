@@ -203,7 +203,7 @@ function NoteCard({ note, onDelete, onEdit, onPin, onFavorite, onLock }) {
 
         {onLock && (
           <button
-            onClick={() => onLock(note.id)}
+            onClick={() => onLock(note)}
             className={`transition duration-200 ${
               note.is_locked
                 ? "text-red-500 scale-110"
