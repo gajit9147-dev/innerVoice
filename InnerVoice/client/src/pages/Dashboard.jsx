@@ -141,7 +141,7 @@ function Dashboard() {
   const handleLock = async (note) => {
     if (note.is_locked) {
       setSelectedNote(note);
-      if (note.security_type === "password") {
+      if (note.security_type === "custom_password") {
         setShowVerifyPasswordModal(true);
       } else {
         setSelectedNoteId(note.id);

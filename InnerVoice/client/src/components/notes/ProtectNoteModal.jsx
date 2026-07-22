@@ -1,7 +1,7 @@
 import Modal from "../common/Modal";
 
 function ProtectNoteModal({ note, onClose, onSelectGlobal, onPassword, onRemovePassword }) {
-  const hasCustomPassword = note?.security_type === "password";
+  const hasCustomPassword = note?.security_type === "custom_password";
 
   return (
     <Modal onClose={onClose}>
