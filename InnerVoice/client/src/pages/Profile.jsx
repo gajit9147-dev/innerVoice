@@ -6,6 +6,7 @@ import ProfileForm from "../components/profile/ProfileForm";
 import ProfileStats from "../components/profile/ProfileStats";
 import { UserCog, Loader2, SquarePen } from "lucide-react";
 import { getProfileInfo } from "../api/profile";
+import VaultPinCard from "../components/profile/VaultPinCard";
 
 function Profile() {
   const navigate = useNavigate();
@@ -44,10 +45,7 @@ function Profile() {
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
           <div className="flex items-center gap-3">
-            <UserCog
-              className="text-blue-600 dark:text-blue-500"
-              size={32}
-            />
+            <UserCog className="text-blue-600 dark:text-blue-500" size={32} />
             <h1 className="text-3xl font-bold text-gray-800 dark:text-white">
               Profile Settings
             </h1>
@@ -65,10 +63,7 @@ function Profile() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Left Column */}
           <div className="lg:col-span-1 space-y-8">
-            <AvatarUpload
-              user={profileData}
-              onUploadSuccess={fetchProfile}
-            />
+            <AvatarUpload user={profileData} onUploadSuccess={fetchProfile} />
 
             <ProfileStats
               stats={profileData?.stats}
@@ -77,11 +72,10 @@ function Profile() {
           </div>
 
           {/* Right Column */}
-          <div className="lg:col-span-2">
-            <ProfileForm
-              user={profileData}
-              onUpdate={fetchProfile}
-            />
+          <div className="space-y-8">
+            <ProfileForm user={profileData} onUpdate={fetchProfile} />
+
+            <VaultPinCard />
           </div>
         </div>
       </div>

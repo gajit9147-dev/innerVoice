@@ -43,3 +43,6 @@ export const togglePinNote = (id) =>
 // Toggle Favorite note
 export const toggleFavoriteNote = (id) =>
   API.put(`/notes/favorite/${id}`);
+
+export const toggleLockNote = (id) =>
+  API.put(`/notes/lock/${id}`);

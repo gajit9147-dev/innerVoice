@@ -11,6 +11,7 @@ import {
   searchNotes,
   togglePinNote,
   toggleFavoriteNote,
+  toggleLockNote,
 } from "../api/note";
 
 function Dashboard() {
@@ -40,7 +41,7 @@ function Dashboard() {
   useEffect(() => {
     fetchNotes();
   }, []);
-
+  // Create Note
   const handleCreateNote = async (data) => {
     try {
       await createNote(data);
@@ -53,6 +54,7 @@ function Dashboard() {
     }
   };
 
+  // Edit Note
   const handleEditNote = async (data) => {
     try {
       await updateNote(editingNote.id, data);
@@ -66,7 +68,7 @@ function Dashboard() {
       alert("Unable to update note");
     }
   };
-
+  // Delete Note
   const handleDeleteNote = async (id) => {
     const confirmDelete = window.confirm(
       "Are you sure you want to delete this note?",
@@ -83,6 +85,7 @@ function Dashboard() {
       alert("Unable to delete note.");
     }
   };
+  // Toggle Pin Note
 
   const handlePin = async (id) => {
     try {
@@ -93,6 +96,7 @@ function Dashboard() {
       alert("Unable to pin note.");
     }
   };
+  // Toggle Favorite Note
 
   const handleFavorite = async (id) => {
     try {
@@ -103,7 +107,18 @@ function Dashboard() {
       alert("Unable to favorite note.");
     }
   };
+  // Toggle Lock Note
+  const handleLock = async (id) => {
+    try {
+      await toggleLockNote(id);
+      fetchNotes();
+    } catch (error) {
+      console.error(error);
+      alert("Unable to lock note.");
+    }
+  };
 
+  // Search Notes
   const handleSearch = async (query) => {
     setSearchQuery(query);
 
@@ -202,6 +217,7 @@ function Dashboard() {
                 onDelete={handleDeleteNote}
                 onPin={handlePin}
                 onFavorite={handleFavorite}
+                onLock={handleLock}
                 onEdit={(noteToEdit) => {
                   setEditingNote(noteToEdit);
                   setShowModal(true);
