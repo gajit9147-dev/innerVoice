@@ -414,7 +414,7 @@ export const setNotePassword = async (req, res) => {
        SET security_type = ?, note_password = ?, password_hint = ?, is_locked = 1
        WHERE id = ? AND user_id = ?`,
       [
-        "password",
+        "custom_password",
         hashedPassword,
         hint || null,
         id,
@@ -466,7 +466,7 @@ export const verifyNotePassword = async (req, res) => {
 
     const note = rows[0];
 
-    if (note.security_type !== "password" || !note.note_password) {
+    if (note.security_type !== "custom_password" || !note.note_password) {
       return res.status(400).json({
         success: false,
         message: "This note is not locked with a custom password.",
@@ -523,7 +523,7 @@ export const deleteNotePassword = async (req, res) => {
 
     const note = rows[0];
 
-    if (note.security_type === "password" && note.note_password) {
+    if (note.security_type === "custom_password" && note.note_password) {
       if (!password) {
         return res.status(400).json({
           success: false,
