@@ -7,6 +7,7 @@ import UnlockNoteModal from "../components/notes/UnlockNoteModal";
 import VerifyPasswordModal from "../components/notes/VerifyPasswordModal";
 import SetNotePasswordModal from "../components/notes/SetNotePasswordModal";
 import SetVaultPinModal from "../components/notes/SetVaultPinModal";
+import ProtectNoteModal from "../components/notes/ProtectNoteModal";
 import {
   getNotes,
   createNote,
@@ -29,6 +30,7 @@ function Dashboard() {
   const [selectedNoteId, setSelectedNoteId] = useState(null);
 
   const [selectedNote, setSelectedNote] = useState(null);
+  const [showProtectNoteModal, setShowProtectNoteModal] = useState(false);
   const [showVerifyPasswordModal, setShowVerifyPasswordModal] = useState(false);
   const [showSetPasswordModal, setShowSetPasswordModal] = useState(false);
   const [showRemovePasswordModal, setShowRemovePasswordModal] = useState(false);
@@ -119,31 +121,38 @@ function Dashboard() {
       alert("Unable to favorite note.");
     }
   };
-  // Toggle Lock Note
-  const handleLock = async (note) => {
+  const handleLockWithPIN = async (noteId) => {
     try {
-      if (note.is_locked) {
-        setSelectedNote(note);
-        if (note.security_type === "password") {
-          setShowVerifyPasswordModal(true);
-        } else {
-          setSelectedNoteId(note.id);
-          setShowUnlockModal(true);
-        }
-        return;
-      }
-
-      await toggleLockNote(note.id);
+      await toggleLockNote(noteId);
       fetchNotes();
     } catch (error) {
       console.error(error);
       if (error.response?.data?.pinNotSet) {
-        setSelectedNote(note);
+        const noteToLock = notes.find((n) => n.id === noteId);
+        setSelectedNote(noteToLock);
         setShowSetPinModal(true);
       } else {
-        alert(error.response?.data?.message || "Unable to update lock status.");
+        alert(error.response?.data?.message || "Unable to lock note.");
       }
     }
+  };
+
+  // Toggle Lock Note
+  const handleLock = async (note) => {
+    if (note.is_locked) {
+      setSelectedNote(note);
+      if (note.security_type === "password") {
+        setShowVerifyPasswordModal(true);
+      } else {
+        setSelectedNoteId(note.id);
+        setShowUnlockModal(true);
+      }
+      return;
+    }
+
+    // If note is unlocked, open ProtectNoteModal to select security type
+    setSelectedNote(note);
+    setShowProtectNoteModal(true);
   };
 
   // Search Notes
@@ -246,15 +255,6 @@ function Dashboard() {
                 onPin={handlePin}
                 onFavorite={handleFavorite}
                 onLock={handleLock}
-                onSetPassword={(id) => {
-                  setSelectedNoteId(id);
-                  setShowSetPasswordModal(true);
-                }}
-                onRemovePassword={(id) => {
-                  const noteToRemove = notes.find((n) => n.id === id);
-                  setSelectedNote(noteToRemove);
-                  setShowRemovePasswordModal(true);
-                }}
                 onEdit={(noteToEdit) => {
                   setEditingNote(noteToEdit);
                   setShowModal(true);
@@ -366,6 +366,31 @@ function Dashboard() {
               }
             }
             setSelectedNote(null);
+          }}
+        />
+      )}
+
+      {showProtectNoteModal && (
+        <ProtectNoteModal
+          note={selectedNote}
+          onClose={() => {
+            setShowProtectNoteModal(false);
+            setSelectedNote(null);
+          }}
+          onSelectGlobal={async () => {
+            const noteId = selectedNote.id;
+            setShowProtectNoteModal(false);
+            await handleLockWithPIN(noteId);
+            setSelectedNote(null);
+          }}
+          onSelectCustom={() => {
+            setSelectedNoteId(selectedNote.id);
+            setShowProtectNoteModal(false);
+            setShowSetPasswordModal(true);
+          }}
+          onRemovePassword={() => {
+            setShowProtectNoteModal(false);
+            setShowRemovePasswordModal(true);
           }}
         />
       )}

@@ -1,9 +1,6 @@
-import { useState } from "react";
 import { Pencil, Trash2, Pin, Star, Lock } from "lucide-react";
-import SecurityMenu from "./SecurityMenu";
 
-function NoteCard({ note, onDelete, onEdit, onPin, onFavorite, onLock, onSetPassword, onRemovePassword }) {
-  const [showSecurityMenu, setShowSecurityMenu] = useState(false);
+function NoteCard({ note, onDelete, onEdit, onPin, onFavorite, onLock }) {
   const categoryColors = {
     General: "bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-200",
     Work: "bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300",
@@ -205,35 +202,17 @@ function NoteCard({ note, onDelete, onEdit, onPin, onFavorite, onLock, onSetPass
         </div>
 
         {onLock && (
-          <div className="relative">
-            <button
-              onClick={() => {
-                if (note.is_locked) {
-                  onLock(note);
-                } else {
-                  setShowSecurityMenu(!showSecurityMenu);
-                }
-              }}
-              className={`transition duration-200 ${
-                note.is_locked
-                  ? "text-red-500 scale-110"
-                  : "text-gray-400 hover:text-red-500"
-              }`}
-              title={note.is_locked ? "Unlock Note" : "Lock Options"}
-            >
-              <Lock size={20} fill={note.is_locked ? "currentColor" : "none"} />
-            </button>
-
-            {showSecurityMenu && (
-              <SecurityMenu
-                note={note}
-                onClose={() => setShowSecurityMenu(false)}
-                onLockPIN={() => onLock(note)}
-                onLockPassword={() => onSetPassword(note.id)}
-                onRemovePassword={() => onRemovePassword(note.id)}
-              />
-            )}
-          </div>
+          <button
+            onClick={() => onLock(note)}
+            className={`transition duration-200 ${
+              note.is_locked
+                ? "text-red-500 scale-110"
+                : "text-gray-400 hover:text-red-500"
+            }`}
+            title={note.is_locked ? "Unlock Note" : "Protect Note"}
+          >
+            <Lock size={20} fill={note.is_locked ? "currentColor" : "none"} />
+          </button>
         )}
 
         <div className="flex items-center gap-2">
