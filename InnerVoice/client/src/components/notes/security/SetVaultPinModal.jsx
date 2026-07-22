@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Lock, ShieldAlert } from "lucide-react";
-import { setVaultPin } from "../../api/auth";
-import Modal from "../common/Modal";
+import { setVaultPin } from "../../../api/auth";
+import Modal from "../../common/Modal";
 
 function SetVaultPinModal({ onClose, onSuccess }) {
   const [pin, setPin] = useState("");
