@@ -334,6 +334,10 @@ export const toggleLockNote = async (req, res) => {
 // =========================
 export const setNotePassword = async (req, res) => {
   try {
+    console.log("Note ID:", req.params.id);
+    console.log("req.user:", req.user);
+    console.log("req.user.id:", req.user.id);
+
     const { id } = req.params;
     const { password, hint } = req.body;
 
