@@ -411,7 +411,7 @@ export const setNotePassword = async (req, res) => {
 
     const [result] = await pool.query(
       `UPDATE notes
-       SET security_type = ?, note_password = ?, password_hint = ?
+       SET security_type = ?, note_password = ?, password_hint = ?, is_locked = 1
        WHERE id = ? AND user_id = ?`,
       [
         "password",

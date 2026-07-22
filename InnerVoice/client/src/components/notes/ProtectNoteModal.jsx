@@ -1,6 +1,6 @@
 import Modal from "../common/Modal";
 
-function ProtectNoteModal({ note, onClose, onSelectGlobal, onSelectCustom, onRemovePassword }) {
+function ProtectNoteModal({ note, onClose, onSelectGlobal, onPassword, onRemovePassword }) {
   const hasCustomPassword = note?.security_type === "password";
 
   return (
@@ -39,7 +39,7 @@ function ProtectNoteModal({ note, onClose, onSelectGlobal, onSelectCustom, onRem
 
           {/* Option 2: Custom Password */}
           <button
-            onClick={onSelectCustom}
+            onClick={onPassword}
             className="w-full flex items-start p-4 border border-gray-200 dark:border-slate-800 rounded-xl text-left bg-gray-50 hover:bg-indigo-50/20 dark:bg-slate-900 dark:hover:bg-slate-800/50 hover:border-indigo-500 dark:hover:border-indigo-500 transition-all duration-200 group"
           >
             <span className="text-2xl mr-4 mt-1 select-none">🔑</span>

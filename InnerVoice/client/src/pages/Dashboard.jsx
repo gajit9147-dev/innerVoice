@@ -318,20 +318,19 @@ function Dashboard() {
         />
       )}
 
-      {showSetPasswordModal && (
-        <SetNotePasswordModal
-          noteId={selectedNoteId}
-          onClose={() => {
-            setShowSetPasswordModal(false);
-            setSelectedNoteId(null);
-          }}
-          onSuccess={() => {
-            fetchNotes();
-            setShowSetPasswordModal(false);
-            setSelectedNoteId(null);
-          }}
-        />
-      )}
+      <SetNotePasswordModal
+        isOpen={showSetPasswordModal}
+        note={selectedNote}
+        onClose={() => {
+          setShowSetPasswordModal(false);
+          setSelectedNote(null);
+        }}
+        onSuccess={() => {
+          fetchNotes();
+          setShowSetPasswordModal(false);
+          setSelectedNote(null);
+        }}
+      />
 
       {showRemovePasswordModal && (
         <VerifyPasswordModal
@@ -383,8 +382,7 @@ function Dashboard() {
             await handleLockWithPIN(noteId);
             setSelectedNote(null);
           }}
-          onSelectCustom={() => {
-            setSelectedNoteId(selectedNote.id);
+          onPassword={() => {
             setShowProtectNoteModal(false);
             setShowSetPasswordModal(true);
           }}
