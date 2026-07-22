@@ -164,7 +164,7 @@ export const updateNote = async (req, res) => {
   }
 };
 
-// Delete Note
+
 export const deleteNote = async (req, res) => {
   try {
     const { id } = req.params;

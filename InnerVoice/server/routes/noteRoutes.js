@@ -9,6 +9,7 @@ import {
   togglePinNote,
   toggleFavoriteNote,
   toggleLockNote,
+  setNotePassword,
 } from "../controllers/noteController.js";
 import authMiddleware from "../middleware/authMiddleware.js";
 
@@ -26,6 +27,12 @@ router.put("/favorite/:id", authMiddleware, toggleFavoriteNote);
 
 
 router.put("/lock/:id", authMiddleware, toggleLockNote);
+
+router.post(
+  "/:id/set-password",
+  authMiddleware,
+  setNotePassword
+);
 
 router.get("/:id", authMiddleware, getNoteById);
 
