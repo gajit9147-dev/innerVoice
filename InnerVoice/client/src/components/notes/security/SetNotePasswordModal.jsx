@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Lock, Eye, EyeOff } from "lucide-react";
-import { setNotePassword } from "../../api/note";
+import { setNotePassword } from "../../../api/note";
 
 function SetNotePasswordModal({
   isOpen,

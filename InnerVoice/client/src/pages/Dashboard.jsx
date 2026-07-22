@@ -4,10 +4,10 @@ import NoteCard from "../components/notes/NoteCard";
 import NoteForm from "../components/notes/NoteForm";
 import Modal from "../components/common/Modal";
 import UnlockNoteModal from "../components/notes/UnlockNoteModal";
-import VerifyPasswordModal from "../components/notes/VerifyPasswordModal";
-import SetNotePasswordModal from "../components/notes/SetNotePasswordModal";
-import SetVaultPinModal from "../components/notes/SetVaultPinModal";
-import ProtectNoteModal from "../components/notes/ProtectNoteModal";
+import VerifyPasswordModal from "../components/notes/security/VerifyPasswordModal";
+import SetNotePasswordModal from "../components/notes/security/SetNotePasswordModal";
+import SetVaultPinModal from "../components/notes/security/SetVaultPinModal";
+import ProtectNoteModal from "../components/notes/security/ProtectNoteModal";
 import {
   getNotes,
   createNote,
