@@ -4,6 +4,9 @@ import NoteCard from "../components/notes/NoteCard";
 import NoteForm from "../components/notes/NoteForm";
 import Modal from "../components/common/Modal";
 import UnlockNoteModal from "../components/notes/UnlockNoteModal";
+import VerifyPasswordModal from "../components/notes/VerifyPasswordModal";
+import SetNotePasswordModal from "../components/notes/SetNotePasswordModal";
+import SetVaultPinModal from "../components/notes/SetVaultPinModal";
 import {
   getNotes,
   createNote,
@@ -24,6 +27,12 @@ function Dashboard() {
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [showUnlockModal, setShowUnlockModal] = useState(false);
   const [selectedNoteId, setSelectedNoteId] = useState(null);
+
+  const [selectedNote, setSelectedNote] = useState(null);
+  const [showVerifyPasswordModal, setShowVerifyPasswordModal] = useState(false);
+  const [showSetPasswordModal, setShowSetPasswordModal] = useState(false);
+  const [showRemovePasswordModal, setShowRemovePasswordModal] = useState(false);
+  const [showSetPinModal, setShowSetPinModal] = useState(false);
 
   const fetchNotes = async () => {
     try {
@@ -114,8 +123,13 @@ function Dashboard() {
   const handleLock = async (note) => {
     try {
       if (note.is_locked) {
-        setSelectedNoteId(note.id);
-        setShowUnlockModal(true);
+        setSelectedNote(note);
+        if (note.security_type === "password") {
+          setShowVerifyPasswordModal(true);
+        } else {
+          setSelectedNoteId(note.id);
+          setShowUnlockModal(true);
+        }
         return;
       }
 
@@ -123,7 +137,12 @@ function Dashboard() {
       fetchNotes();
     } catch (error) {
       console.error(error);
-      alert("Unable to update lock status.");
+      if (error.response?.data?.pinNotSet) {
+        setSelectedNote(note);
+        setShowSetPinModal(true);
+      } else {
+        alert(error.response?.data?.message || "Unable to update lock status.");
+      }
     }
   };
 
@@ -227,6 +246,15 @@ function Dashboard() {
                 onPin={handlePin}
                 onFavorite={handleFavorite}
                 onLock={handleLock}
+                onSetPassword={(id) => {
+                  setSelectedNoteId(id);
+                  setShowSetPasswordModal(true);
+                }}
+                onRemovePassword={(id) => {
+                  const noteToRemove = notes.find((n) => n.id === id);
+                  setSelectedNote(noteToRemove);
+                  setShowRemovePasswordModal(true);
+                }}
                 onEdit={(noteToEdit) => {
                   setEditingNote(noteToEdit);
                   setShowModal(true);
@@ -271,6 +299,73 @@ function Dashboard() {
             fetchNotes();
             setShowUnlockModal(false);
             setSelectedNoteId(null);
+          }}
+        />
+      )}
+
+      {showVerifyPasswordModal && (
+        <VerifyPasswordModal
+          note={selectedNote}
+          onClose={() => {
+            setShowVerifyPasswordModal(false);
+            setSelectedNote(null);
+          }}
+          onSuccess={() => {
+            fetchNotes();
+            setShowVerifyPasswordModal(false);
+            setSelectedNote(null);
+          }}
+        />
+      )}
+
+      {showSetPasswordModal && (
+        <SetNotePasswordModal
+          noteId={selectedNoteId}
+          onClose={() => {
+            setShowSetPasswordModal(false);
+            setSelectedNoteId(null);
+          }}
+          onSuccess={() => {
+            fetchNotes();
+            setShowSetPasswordModal(false);
+            setSelectedNoteId(null);
+          }}
+        />
+      )}
+
+      {showRemovePasswordModal && (
+        <VerifyPasswordModal
+          note={selectedNote}
+          isDeleteFlow={true}
+          onClose={() => {
+            setShowRemovePasswordModal(false);
+            setSelectedNote(null);
+          }}
+          onSuccess={() => {
+            fetchNotes();
+            setShowRemovePasswordModal(false);
+            setSelectedNote(null);
+          }}
+        />
+      )}
+
+      {showSetPinModal && (
+        <SetVaultPinModal
+          onClose={() => {
+            setShowSetPinModal(false);
+            setSelectedNote(null);
+          }}
+          onSuccess={async () => {
+            setShowSetPinModal(false);
+            if (selectedNote) {
+              try {
+                await toggleLockNote(selectedNote.id);
+                fetchNotes();
+              } catch (err) {
+                console.error(err);
+              }
+            }
+            setSelectedNote(null);
           }}
         />
       )}

@@ -6,6 +6,7 @@ function NoteForm({ onSave, onCancel, initialData }) {
     content: "",
     category: "General",
     feeling: "Neutral",
+    is_locked: false,
   });
 
   useEffect(() => {
@@ -15,6 +16,7 @@ function NoteForm({ onSave, onCancel, initialData }) {
         content: initialData.content || "",
         category: initialData.category || "General",
         feeling: initialData.feeling || "Neutral",
+        is_locked: initialData.is_locked === 1 || initialData.is_locked === true || false,
       });
     }
   }, [initialData]);
@@ -23,6 +25,13 @@ function NoteForm({ onSave, onCancel, initialData }) {
     setFormData((prev) => ({
       ...prev,
       [e.target.name]: e.target.value,
+    }));
+  };
+
+  const handleLockToggle = (e) => {
+    setFormData((prev) => ({
+      ...prev,
+      is_locked: e.target.checked,
     }));
   };
 
@@ -42,6 +51,7 @@ function NoteForm({ onSave, onCancel, initialData }) {
         content: "",
         category: "General",
         feeling: "Neutral",
+        is_locked: false,
       });
     }
   };
@@ -166,6 +176,20 @@ function NoteForm({ onSave, onCancel, initialData }) {
         onChange={handleChange}
         className="w-full p-3 rounded-lg border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-blue-500 resize-none"
       />
+
+      {/* Lock Option */}
+      <div className="flex items-center gap-2 py-1.5">
+        <label className="flex items-center gap-2.5 cursor-pointer text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition text-sm">
+          <input
+            type="checkbox"
+            name="is_locked"
+            checked={formData.is_locked}
+            onChange={handleLockToggle}
+            className="w-4 h-4 text-blue-600 border-gray-300 dark:border-slate-700 bg-transparent rounded focus:ring-blue-500"
+          />
+          <span>🔒 Protect this note with Vault PIN</span>
+        </label>
+      </div>
 
       {/* Buttons */}
       <div className="flex justify-end gap-3">
