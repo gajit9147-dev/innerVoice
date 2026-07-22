@@ -1,4 +1,5 @@
 import pool from "../config/db.js";
+import bcrypt from "bcryptjs";
 
 // Create Note
 export const createNote = async (req, res) => {
@@ -322,6 +323,65 @@ export const toggleLockNote = async (req, res) => {
     console.error(error);
 
     res.status(500).json({
+      success: false,
+      message: "Server Error",
+    });
+  }
+};
+
+// =========================
+// SET CUSTOM NOTE PASSWORD
+// =========================
+export const setNotePassword = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { password, hint } = req.body;
+
+    if (!password) {
+      return res.status(400).json({
+        success: false,
+        message: "Password is required.",
+      });
+    }
+
+    if (password.length < 4) {
+      return res.status(400).json({
+        success: false,
+        message: "Password must be at least 4 characters.",
+      });
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    const [result] = await pool.query(
+      `UPDATE notes
+       SET security_type = ?, note_password = ?, password_hint = ?
+       WHERE id = ? AND user_id = ?`,
+      [
+        "password",
+        hashedPassword,
+        hint || null,
+        id,
+        req.user.id,
+      ]
+    );
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "Note not found.",
+      });
+    }
+
+    return res.json({
+      success: true,
+      message: "Password added successfully.",
+    });
+
+  } catch (error) {
+    console.error("Set Note Password Error:", error);
+
+    return res.status(500).json({
       success: false,
       message: "Server Error",
     });
