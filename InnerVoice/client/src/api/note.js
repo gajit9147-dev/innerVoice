@@ -31,3 +31,12 @@ export const toggleFavoriteNote = (id) =>
 
 export const toggleLockNote = (id) =>
   API.put(`/notes/lock/${id}`);
+
+export const setNotePassword = (id, password, hint) =>
+  API.post(`/notes/${id}/set-password`, { password, hint });
+
+export const verifyNotePassword = (id, password) =>
+  API.post(`/notes/${id}/verify-password`, { password });
+
+export const deleteNotePassword = (id, password) =>
+  API.delete(`/notes/${id}/password`, { data: { password } });
