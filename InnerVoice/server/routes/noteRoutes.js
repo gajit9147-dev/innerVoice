@@ -12,6 +12,7 @@ import {
   setNotePassword,
   verifyNotePassword,
   deleteNotePassword,
+  changeNotePassword,
 } from "../controllers/noteController.js";
 import authMiddleware from "../middleware/authMiddleware.js";
 
@@ -46,6 +47,12 @@ router.delete(
   "/:id/password",
   authMiddleware,
   deleteNotePassword
+);
+
+router.put(
+  "/:id/change-password",
+  authMiddleware,
+  changeNotePassword
 );
 
 router.get("/:id", authMiddleware, getNoteById);

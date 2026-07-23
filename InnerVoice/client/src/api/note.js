@@ -40,3 +40,6 @@ export const verifyNotePassword = (id, password) =>
 
 export const deleteNotePassword = (id, password) =>
   API.delete(`/notes/${id}/password`, { data: { password } });
+
+export const changeNotePassword = (id, data) =>
+  API.put(`/notes/${id}/change-password`, data);

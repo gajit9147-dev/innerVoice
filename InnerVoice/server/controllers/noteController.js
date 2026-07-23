@@ -1,5 +1,14 @@
 import pool from "../config/db.js";
 import bcrypt from "bcryptjs";
+import fs from "fs";
+
+const logDebug = (msg) => {
+  try {
+    fs.appendFileSync("c:/Users/ajeet/Desktop/Proj1/InnerVoice/server/debug.log", `[${new Date().toISOString()}] ${msg}\n`);
+  } catch (err) {
+    console.error("Failed to write to debug.log", err);
+  }
+};
 
 // Create Note
 export const createNote = async (req, res) => {
@@ -389,6 +398,7 @@ export const setNotePassword = async (req, res) => {
     console.log("Note ID:", req.params.id);
     console.log("req.user:", req.user);
     console.log("req.user.id:", req.user.id);
+    logDebug(`setNotePassword - ID: ${req.params.id}, req.user.id: ${req.user?.id}, req.body: ${JSON.stringify(req.body)}`);
 
     const { id } = req.params;
     const { password, hint } = req.body;
@@ -449,6 +459,11 @@ export const setNotePassword = async (req, res) => {
 // =========================
 export const verifyNotePassword = async (req, res) => {
   try {
+    console.log("Verify Note Password - Note ID:", req.params.id);
+    console.log("Verify Note Password - req.user:", req.user);
+    console.log("Verify Note Password - req.user.id:", req.user?.id);
+    logDebug(`verifyNotePassword - ID: ${req.params.id}, req.user.id: ${req.user?.id}, req.body: ${JSON.stringify(req.body)}`);
+
     const { id } = req.params;
     const { password } = req.body;
 
@@ -456,6 +471,8 @@ export const verifyNotePassword = async (req, res) => {
       "SELECT note_password, security_type FROM notes WHERE id = ? AND user_id = ?",
       [id, req.user.id]
     );
+
+    console.log("Rows:", rows);
 
     if (rows.length === 0) {
       return res.status(404).json({
@@ -506,6 +523,11 @@ export const verifyNotePassword = async (req, res) => {
 // =========================
 export const deleteNotePassword = async (req, res) => {
   try {
+    console.log("Delete Note Password - Note ID:", req.params.id);
+    console.log("Delete Note Password - req.user:", req.user);
+    console.log("Delete Note Password - req.user.id:", req.user?.id);
+    logDebug(`deleteNotePassword - ID: ${req.params.id}, req.user.id: ${req.user?.id}, req.body: ${JSON.stringify(req.body)}`);
+
     const { id } = req.params;
     const { password } = req.body;
 
@@ -554,6 +576,76 @@ export const deleteNotePassword = async (req, res) => {
     });
   } catch (error) {
     console.error("Delete Note Password Error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Server Error",
+    });
+  }
+};
+
+//change note password
+export const changeNotePassword = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { currentPassword, newPassword, hint } = req.body;
+
+    const [rows] = await pool.query(
+      `SELECT note_password, security_type
+       FROM notes
+       WHERE id = ? AND user_id = ?`,
+      [id, req.user.id]
+    );
+
+    if (rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "Note not found.",
+      });
+    }
+
+    const note = rows[0];
+
+    if (note.security_type !== "custom_password") {
+      return res.status(400).json({
+        success: false,
+        message: "This note is not protected with a custom password.",
+      });
+    }
+
+    const isMatch = await bcrypt.compare(
+      currentPassword,
+      note.note_password
+    );
+
+    if (!isMatch) {
+      return res.status(401).json({
+        success: false,
+        message: "Current password is incorrect.",
+      });
+    }
+
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+    await pool.query(
+      `UPDATE notes
+       SET note_password = ?, password_hint = ?
+       WHERE id = ? AND user_id = ?`,
+      [
+        hashedPassword,
+        hint || null,
+        id,
+        req.user.id,
+      ]
+    );
+
+    return res.json({
+      success: true,
+      message: "Password changed successfully.",
+    });
+
+  } catch (error) {
+    console.error(error);
+
     return res.status(500).json({
       success: false,
       message: "Server Error",
