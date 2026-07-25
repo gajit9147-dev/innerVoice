@@ -950,3 +950,73 @@ export const getDashboardStats = async (req, res) => {
     });
   }
 };
+
+// =========================
+// GET MOOD STATS
+// =========================
+export const getMoodStats = async (req, res) => {
+  try {
+    const userId = req.user.id;
+
+    const [rows] = await pool.query(
+      `
+      SELECT
+        feeling,
+        COUNT(*) AS count
+      FROM notes
+      WHERE user_id = ?
+        AND is_deleted = 0
+      GROUP BY feeling
+      ORDER BY count DESC
+      `,
+      [userId]
+    );
+
+    res.status(200).json({
+      success: true,
+      moods: rows,
+    });
+  } catch (error) {
+    console.error("Mood Stats Error:", error);
+
+    res.status(500).json({
+      success: false,
+      message: "Server Error",
+    });
+  }
+};
+
+// =========================
+// GET CATEGORY STATS
+// =========================
+export const getCategoryStats = async (req, res) => {
+  try {
+    const userId = req.user.id;
+
+    const [rows] = await pool.query(
+      `
+      SELECT
+        category,
+        COUNT(*) AS count
+      FROM notes
+      WHERE user_id = ?
+        AND is_deleted = 0
+      GROUP BY category
+      ORDER BY count DESC
+      `,
+      [userId]
+    );
+
+    res.status(200).json({
+      success: true,
+      categories: rows,
+    });
+  } catch (error) {
+    console.error("Category Stats Error:", error);
+
+    res.status(500).json({
+      success: false,
+      message: "Server Error",
+    });
+  }
+};
