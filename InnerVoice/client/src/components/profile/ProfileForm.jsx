@@ -1,13 +1,10 @@
 import { useState, useEffect } from "react";
 import { useToast } from "../../context/ToastContext";
-import { Save, User, Mail, Lock, AlertTriangle, AtSign, Phone, FileText, Download, Database, FileDown } from "lucide-react";
-import { updateProfileInfo, changePassword, deleteAccount } from "../../api/profile";
-import { getNotes } from "../../api/note";
-import { useNavigate } from "react-router-dom";
+import { Save, User, Mail, AtSign, Phone, FileText } from "lucide-react";
+import { updateProfileInfo } from "../../api/profile";
 
 function ProfileForm({ user, onUpdate }) {
   const { addToast } = useToast();
-  const navigate = useNavigate();
   const [isSaving, setIsSaving] = useState(false);
   const [formData, setFormData] = useState({
     fullName: user?.full_name || "",
@@ -15,20 +12,17 @@ function ProfileForm({ user, onUpdate }) {
     phone: user?.phone || "",
     bio: user?.bio || "",
     email: user?.email || "",
-    currentPassword: "",
-    newPassword: ""
   });
 
   useEffect(() => {
     if (user) {
-      setFormData(prev => ({
-        ...prev,
+      setFormData({
         fullName: user.full_name || "",
         username: user.username || "",
         phone: user.phone || "",
         bio: user.bio || "",
-        email: user.email || ""
-      }));
+        email: user.email || "",
+      });
     }
   }, [user]);
 
@@ -58,9 +52,11 @@ function ProfileForm({ user, onUpdate }) {
         phone: formData.phone,
         bio: formData.bio
       }));
+
+      // Dispatch storage event so header/sidebar updates dynamically
+      window.dispatchEvent(new Event("storage"));
       
       addToast(res.data.message || "Profile updated successfully!", "success");
-      setFormData(prev => ({ ...prev, currentPassword: "", newPassword: "" }));
       
       if (onUpdate) onUpdate();
     } catch (err) {
@@ -70,335 +66,112 @@ function ProfileForm({ user, onUpdate }) {
     }
   };
 
-  // Password change handler – now inside the component
-  const handlePasswordChange = async () => {
-    try {
-      if (!formData.currentPassword || !formData.newPassword) {
-        addToast("Please fill in both password fields.", "error");
-        return;
-      }
-
-      const res = await changePassword({
-        currentPassword: formData.currentPassword,
-        newPassword: formData.newPassword,
-      });
-
-      addToast(res.data.message || "Password changed successfully!", "success");
-
-      setFormData((prev) => ({
-        ...prev,
-        currentPassword: "",
-        newPassword: "",
-      }));
-    } catch (error) {
-      addToast(error.response?.data?.message || "Something went wrong.", "error");
-    }
-  };
-
-  // Download helper function
-  const triggerDownload = (content, filename, contentType) => {
-    const blob = new Blob([content], { type: contentType });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = filename;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
-  };
-
-  // Export all notes as a structured JSON backup file
-  const handleExportJSON = async () => {
-    try {
-      addToast("Preparing your backup...", "success");
-      const res = await getNotes();
-      const notesList = res.data.notes || [];
-
-      if (notesList.length === 0) {
-        addToast("No notes found to export.", "error");
-        return;
-      }
-
-      const jsonStr = JSON.stringify(notesList, null, 2);
-      triggerDownload(jsonStr, "innervoice_notes_backup.json", "application/json");
-      addToast("JSON backup downloaded successfully!", "success");
-    } catch (err) {
-      console.error(err);
-      addToast("Failed to export notes.", "error");
-    }
-  };
-
-  // Export all notes in a single beautifully formatted Markdown document
-  const handleExportMarkdown = async () => {
-    try {
-      addToast("Preparing your backup...", "success");
-      const res = await getNotes();
-      const notesList = res.data.notes || [];
-
-      if (notesList.length === 0) {
-        addToast("No notes found to export.", "error");
-        return;
-      }
-
-      let markdownContent = `# InnerVoice Journal Backup\n*Exported on: ${new Date().toLocaleString()}*\n\n---\n\n`;
-
-      notesList.forEach((note) => {
-        markdownContent += `## ${note.title || "Untitled Note"}\n`;
-        markdownContent += `**Date**: ${note.created_at ? new Date(note.created_at).toLocaleDateString() : "N/A"}  \n`;
-        markdownContent += `**Category**: ${note.category || "General"}  \n`;
-        if (note.feeling) {
-          markdownContent += `**Feeling**: ${note.feeling}  \n`;
-        }
-        markdownContent += `**Status**: ${note.is_locked ? "🔒 Locked" : "🔓 Unlocked"}  \n\n`;
-        markdownContent += `${note.content || ""}\n\n`;
-        markdownContent += `---\n\n`;
-      });
-
-      triggerDownload(markdownContent, "innervoice_notes_backup.md", "text/markdown");
-      addToast("Markdown backup downloaded successfully!", "success");
-    } catch (err) {
-      console.error(err);
-      addToast("Failed to export notes.", "error");
-    }
-  };
-
-  const handleDeleteAccount = async () => {
-    const isConfirmed = window.confirm(
-      "Are you absolutely sure you want to permanently delete your account? This action cannot be undone and will delete all your notes."
-    );
-
-    if (isConfirmed) {
-      try {
-        await deleteAccount();
-        localStorage.removeItem("token");
-        localStorage.removeItem("user");
-        addToast("Account permanently deleted.", "success");
-        navigate("/login");
-      } catch (err) {
-        addToast(err.response?.data?.message || "Failed to delete account.", "error");
-      }
-    }
-  };
-
   return (
-    <div className="space-y-8">
-      {/* 1. Personal Information Card */}
-      <form onSubmit={handleSubmit} className="bg-white dark:bg-slate-800 rounded-2xl shadow-md p-6 lg:p-8 border border-gray-100 dark:border-slate-700 transition-colors">
-        <h3 className="text-xl font-bold text-gray-800 dark:text-white mb-6">
-          Personal Information
-        </h3>
+    <form onSubmit={handleSubmit} className="bg-white dark:bg-slate-800 rounded-2xl shadow-md p-6 lg:p-8 border border-gray-100 dark:border-slate-700 transition-colors">
+      <h3 className="text-xl font-bold text-gray-800 dark:text-white mb-6">
+        Personal Information
+      </h3>
 
-        <div className="space-y-5">
-          {/* Full Name */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Full Name
-            </label>
-            <div className="relative">
-              <User className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
-              <input
-                type="text"
-                name="fullName"
-                value={formData.fullName}
-                onChange={handleChange}
-                className="w-full bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-600 rounded-xl py-3 pl-11 pr-4 outline-none focus:ring-2 focus:ring-blue-500 text-gray-800 dark:text-gray-100 transition-colors"
-              />
-            </div>
-          </div>
-
-          {/* Username */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Username
-            </label>
-            <div className="relative">
-              <AtSign className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
-              <input
-                type="text"
-                name="username"
-                value={formData.username}
-                onChange={handleChange}
-                className="w-full bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-600 rounded-xl py-3 pl-11 pr-4 outline-none focus:ring-2 focus:ring-blue-500 text-gray-800 dark:text-gray-100 transition-colors"
-              />
-            </div>
-          </div>
-
-          {/* Phone */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Phone Number
-            </label>
-            <div className="relative">
-              <Phone className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
-              <input
-                type="text"
-                name="phone"
-                value={formData.phone}
-                onChange={handleChange}
-                className="w-full bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-600 rounded-xl py-3 pl-11 pr-4 outline-none focus:ring-2 focus:ring-blue-500 text-gray-800 dark:text-gray-100 transition-colors"
-              />
-            </div>
-          </div>
-
-          {/* Bio */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Bio
-            </label>
-            <div className="relative">
-              <FileText className="absolute left-4 top-4 text-gray-400" size={18} />
-              <textarea
-                name="bio"
-                value={formData.bio}
-                onChange={handleChange}
-                rows={3}
-                className="w-full bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-600 rounded-xl py-3 pl-11 pr-4 outline-none focus:ring-2 focus:ring-blue-500 text-gray-800 dark:text-gray-100 transition-colors resize-none"
-                placeholder="Tell us something about yourself..."
-              />
-            </div>
-          </div>
-
-          {/* Email */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Email Address
-            </label>
-            <div className="relative">
-              <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
-              <input
-                type="email"
-                name="email"
-                value={formData.email}
-                disabled
-                className="w-full bg-gray-50 dark:bg-slate-900/50 border border-gray-200 dark:border-slate-700 rounded-xl py-3 pl-11 pr-4 text-gray-500 dark:text-gray-400 cursor-not-allowed transition-colors"
-              />
-            </div>
-            <p className="text-xs text-gray-400 mt-2">Email address cannot be changed currently.</p>
+      <div className="space-y-5">
+        {/* Full Name */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            Full Name
+          </label>
+          <div className="relative">
+            <User className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+            <input
+              type="text"
+              name="fullName"
+              value={formData.fullName}
+              onChange={handleChange}
+              className="w-full bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-600 rounded-xl py-3 pl-11 pr-4 outline-none focus:ring-2 focus:ring-blue-500 text-gray-800 dark:text-gray-100 transition-colors"
+            />
           </div>
         </div>
 
-        <div className="mt-8 flex justify-end">
-          <button
-            type="submit"
-            disabled={isSaving}
-            className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-xl font-semibold transition-colors disabled:opacity-70 cursor-pointer"
-          >
-            <Save size={18} />
-            {isSaving ? "Saving..." : "Save Changes"}
-          </button>
-        </div>
-      </form>
-
-      {/* 2. Change Password Card */}
-      <form
-        onSubmit={(e) => {
-          e.preventDefault();
-          handlePasswordChange();
-        }}
-        className="bg-white dark:bg-slate-800 rounded-2xl shadow-md p-6 lg:p-8 border border-gray-100 dark:border-slate-700 transition-colors"
-      >
-        <h3 className="text-xl font-bold text-gray-800 dark:text-white mb-6">
-          Change Password
-        </h3>
-
-        <div className="space-y-5">
-          {/* Current Password */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Current Password
-            </label>
-            <div className="relative">
-              <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
-              <input
-                type="password"
-                name="currentPassword"
-                value={formData.currentPassword}
-                onChange={handleChange}
-                placeholder="Enter current password"
-                className="w-full bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-600 rounded-xl py-3 pl-11 pr-4 outline-none focus:ring-2 focus:ring-blue-500 text-gray-800 dark:text-gray-100 transition-colors placeholder-gray-400 dark:placeholder-gray-500"
-              />
-            </div>
-          </div>
-
-          {/* New Password */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              New Password
-            </label>
-            <div className="relative">
-              <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
-              <input
-                type="password"
-                name="newPassword"
-                value={formData.newPassword}
-                onChange={handleChange}
-                placeholder="Enter new password"
-                className="w-full bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-600 rounded-xl py-3 pl-11 pr-4 outline-none focus:ring-2 focus:ring-blue-500 text-gray-800 dark:text-gray-100 transition-colors placeholder-gray-400 dark:placeholder-gray-500"
-              />
-            </div>
+        {/* Username */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            Username
+          </label>
+          <div className="relative">
+            <AtSign className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+            <input
+              type="text"
+              name="username"
+              value={formData.username}
+              onChange={handleChange}
+              className="w-full bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-600 rounded-xl py-3 pl-11 pr-4 outline-none focus:ring-2 focus:ring-blue-500 text-gray-800 dark:text-gray-100 transition-colors"
+            />
           </div>
         </div>
 
-        <div className="mt-6 flex justify-end">
-          <button
-            type="submit"
-            className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-xl font-semibold transition-colors cursor-pointer"
-          >
-            <Lock size={18} />
-            Change Password
-          </button>
+        {/* Phone */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            Phone Number
+          </label>
+          <div className="relative">
+            <Phone className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+            <input
+              type="text"
+              name="phone"
+              value={formData.phone}
+              onChange={handleChange}
+              className="w-full bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-600 rounded-xl py-3 pl-11 pr-4 outline-none focus:ring-2 focus:ring-blue-500 text-gray-800 dark:text-gray-100 transition-colors"
+            />
+          </div>
         </div>
-      </form>
 
-      {/* 3. Export & Backup Card */}
-      <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-md p-6 lg:p-8 border border-gray-100 dark:border-slate-700 transition-colors">
-        <h3 className="text-lg font-bold text-gray-800 dark:text-white mb-2 flex items-center gap-2">
-          <Database size={20} className="text-blue-500" />
-          Export & Backup
-        </h3>
-        <p className="text-gray-500 dark:text-gray-400 text-sm mb-5">
-          Download a complete archive of your journal entries. Choose JSON for machine-readable raw backups or Markdown for document readers.
-        </p>
-        <div className="flex flex-wrap gap-4">
-          <button
-            type="button"
-            onClick={handleExportJSON}
-            className="flex items-center gap-2 bg-blue-50 hover:bg-blue-100 text-blue-600 dark:bg-blue-900/20 dark:hover:bg-blue-900/40 dark:text-blue-400 px-5 py-2.5 rounded-xl font-semibold text-sm transition-colors cursor-pointer"
-          >
-            <FileDown size={18} />
-            Export JSON
-          </button>
-          
-          <button
-            type="button"
-            onClick={handleExportMarkdown}
-            className="flex items-center gap-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-600 dark:bg-indigo-900/20 dark:hover:bg-indigo-900/40 dark:text-indigo-400 px-5 py-2.5 rounded-xl font-semibold text-sm transition-colors cursor-pointer"
-          >
-            <Download size={18} />
-            Export Markdown (.md)
-          </button>
+        {/* Bio */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            Bio
+          </label>
+          <div className="relative">
+            <FileText className="absolute left-4 top-4 text-gray-400" size={18} />
+            <textarea
+              name="bio"
+              value={formData.bio}
+              onChange={handleChange}
+              rows={3}
+              className="w-full bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-600 rounded-xl py-3 pl-11 pr-4 outline-none focus:ring-2 focus:ring-blue-500 text-gray-800 dark:text-gray-100 transition-colors resize-none"
+              placeholder="Tell us something about yourself..."
+            />
+          </div>
+        </div>
+
+        {/* Email */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            Email Address
+          </label>
+          <div className="relative">
+            <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+            <input
+              type="email"
+              name="email"
+              value={formData.email}
+              disabled
+              className="w-full bg-gray-50 dark:bg-slate-900/50 border border-gray-200 dark:border-slate-700 rounded-xl py-3 pl-11 pr-4 text-gray-500 dark:text-gray-400 cursor-not-allowed transition-colors"
+            />
+          </div>
+          <p className="text-xs text-gray-400 mt-2">Email address cannot be changed currently.</p>
         </div>
       </div>
 
-      {/* 4. Danger Zone Card */}
-      <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-md p-6 lg:p-8 border border-red-150 dark:border-red-900/30 transition-colors">
-        <h3 className="text-lg font-bold text-red-600 dark:text-red-500 mb-2 flex items-center gap-2">
-          <AlertTriangle size={20} />
-          Danger Zone
-        </h3>
-        <p className="text-gray-500 dark:text-gray-400 text-sm mb-4">
-          Permanently delete your account and all your notes. This action cannot be undone.
-        </p>
+      <div className="mt-8 flex justify-end">
         <button
-          type="button"
-          onClick={handleDeleteAccount}
-          className="px-6 py-2.5 bg-red-50 hover:bg-red-100 text-red-600 dark:bg-red-900/20 dark:hover:bg-red-900/40 dark:text-red-400 rounded-lg font-medium transition-colors cursor-pointer"
+          type="submit"
+          disabled={isSaving}
+          className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-xl font-semibold transition-colors disabled:opacity-70 cursor-pointer"
         >
-          Delete Account
+          <Save size={18} />
+          {isSaving ? "Saving..." : "Save Changes"}
         </button>
       </div>
-    </div>
+    </form>
   );
 }
 

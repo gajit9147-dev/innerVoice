@@ -4,6 +4,9 @@ import Layout from "../components/layout/Layout";
 import AvatarUpload from "../components/profile/AvatarUpload";
 import ProfileForm from "../components/profile/ProfileForm";
 import ProfileStats from "../components/profile/ProfileStats";
+import ChangePasswordCard from "../components/profile/ChangePasswordCard";
+import ExportBackupCard from "../components/profile/ExportBackupCard";
+import DangerZoneCard from "../components/profile/DangerZoneCard";
 import { UserCog, Loader2, SquarePen } from "lucide-react";
 import { getProfileInfo } from "../api/profile";
 import VaultPinCard from "../components/profile/VaultPinCard";
@@ -41,7 +44,7 @@ function Profile() {
 
   return (
     <Layout>
-      <div className="max-w-5xl mx-auto py-6 animate-fade-scale">
+      <div className="max-w-7xl mx-auto py-6 animate-fade-scale">
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
           <div className="flex items-center gap-3">
@@ -60,22 +63,28 @@ function Profile() {
           </button>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Left Column */}
-          <div className="lg:col-span-1 space-y-8">
+        {/* 3-Column Layout */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 items-start">
+          {/* Column 1: Identity & Stats */}
+          <div className="space-y-8">
             <AvatarUpload user={profileData} onUploadSuccess={fetchProfile} />
-
             <ProfileStats
               stats={profileData?.stats}
               createdAt={profileData?.created_at}
             />
           </div>
 
-          {/* Right Column */}
-          <div className="lg:col-span-2 space-y-8">
+          {/* Column 2: Personal Information & Vault PIN */}
+          <div className="space-y-8">
             <ProfileForm user={profileData} onUpdate={fetchProfile} />
-
             <VaultPinCard />
+          </div>
+
+          {/* Column 3: Security, Export, & Deletion */}
+          <div className="space-y-8">
+            <ChangePasswordCard />
+            <ExportBackupCard />
+            <DangerZoneCard />
           </div>
         </div>
       </div>
