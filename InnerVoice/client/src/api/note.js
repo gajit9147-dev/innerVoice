@@ -46,3 +46,15 @@ export const changeNotePassword = (id, data) =>
 
 export const resetNotePassword = (id, data) =>
   API.post(`/notes/${id}/reset-password`, data);
+
+export const moveToTrash = (id) =>
+  API.patch(`/notes/${id}/trash`);
+
+export const getTrashNotes = () =>
+  API.get("/notes/trash");
+
+export const restoreNote = (id) =>
+  API.patch(`/notes/${id}/restore`);
+
+export const deleteForever = (id) =>
+  API.delete(`/notes/${id}/permanent`);

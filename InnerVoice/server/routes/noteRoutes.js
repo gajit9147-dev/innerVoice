@@ -16,6 +16,8 @@ import {
   resetNotePassword,
   moveToTrash,
   getTrashNotes,
+  restoreNote,
+  deleteForever,
 } from "../controllers/noteController.js";
 
 import authMiddleware from "../middleware/authMiddleware.js";
@@ -41,6 +43,8 @@ router.get("/trash", authMiddleware, getTrashNotes);
 // Trash
 // ==========================
 router.patch("/:id/trash", authMiddleware, moveToTrash);
+router.patch("/:id/restore", authMiddleware, restoreNote);
+router.delete("/:id/permanent", authMiddleware, deleteForever);
 
 // ==========================
 // Pin / Favorite / Lock
