@@ -1,6 +1,6 @@
 import { Pencil, Trash2, Pin, Star, Lock } from "lucide-react";
 
-function NoteCard({ note, onDelete, onEdit, onPin, onFavorite, onLock }) {
+function NoteCard({ note, onDelete, onEdit, onPin, onFavorite, onLock, isSessionUnlocked = false }) {
   const categoryColors = {
     General: "bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-200",
     Work: "bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300",
@@ -205,13 +205,20 @@ function NoteCard({ note, onDelete, onEdit, onPin, onFavorite, onLock }) {
           <button
             onClick={() => onLock(note)}
             className={`transition duration-200 ${
-              note.is_locked
+              note.is_locked && !isSessionUnlocked
                 ? "text-red-500 scale-110"
                 : "text-gray-400 hover:text-red-500"
             }`}
-            title={note.is_locked ? "Unlock Note" : "Protect Note"}
+            title={
+              note.is_locked && !isSessionUnlocked
+                ? "Unlock Note"
+                : "Protect Note"
+            }
           >
-            <Lock size={20} fill={note.is_locked ? "currentColor" : "none"} />
+            <Lock
+              size={20}
+              fill={note.is_locked && !isSessionUnlocked ? "currentColor" : "none"}
+            />
           </button>
         )}
 
@@ -252,7 +259,7 @@ function NoteCard({ note, onDelete, onEdit, onPin, onFavorite, onLock }) {
       </div>
 
       {/* Content */}
-      {note.is_locked ? (
+      {note.is_locked && !isSessionUnlocked ? (
         <div className="mb-6 rounded-lg border border-red-300 bg-red-50 dark:bg-red-950 dark:border-red-800 p-4 text-center">
           <div className="text-3xl mb-2">🔒</div>
           <p className="text-red-600 dark:text-red-300 font-semibold">

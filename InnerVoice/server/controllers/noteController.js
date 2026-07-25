@@ -499,11 +499,8 @@ export const verifyNotePassword = async (req, res) => {
       });
     }
 
-    // Unlock the note
-    await pool.query(
-      "UPDATE notes SET is_locked = 0 WHERE id = ? AND user_id = ?",
-      [id, req.user.id]
-    );
+    // Password is correct — do NOT permanently unlock in DB.
+    // The frontend tracks the session-unlocked state in memory.
 
     return res.json({
       success: true,
@@ -610,12 +607,54 @@ export const changeNotePassword = async (req, res) => {
       });
     }
 
-    // Keep the rest of your existing code here
-    // SELECT note_password, security_type ...
-    // bcrypt.compare(...)
-    // bcrypt.hash(...)
-    // UPDATE notes ...
-    // return success ...
+    const [rows] = await pool.query(
+      "SELECT note_password, security_type FROM notes WHERE id = ? AND user_id = ?",
+      [id, req.user.id]
+    );
+
+    if (rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "Note not found.",
+      });
+    }
+
+    const note = rows[0];
+
+    if (note.security_type !== "custom_password" || !note.note_password) {
+      return res.status(400).json({
+        success: false,
+        message: "This note is not locked with a custom password.",
+      });
+    }
+
+    console.log("Current Password:", currentPassword);
+    console.log("Stored Hash:", note.note_password);
+
+    const isMatch = await bcrypt.compare(currentPassword, note.note_password);
+
+    console.log("Password Match:", isMatch);
+
+    if (!isMatch) {
+      return res.status(401).json({
+        success: false,
+        message: "Current password is incorrect.",
+      });
+    }
+
+    const hashedNewPassword = await bcrypt.hash(newPassword, 10);
+
+    await pool.query(
+      `UPDATE notes
+       SET note_password = ?, password_hint = ?
+       WHERE id = ? AND user_id = ?`,
+      [hashedNewPassword, hint || null, id, req.user.id]
+    );
+
+    return res.json({
+      success: true,
+      message: "Note password changed successfully.",
+    });
 
   } catch (error) {
     console.error(error);
