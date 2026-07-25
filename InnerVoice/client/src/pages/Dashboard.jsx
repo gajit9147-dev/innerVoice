@@ -557,6 +557,7 @@ function Dashboard() {
                   setEditingNote(noteToEdit);
                   setShowModal(true);
                 }}
+                mode="dashboard"
               />
             ))}
           </div>
