@@ -1,16 +1,25 @@
-import bcrypt from "bcryptjs";
-import jwt from "jsonwebtoken";
-import pool from "../config/db.js";
-import cloudinary from "../config/cloudinary.js";
-import streamifier from "streamifier";  
+// ============================================================
+// authController.js
+// Handles: Signup, Login, Profile Image Upload,
+//          Get/Update Profile, Set/Verify Vault PIN
+// ============================================================
+
+import bcrypt from "bcryptjs";      // Used to hash & compare passwords securely
+import jwt from "jsonwebtoken";      // Used to create & verify JWT tokens
+import pool from "../config/db.js";  // MySQL database connection pool
+import cloudinary from "../config/cloudinary.js";  // Cloudinary CDN for image uploads
+import streamifier from "streamifier";  // Converts a buffer into a readable stream for Cloudinary
+
 // =========================
 // SIGNUP
+// Registers a new user account
+// POST /api/auth/signup
 // =========================
 export const signup = async (req, res) => {
   try {
     const { full_name, email, password } = req.body;
 
-    // Check if user already exists
+    // Check if an account with this email already exists
     const [existingUser] = await pool.query(
       "SELECT id FROM users WHERE email = ?",
       [email]
@@ -23,10 +32,10 @@ export const signup = async (req, res) => {
       });
     }
 
-    // Hash password
+    // Hash the password with bcrypt (saltRounds = 10) before saving
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Insert user
+    // Insert the new user into the database
     await pool.query(
       "INSERT INTO users (full_name, email, password) VALUES (?, ?, ?)",
       [full_name, email, hashedPassword]
@@ -48,15 +57,17 @@ export const signup = async (req, res) => {
 
 // =========================
 // LOGIN
+// Authenticates user and returns a JWT token
+// POST /api/auth/login
 // =========================
 export const login = async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    // Debug
+    // Debug log — shows what email is being attempted
     console.log("Login Email:", email);
 
-    // Find user
+    // Look up the user by email
     const [rows] = await pool.query(
       "SELECT * FROM users WHERE email = ?",
       [email]
@@ -64,6 +75,7 @@ export const login = async (req, res) => {
 
     console.log("Database Result:", rows);
 
+    // If no user found, return 404
     if (rows.length === 0) {
       return res.status(404).json({
         success: false,
@@ -73,7 +85,7 @@ export const login = async (req, res) => {
 
     const user = rows[0];
 
-    // Compare password
+    // Compare the entered plain password against the stored hashed password
     const isMatch = await bcrypt.compare(password, user.password);
 
     if (!isMatch) {
@@ -83,19 +95,21 @@ export const login = async (req, res) => {
       });
     }
 
-    // Generate JWT
+    // Generate a JWT token valid for 7 days
+    // Payload contains user id, email, and role
     const token = jwt.sign(
       {
         id: user.id,
         email: user.email,
         role: user.role,
       },
-      process.env.JWT_SECRET,
+      process.env.JWT_SECRET,  // Secret key from .env file
       {
         expiresIn: "7d",
       }
     );
 
+    // Return token + basic user info (no password)
     return res.status(200).json({
       success: true,
       message: "Login successful",
@@ -117,8 +131,14 @@ export const login = async (req, res) => {
   }
 };
 
+// =========================
+// UPLOAD PROFILE IMAGE
+// Uploads image to Cloudinary and saves the URL in the DB
+// POST /api/auth/upload-profile
+// =========================
 export const uploadProfileImage = async (req, res) => {
   try {
+    // multer puts the uploaded file on req.file
     if (!req.file) {
       return res.status(400).json({
         success: false,
@@ -126,28 +146,33 @@ export const uploadProfileImage = async (req, res) => {
       });
     }
 
+    // Cloudinary doesn't accept buffers directly — wrap it in a Promise
+    // that pipes the buffer through a readable stream into Cloudinary's upload_stream
     const uploadFromBuffer = () =>
       new Promise((resolve, reject) => {
         const stream = cloudinary.uploader.upload_stream(
           {
-            folder: "innervoice/profile-images",
+            folder: "innervoice/profile-images",  // Folder inside Cloudinary
           },
           (error, result) => {
             if (error) return reject(error);
-            resolve(result);
+            resolve(result);  // result.secure_url = the CDN image URL
           }
         );
 
+        // Convert req.file.buffer (in-memory file from multer) into a readable stream
         streamifier.createReadStream(req.file.buffer).pipe(stream);
       });
 
     const result = await uploadFromBuffer();
 
+    // Save the Cloudinary image URL to the user's record in MySQL
     await pool.query(
       "UPDATE users SET profile_image = ? WHERE id = ?",
       [result.secure_url, req.user.id]
     );
 
+    // Return the CDN URL so the frontend can display it immediately
     return res.json({
       success: true,
       image: result.secure_url,
@@ -162,13 +187,19 @@ export const uploadProfileImage = async (req, res) => {
   }
 };
 
+// =========================
+// GET PROFILE
+// Returns the logged-in user's profile data
+// GET /api/auth/profile
+// =========================
 export const getProfile = async (req, res) => {
   try {
+    // Select only the safe fields (never return the hashed password)
     const [rows] = await pool.query(
       `SELECT id, full_name, email, username, phone, bio, role, profile_image
        FROM users
        WHERE id = ?`,
-      [req.user.id]
+      [req.user.id]  // req.user is set by authMiddleware after JWT decode
     );
 
     if (rows.length === 0) {
@@ -192,12 +223,19 @@ export const getProfile = async (req, res) => {
   }
 };
 
+// =========================
+// UPDATE PROFILE
+// Updates full_name, username, phone, bio
+// PUT /api/auth/profile
+// =========================
 export const updateProfile = async (req, res) => {
   try {
     const { full_name, username, phone, bio } = req.body || {};
 
+    // Treat empty/whitespace username as null (allow clearing it)
     const cleanUsername = username && username.trim() !== "" ? username.trim() : null;
 
+    // If a new username is provided, make sure it's not taken by another user
     if (cleanUsername) {
       const [existingUser] = await pool.query(
         "SELECT id FROM users WHERE username = ? AND id != ?",
@@ -212,6 +250,7 @@ export const updateProfile = async (req, res) => {
       }
     }
 
+    // Update the user's profile fields in the database
     await pool.query(
       `UPDATE users
        SET full_name = ?, username = ?, phone = ?, bio = ?
@@ -225,6 +264,7 @@ export const updateProfile = async (req, res) => {
       ]
     );
 
+    // Re-fetch the updated row so the frontend gets fresh data
     const [rows] = await pool.query(
       `SELECT id, full_name, email, username, phone, bio, profile_image, role
        FROM users
@@ -240,6 +280,7 @@ export const updateProfile = async (req, res) => {
   } catch (error) {
     console.error("Update Profile Error:", error);
 
+    // MySQL duplicate entry error (e.g., duplicate username)
     if (error.code === "ER_DUP_ENTRY") {
       return res.status(400).json({
         success: false,
@@ -254,14 +295,16 @@ export const updateProfile = async (req, res) => {
   }
 };
 
-
 // =========================
 // SET VAULT PIN
+// Saves a hashed 4-digit PIN used to lock/unlock notes
+// PUT /api/auth/set-vault-pin
 // =========================
 export const setVaultPin = async (req, res) => {
   try {
     const { pin } = req.body;
 
+    // Validate: must be exactly 4 numeric digits
     if (!pin || !/^\d{4}$/.test(pin)) {
       return res.status(400).json({
         success: false,
@@ -269,8 +312,10 @@ export const setVaultPin = async (req, res) => {
       });
     }
 
+    // Hash the PIN before storing (same security as passwords)
     const hashedPin = await bcrypt.hash(pin, 10);
 
+    // Save the hashed PIN in the user's row
     await pool.query(
       "UPDATE users SET vault_pin = ? WHERE id = ?",
       [hashedPin, req.user.id]
@@ -292,11 +337,14 @@ export const setVaultPin = async (req, res) => {
 
 // =========================
 // VERIFY VAULT PIN
+// Checks if the entered PIN matches the stored hash
+// POST /api/auth/verify-vault-pin
 // =========================
 export const verifyVaultPin = async (req, res) => {
   try {
     const { pin } = req.body;
 
+    // Fetch the stored hashed PIN for this user
     const [rows] = await pool.query(
       "SELECT vault_pin FROM users WHERE id = ?",
       [req.user.id]
@@ -309,6 +357,7 @@ export const verifyVaultPin = async (req, res) => {
       });
     }
 
+    // If no PIN has been set yet, reject
     if (!rows[0].vault_pin) {
       return res.status(400).json({
         success: false,
@@ -316,6 +365,7 @@ export const verifyVaultPin = async (req, res) => {
       });
     }
 
+    // Compare entered PIN (plain) against stored bcrypt hash
     const isMatch = await bcrypt.compare(pin, rows[0].vault_pin);
 
     if (!isMatch) {

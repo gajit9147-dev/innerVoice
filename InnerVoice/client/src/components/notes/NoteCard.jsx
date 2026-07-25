@@ -260,13 +260,17 @@ function NoteCard({ note, onDelete, onEdit, onPin, onFavorite, onLock, isSession
 
       {/* Content */}
       {note.is_locked && !isSessionUnlocked ? (
-        <div className="mb-6 rounded-lg border border-red-300 bg-red-50 dark:bg-red-950 dark:border-red-800 p-4 text-center">
+        <div
+          onClick={() => onLock && onLock(note)}
+          className="mb-6 rounded-lg border border-red-300 bg-red-50 dark:bg-red-950 dark:border-red-800 p-4 text-center cursor-pointer hover:bg-red-100 dark:hover:bg-red-900/60 hover:border-red-400 active:scale-95 transition-all duration-200 select-none"
+          title="Click to unlock"
+        >
           <div className="text-3xl mb-2">🔒</div>
           <p className="text-red-600 dark:text-red-300 font-semibold">
             This note is locked
           </p>
-          <p className="text-sm text-gray-600 dark:text-gray-400">
-            Unlock it to view its contents.
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+            Click to enter password
           </p>
         </div>
       ) : (
