@@ -119,6 +119,7 @@ export const login = async (req, res) => {
         full_name: user.full_name,
         email: user.email,
         role: user.role,
+        profile_image: user.profile_image,
       },
     });
   } catch (error) {

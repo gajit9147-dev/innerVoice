@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Bell, Moon, Sun, Calendar, Menu } from "lucide-react";
 import { useTheme } from "../../context/ThemeContext";
 import { Link } from "react-router-dom";
+import { getProfileInfo } from "../../api/profile";
 
 function Header({ onMenuClick }) {
   const { theme, toggleTheme } = useTheme();
@@ -12,6 +13,34 @@ function Header({ onMenuClick }) {
   };
 
   const [user, setUser] = useState(readUser);
+
+  // Sync profile details on mount to ensure localStorage is always up-to-date
+  useEffect(() => {
+    const syncProfile = async () => {
+      const token = localStorage.getItem("token");
+      if (!token) return;
+
+      try {
+        const res = await getProfileInfo();
+        const profile = res.data.profile;
+        if (profile) {
+          const savedUser = JSON.parse(localStorage.getItem("user") || "{}");
+          const updatedUser = {
+            ...savedUser,
+            full_name: profile.full_name,
+            email: profile.email,
+            profile_image: profile.profile_image,
+          };
+          localStorage.setItem("user", JSON.stringify(updatedUser));
+          setUser(updatedUser); // Update local state immediately
+          window.dispatchEvent(new Event("storage")); // Trigger sync in Sidebar
+        }
+      } catch (err) {
+        console.error("Failed to sync user profile in Header:", err);
+      }
+    };
+    syncProfile();
+  }, []);
 
   // Re-read user from localStorage whenever profile updates (AvatarUpload dispatches "storage")
   useEffect(() => {
