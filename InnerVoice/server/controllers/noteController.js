@@ -468,6 +468,101 @@ export const moveToTrash = async (req, res) => {
 };
 
 // =========================
+// RESTORE NOTE FROM TRASH
+// =========================
+export const restoreNote = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const userId = req.user.id;
+
+    // Check if the note exists in Trash
+    const [rows] = await pool.query(
+      `SELECT id
+       FROM notes
+       WHERE id = ?
+         AND user_id = ?
+         AND is_deleted = 1`,
+      [id, userId]
+    );
+
+    if (rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "Note not found in Trash.",
+      });
+    }
+
+    // Restore the note
+    await pool.query(
+      `UPDATE notes
+       SET is_deleted = 0,
+           deleted_at = NULL,
+           updated_at = NOW()
+       WHERE id = ?
+         AND user_id = ?`,
+      [id, userId]
+    );
+
+    res.status(200).json({
+      success: true,
+      message: "Note restored successfully.",
+    });
+  } catch (error) {
+    console.error("Restore Note Error:", error);
+
+    res.status(500).json({
+      success: false,
+      message: "Server Error",
+    });
+  }
+};
+
+// =========================
+// DELETE NOTE PERMANENTLY (FOREVER)
+// =========================
+export const deleteForever = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const userId = req.user.id;
+
+    // Check if the note exists in Trash
+    const [rows] = await pool.query(
+      `SELECT id
+       FROM notes
+       WHERE id = ?
+         AND user_id = ?
+         AND is_deleted = 1`,
+      [id, userId]
+    );
+
+    if (rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "Note not found in Trash.",
+      });
+    }
+
+    // Permanently delete the note
+    await pool.query(
+      "DELETE FROM notes WHERE id = ? AND user_id = ?",
+      [id, userId]
+    );
+
+    res.status(200).json({
+      success: true,
+      message: "Note deleted permanently.",
+    });
+  } catch (error) {
+    console.error("Delete Forever Error:", error);
+
+    res.status(500).json({
+      success: false,
+      message: "Server Error",
+    });
+  }
+};
+
+// =========================
 // SET CUSTOM NOTE PASSWORD
 // =========================
 export const setNotePassword = async (req, res) => {
