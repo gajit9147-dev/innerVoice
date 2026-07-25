@@ -665,3 +665,80 @@ export const changeNotePassword = async (req, res) => {
     });
   }
 };
+
+// Reset note password using user's main account password (recovery flow)
+export const resetNotePassword = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { accountPassword, newNotePassword, hint } = req.body;
+
+    if (!accountPassword || !newNotePassword) {
+      return res.status(400).json({
+        success: false,
+        message: "Account password and new note password are required.",
+      });
+    }
+
+    if (newNotePassword.length < 4) {
+      return res.status(400).json({
+        success: false,
+        message: "New note password must be at least 4 characters.",
+      });
+    }
+
+    // 1. Fetch user's hashed login password
+    const [userRows] = await pool.query(
+      "SELECT password FROM users WHERE id = ?",
+      [req.user.id]
+    );
+
+    if (userRows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found.",
+      });
+    }
+
+    // 2. Validate the user's account password
+    const isAccountPasswordCorrect = await bcrypt.compare(
+      accountPassword,
+      userRows[0].password
+    );
+
+    if (!isAccountPasswordCorrect) {
+      return res.status(401).json({
+        success: false,
+        message: "Incorrect account password. Verification failed.",
+      });
+    }
+
+    // 3. Hash and save the new note password
+    const hashedNewPassword = await bcrypt.hash(newNotePassword, 10);
+
+    const [noteResult] = await pool.query(
+      `UPDATE notes
+       SET note_password = ?, password_hint = ?, security_type = 'custom_password'
+       WHERE id = ? AND user_id = ?`,
+      [hashedNewPassword, hint || null, id, req.user.id]
+    );
+
+    if (noteResult.affectedRows === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "Note not found or you do not have permission to access it.",
+      });
+    }
+
+    return res.json({
+      success: true,
+      message: "Note password reset successfully.",
+    });
+
+  } catch (error) {
+    console.error("Reset Note Password Error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Server Error",
+    });
+  }
+};
