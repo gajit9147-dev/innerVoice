@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 
-function WeeklyActivity({ notes }) {
+function WeeklyChart({ notes = [] }) {
   const activityData = useMemo(() => {
     const days = [];
     const locale = "en-US";
@@ -49,7 +49,7 @@ function WeeklyActivity({ notes }) {
                 <div
                   className={`w-full rounded-t-lg transition-all duration-700 ease-out ${
                     isToday
-                      ? "bg-gradient-to-t from-blue-600 to-cyan-400 shadow-md shadow-blue-500/20 animate-pulse-slow"
+                      ? "bg-gradient-to-t from-blue-600 to-cyan-400 shadow-md shadow-blue-500/20"
                       : "bg-gradient-to-t from-slate-400 to-slate-300 dark:from-slate-700 dark:to-slate-600 group-hover:from-blue-400 group-hover:to-blue-300"
                   }`}
                   style={{ height: `${Math.max(heightPercent, count > 0 ? 8 : 4)}%` }}
@@ -68,4 +68,4 @@ function WeeklyActivity({ notes }) {
   );
 }
 
-export default WeeklyActivity;
+export default WeeklyChart;

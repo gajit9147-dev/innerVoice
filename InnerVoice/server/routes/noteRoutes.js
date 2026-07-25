@@ -19,6 +19,9 @@ import {
   restoreNote,
   deleteForever,
   getDashboardStats,
+  getMoodStats,
+  getCategoryStats,
+  getWeeklyStats,
 } from "../controllers/noteController.js";
 
 import authMiddleware from "../middleware/authMiddleware.js";
@@ -40,6 +43,9 @@ router.get("/", authMiddleware, getNotes);
 router.get("/search", authMiddleware, searchNotes);
 router.get("/trash", authMiddleware, getTrashNotes);
 router.get("/stats", authMiddleware, getDashboardStats);
+router.get("/mood-stats", authMiddleware, getMoodStats);
+router.get("/category-stats", authMiddleware, getCategoryStats);
+router.get("/weekly-stats", authMiddleware, getWeeklyStats);
 
 // ==========================
 // Trash

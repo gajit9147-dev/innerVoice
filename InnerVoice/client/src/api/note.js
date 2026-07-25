@@ -66,3 +66,15 @@ export const deleteForever = (id) =>
 // Get dashboard stats
 export const getDashboardStats = () =>
   API.get("/notes/stats");
+
+// Get mood statistics
+export const getMoodStats = () =>
+  API.get("/notes/mood-stats");
+
+// Get category statistics
+export const getCategoryStats = () =>
+  API.get("/notes/category-stats");
+
+// Get weekly statistics
+export const getWeeklyStats = () =>
+  API.get("/notes/weekly-stats");
