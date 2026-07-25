@@ -18,7 +18,7 @@ const menu = [
   { name: "Notes", path: "/dashboard", icon: <NotebookPen size={20} /> },
   { name: "Favorites", path: "/dashboard?filter=favorites", icon: <Star size={20} /> },
   { name: "Archive", path: "/dashboard?filter=archive", icon: <Archive size={20} /> },
-  { name: "Trash", path: "/dashboard?filter=trash", icon: <Trash2 size={20} /> },
+  { name: "Trash", path: "/trash", icon: <Trash2 size={20} /> },
   { name: "Analytics", path: "/analytics", icon: <BarChart3 size={20} /> },
   { name: "Profile", path: "/profile", icon: <Settings size={20} /> },
 ];

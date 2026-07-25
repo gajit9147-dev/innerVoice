@@ -20,6 +20,7 @@ import Profile        from "./pages/Profile";
 import AdminDashboard from "./pages/AdminDashboard";
 import NotFound       from "./pages/NotFound";
 import EditProfile    from "./pages/EditProfile";
+import Trash          from "./pages/Trash";
 
 function App() {
   return (
@@ -37,6 +38,7 @@ function App() {
               <Route path="/profile"     element={<Profile />} />
               <Route path="/profile/edit" element={<EditProfile />} />
               <Route path="/admin"       element={<AdminDashboard />} />
+              <Route path="/trash"       element={<Trash />} />
               <Route path="*"            element={<NotFound />} />
             </Routes>
           </BrowserRouter>
