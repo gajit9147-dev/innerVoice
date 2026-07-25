@@ -6,6 +6,7 @@ import pool from "./config/db.js";
 import authRoutes from "./routes/authRoutes.js";
 import profileRoutes from "./routes/profileRoutes.js";
 import adminRoutes from "./routes/adminRoutes.js";
+import { notFound, errorHandler } from "./middleware/errorMiddleware.js";
 
 dotenv.config();
 
@@ -22,6 +23,17 @@ app.use(
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+// Handle malformed JSON body — return clean JSON instead of HTML error
+app.use((err, req, res, next) => {
+  if (err.type === "entity.parse.failed") {
+    return res.status(400).json({
+      success: false,
+      message: "Invalid JSON in request body. Please send valid JSON.",
+    });
+  }
+  next(err);
+});
+
 // Routes
 app.use("/api/auth", authRoutes);
 app.use("/api/notes", noteRoutes);
@@ -34,6 +46,10 @@ app.get("/", (req, res) => {
     message: "Hey Ajeet You are connected to the server",
   });
 });
+
+// 404 + global error handler (must be last)
+app.use(notFound);
+app.use(errorHandler);
 
 // Test MySQL Connection
 try {

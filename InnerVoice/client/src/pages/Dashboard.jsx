@@ -35,6 +35,8 @@ function Dashboard() {
   const [showSetPasswordModal, setShowSetPasswordModal] = useState(false);
   const [showRemovePasswordModal, setShowRemovePasswordModal] = useState(false);
   const [showSetPinModal, setShowSetPinModal] = useState(false);
+  // Track notes unlocked this session via custom password (resets on refresh)
+  const [sessionUnlockedIds, setSessionUnlockedIds] = useState(new Set());
 
   const fetchNotes = async () => {
     try {
@@ -140,6 +142,15 @@ function Dashboard() {
   // Toggle Lock Note
   const handleLock = async (note) => {
     if (note.is_locked) {
+      // If already session-unlocked, just re-lock it (remove from session)
+      if (sessionUnlockedIds.has(note.id)) {
+        setSessionUnlockedIds((prev) => {
+          const next = new Set(prev);
+          next.delete(note.id);
+          return next;
+        });
+        return;
+      }
       setSelectedNote(note);
       if (note.security_type === "custom_password") {
         setShowVerifyPasswordModal(true);
@@ -255,6 +266,7 @@ function Dashboard() {
                 onPin={handlePin}
                 onFavorite={handleFavorite}
                 onLock={handleLock}
+                isSessionUnlocked={sessionUnlockedIds.has(note.id)}
                 onEdit={(noteToEdit) => {
                   setEditingNote(noteToEdit);
                   setShowModal(true);
@@ -311,7 +323,8 @@ function Dashboard() {
             setSelectedNote(null);
           }}
           onSuccess={() => {
-            fetchNotes();
+            // Add to session-unlocked set without touching DB or re-fetching
+            setSessionUnlockedIds((prev) => new Set(prev).add(selectedNote.id));
             setShowVerifyPasswordModal(false);
             setSelectedNote(null);
           }}
