@@ -182,167 +182,177 @@ function ProfileForm({ user, onUpdate }) {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="bg-white dark:bg-slate-800 rounded-2xl shadow-md p-6 lg:p-8 border border-gray-100 dark:border-slate-700 transition-colors">
-      <h3 className="text-xl font-bold text-gray-800 dark:text-white mb-6">
-        Personal Information
-      </h3>
+    <div className="space-y-8">
+      {/* 1. Personal Information Card */}
+      <form onSubmit={handleSubmit} className="bg-white dark:bg-slate-800 rounded-2xl shadow-md p-6 lg:p-8 border border-gray-100 dark:border-slate-700 transition-colors">
+        <h3 className="text-xl font-bold text-gray-800 dark:text-white mb-6">
+          Personal Information
+        </h3>
 
-      <div className="space-y-5">
-        {/* Full Name */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-            Full Name
-          </label>
-          <div className="relative">
-            <User className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
-            <input
-              type="text"
-              name="fullName"
-              value={formData.fullName}
-              onChange={handleChange}
-              className="w-full bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-600 rounded-xl py-3 pl-11 pr-4 outline-none focus:ring-2 focus:ring-blue-500 text-gray-800 dark:text-gray-100 transition-colors"
-            />
+        <div className="space-y-5">
+          {/* Full Name */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Full Name
+            </label>
+            <div className="relative">
+              <User className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+              <input
+                type="text"
+                name="fullName"
+                value={formData.fullName}
+                onChange={handleChange}
+                className="w-full bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-600 rounded-xl py-3 pl-11 pr-4 outline-none focus:ring-2 focus:ring-blue-500 text-gray-800 dark:text-gray-100 transition-colors"
+              />
+            </div>
+          </div>
+
+          {/* Username */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Username
+            </label>
+            <div className="relative">
+              <AtSign className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+              <input
+                type="text"
+                name="username"
+                value={formData.username}
+                onChange={handleChange}
+                className="w-full bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-600 rounded-xl py-3 pl-11 pr-4 outline-none focus:ring-2 focus:ring-blue-500 text-gray-800 dark:text-gray-100 transition-colors"
+              />
+            </div>
+          </div>
+
+          {/* Phone */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Phone Number
+            </label>
+            <div className="relative">
+              <Phone className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+              <input
+                type="text"
+                name="phone"
+                value={formData.phone}
+                onChange={handleChange}
+                className="w-full bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-600 rounded-xl py-3 pl-11 pr-4 outline-none focus:ring-2 focus:ring-blue-500 text-gray-800 dark:text-gray-100 transition-colors"
+              />
+            </div>
+          </div>
+
+          {/* Bio */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Bio
+            </label>
+            <div className="relative">
+              <FileText className="absolute left-4 top-4 text-gray-400" size={18} />
+              <textarea
+                name="bio"
+                value={formData.bio}
+                onChange={handleChange}
+                rows={3}
+                className="w-full bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-600 rounded-xl py-3 pl-11 pr-4 outline-none focus:ring-2 focus:ring-blue-500 text-gray-800 dark:text-gray-100 transition-colors resize-none"
+                placeholder="Tell us something about yourself..."
+              />
+            </div>
+          </div>
+
+          {/* Email */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Email Address
+            </label>
+            <div className="relative">
+              <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+              <input
+                type="email"
+                name="email"
+                value={formData.email}
+                disabled
+                className="w-full bg-gray-50 dark:bg-slate-900/50 border border-gray-200 dark:border-slate-700 rounded-xl py-3 pl-11 pr-4 text-gray-500 dark:text-gray-400 cursor-not-allowed transition-colors"
+              />
+            </div>
+            <p className="text-xs text-gray-400 mt-2">Email address cannot be changed currently.</p>
           </div>
         </div>
 
-        {/* Username */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-            Username
-          </label>
-          <div className="relative">
-            <AtSign className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
-            <input
-              type="text"
-              name="username"
-              value={formData.username}
-              onChange={handleChange}
-              className="w-full bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-600 rounded-xl py-3 pl-11 pr-4 outline-none focus:ring-2 focus:ring-blue-500 text-gray-800 dark:text-gray-100 transition-colors"
-            />
-          </div>
+        <div className="mt-8 flex justify-end">
+          <button
+            type="submit"
+            disabled={isSaving}
+            className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-xl font-semibold transition-colors disabled:opacity-70 cursor-pointer"
+          >
+            <Save size={18} />
+            {isSaving ? "Saving..." : "Save Changes"}
+          </button>
         </div>
+      </form>
 
-        {/* Phone */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-            Phone Number
-          </label>
-          <div className="relative">
-            <Phone className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
-            <input
-              type="text"
-              name="phone"
-              value={formData.phone}
-              onChange={handleChange}
-              className="w-full bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-600 rounded-xl py-3 pl-11 pr-4 outline-none focus:ring-2 focus:ring-blue-500 text-gray-800 dark:text-gray-100 transition-colors"
-            />
-          </div>
-        </div>
-
-        {/* Bio */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-            Bio
-          </label>
-          <div className="relative">
-            <FileText className="absolute left-4 top-4 text-gray-400" size={18} />
-            <textarea
-              name="bio"
-              value={formData.bio}
-              onChange={handleChange}
-              rows={3}
-              className="w-full bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-600 rounded-xl py-3 pl-11 pr-4 outline-none focus:ring-2 focus:ring-blue-500 text-gray-800 dark:text-gray-100 transition-colors resize-none"
-              placeholder="Tell us something about yourself..."
-            />
-          </div>
-        </div>
-
-        {/* Email */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-            Email Address
-          </label>
-          <div className="relative">
-            <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
-            <input
-              type="email"
-              name="email"
-              value={formData.email}
-              disabled
-              className="w-full bg-gray-50 dark:bg-slate-900/50 border border-gray-200 dark:border-slate-700 rounded-xl py-3 pl-11 pr-4 text-gray-500 dark:text-gray-400 cursor-not-allowed transition-colors"
-            />
-          </div>
-          <p className="text-xs text-gray-400 mt-2">Email address cannot be changed currently.</p>
-        </div>
-
-        <div className="w-full h-px bg-gray-100 dark:bg-slate-700 my-8 transition-colors"></div>
-
+      {/* 2. Change Password Card */}
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          handlePasswordChange();
+        }}
+        className="bg-white dark:bg-slate-800 rounded-2xl shadow-md p-6 lg:p-8 border border-gray-100 dark:border-slate-700 transition-colors"
+      >
         <h3 className="text-xl font-bold text-gray-800 dark:text-white mb-6">
           Change Password
         </h3>
 
-        {/* Current Password - now enabled */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-            Current Password
-          </label>
-          <div className="relative">
-            <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
-            <input
-              type="password"
-              name="currentPassword"
-              value={formData.currentPassword}
-              onChange={handleChange}
-              placeholder="Enter current password"
-              className="w-full bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-600 rounded-xl py-3 pl-11 pr-4 outline-none focus:ring-2 focus:ring-blue-500 text-gray-800 dark:text-gray-100 transition-colors placeholder-gray-400 dark:placeholder-gray-500"
-            />
+        <div className="space-y-5">
+          {/* Current Password */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Current Password
+            </label>
+            <div className="relative">
+              <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+              <input
+                type="password"
+                name="currentPassword"
+                value={formData.currentPassword}
+                onChange={handleChange}
+                placeholder="Enter current password"
+                className="w-full bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-600 rounded-xl py-3 pl-11 pr-4 outline-none focus:ring-2 focus:ring-blue-500 text-gray-800 dark:text-gray-100 transition-colors placeholder-gray-400 dark:placeholder-gray-500"
+              />
+            </div>
+          </div>
+
+          {/* New Password */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              New Password
+            </label>
+            <div className="relative">
+              <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+              <input
+                type="password"
+                name="newPassword"
+                value={formData.newPassword}
+                onChange={handleChange}
+                placeholder="Enter new password"
+                className="w-full bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-600 rounded-xl py-3 pl-11 pr-4 outline-none focus:ring-2 focus:ring-blue-500 text-gray-800 dark:text-gray-100 transition-colors placeholder-gray-400 dark:placeholder-gray-500"
+              />
+            </div>
           </div>
         </div>
 
-        {/* New Password - now enabled */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-            New Password
-          </label>
-          <div className="relative">
-            <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
-            <input
-              type="password"
-              name="newPassword"
-              value={formData.newPassword}
-              onChange={handleChange}
-              placeholder="Enter new password"
-              className="w-full bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-600 rounded-xl py-3 pl-11 pr-4 outline-none focus:ring-2 focus:ring-blue-500 text-gray-800 dark:text-gray-100 transition-colors placeholder-gray-400 dark:placeholder-gray-500"
-            />
-          </div>
-        </div>
-
-        {/* Change Password button */}
         <div className="mt-6 flex justify-end">
           <button
-            type="button"
-            onClick={handlePasswordChange}
-            className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-xl font-semibold transition-colors"
+            type="submit"
+            className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-xl font-semibold transition-colors cursor-pointer"
           >
             <Lock size={18} />
             Change Password
           </button>
         </div>
-      </div>
+      </form>
 
-      <div className="mt-8 flex justify-end">
-        <button
-          type="submit"
-          disabled={isSaving}
-          className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-xl font-semibold transition-colors disabled:opacity-70"
-        >
-          <Save size={18} />
-          {isSaving ? "Saving..." : "Save Changes"}
-        </button>
-      </div>
-      
-      {/* Export & Backup */}
-      <div className="mt-12 pt-8 border-t border-gray-100 dark:border-slate-700">
+      {/* 3. Export & Backup Card */}
+      <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-md p-6 lg:p-8 border border-gray-100 dark:border-slate-700 transition-colors">
         <h3 className="text-lg font-bold text-gray-800 dark:text-white mb-2 flex items-center gap-2">
           <Database size={20} className="text-blue-500" />
           Export & Backup
@@ -370,9 +380,9 @@ function ProfileForm({ user, onUpdate }) {
           </button>
         </div>
       </div>
-      
-      {/* Danger Zone */}
-      <div className="mt-12 pt-8 border-t border-red-100 dark:border-red-900/30">
+
+      {/* 4. Danger Zone Card */}
+      <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-md p-6 lg:p-8 border border-red-150 dark:border-red-900/30 transition-colors">
         <h3 className="text-lg font-bold text-red-600 dark:text-red-500 mb-2 flex items-center gap-2">
           <AlertTriangle size={20} />
           Danger Zone
@@ -383,12 +393,12 @@ function ProfileForm({ user, onUpdate }) {
         <button
           type="button"
           onClick={handleDeleteAccount}
-          className="px-6 py-2.5 bg-red-50 hover:bg-red-100 text-red-600 dark:bg-red-900/20 dark:hover:bg-red-900/40 dark:text-red-400 rounded-lg font-medium transition-colors"
+          className="px-6 py-2.5 bg-red-50 hover:bg-red-100 text-red-600 dark:bg-red-900/20 dark:hover:bg-red-900/40 dark:text-red-400 rounded-lg font-medium transition-colors cursor-pointer"
         >
           Delete Account
         </button>
       </div>
-    </form>
+    </div>
   );
 }
 

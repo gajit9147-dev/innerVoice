@@ -72,7 +72,7 @@ function Profile() {
           </div>
 
           {/* Right Column */}
-          <div className="space-y-8">
+          <div className="lg:col-span-2 space-y-8">
             <ProfileForm user={profileData} onUpdate={fetchProfile} />
 
             <VaultPinCard />
