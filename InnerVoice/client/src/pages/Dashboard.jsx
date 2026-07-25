@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import Layout from "../components/layout/Layout";
 import NoteCard from "../components/notes/NoteCard";
 import NoteForm from "../components/notes/NoteForm";
@@ -20,6 +21,7 @@ import {
 } from "../api/note";
 
 function Dashboard() {
+  const [searchParams] = useSearchParams();
   const [notes, setNotes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
@@ -198,10 +200,23 @@ function Dashboard() {
     "Journal",
   ];
 
+  const filter = searchParams.get("filter");
+
+  let displayNotes = notes;
+  if (filter === "favorites") {
+    displayNotes = notes.filter((note) => note.is_favorite);
+  } else if (filter === "archive") {
+    // If you support archiving in future, you can filter by note.is_archived. For now, empty placeholder.
+    displayNotes = [];
+  } else if (filter === "trash") {
+    // If you support trash in future, you can filter by note.is_deleted. For now, empty placeholder.
+    displayNotes = [];
+  }
+
   const filteredNotes =
     selectedCategory === "All"
-      ? notes
-      : notes.filter((note) => note.category === selectedCategory);
+      ? displayNotes
+      : displayNotes.filter((note) => note.category === selectedCategory);
 
   return (
     <Layout>
@@ -209,7 +224,13 @@ function Dashboard() {
         {/* Header */}
         <div className="flex justify-between items-center mb-8">
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-            My Notes
+            {filter === "favorites"
+              ? "Favorite Notes"
+              : filter === "archive"
+              ? "Archived Notes"
+              : filter === "trash"
+              ? "Trash Notes"
+              : "My Notes"}
           </h1>
 
           <button
