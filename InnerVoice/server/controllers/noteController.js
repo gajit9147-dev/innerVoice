@@ -589,59 +589,33 @@ export const changeNotePassword = async (req, res) => {
     const { id } = req.params;
     const { currentPassword, newPassword, hint } = req.body;
 
-    const [rows] = await pool.query(
-      `SELECT note_password, security_type
-       FROM notes
-       WHERE id = ? AND user_id = ?`,
-      [id, req.user.id]
-    );
-
-    if (rows.length === 0) {
-      return res.status(404).json({
-        success: false,
-        message: "Note not found.",
-      });
-    }
-
-    const note = rows[0];
-
-    if (note.security_type !== "custom_password") {
+    if (!currentPassword || !newPassword) {
       return res.status(400).json({
         success: false,
-        message: "This note is not protected with a custom password.",
+        message: "Current password and new password are required.",
       });
     }
 
-    const isMatch = await bcrypt.compare(
-      currentPassword,
-      note.note_password
-    );
-
-    if (!isMatch) {
-      return res.status(401).json({
+    if (newPassword.length < 4) {
+      return res.status(400).json({
         success: false,
-        message: "Current password is incorrect.",
+        message: "New password must be at least 4 characters.",
       });
     }
 
-    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    if (currentPassword === newPassword) {
+      return res.status(400).json({
+        success: false,
+        message: "New password must be different from the current password.",
+      });
+    }
 
-    await pool.query(
-      `UPDATE notes
-       SET note_password = ?, password_hint = ?
-       WHERE id = ? AND user_id = ?`,
-      [
-        hashedPassword,
-        hint || null,
-        id,
-        req.user.id,
-      ]
-    );
-
-    return res.json({
-      success: true,
-      message: "Password changed successfully.",
-    });
+    // Keep the rest of your existing code here
+    // SELECT note_password, security_type ...
+    // bcrypt.compare(...)
+    // bcrypt.hash(...)
+    // UPDATE notes ...
+    // return success ...
 
   } catch (error) {
     console.error(error);
