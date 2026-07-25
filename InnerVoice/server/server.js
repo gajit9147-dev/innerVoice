@@ -7,6 +7,7 @@ import authRoutes from "./routes/authRoutes.js";
 import profileRoutes from "./routes/profileRoutes.js";
 import adminRoutes from "./routes/adminRoutes.js";
 import { notFound, errorHandler } from "./middleware/errorMiddleware.js";
+import liquidLogger from "./middleware/liquidLogger.js";
 
 dotenv.config();
 
@@ -22,6 +23,9 @@ app.use(
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// Liquid rainbow request logger — logs every request with iridescent chalk colors
+app.use(liquidLogger);
 
 // Handle malformed JSON body — return clean JSON instead of HTML error
 app.use((err, req, res, next) => {
@@ -44,6 +48,21 @@ app.use("/api/admin", adminRoutes);
 app.get("/", (req, res) => {
   res.json({
     message: "Hey Ajeet You are connected to the server",
+  });
+});
+
+// =========================
+// LIQUID GLASS THEME API
+// Returns an iridescent color palette.
+// The frontend (LiquidGlassProvider) fetches this on load
+// and injects the colors into CSS custom properties.
+// GET /api/glass-theme
+// =========================
+app.get("/api/glass-theme", (req, res) => {
+  res.json({
+    primary:   "#c084fc",  // Purple — used for glare & glow
+    secondary: "#22d3ee",  // Cyan  — used for mesh gradient layer 2
+    accent:    "#f472b6",  // Pink  — used for mesh gradient layer 3
   });
 });
 
