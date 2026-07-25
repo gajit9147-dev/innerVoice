@@ -51,9 +51,12 @@ function Dashboard() {
     try {
       const res = await getNotes();
 
-      const sortedNotes = [...res.data.notes].sort(
-        (a, b) => b.is_pinned - a.is_pinned,
-      );
+      const sortedNotes = [...res.data.notes].sort((a, b) => {
+        if (a.is_pinned !== b.is_pinned) {
+          return Number(b.is_pinned) - Number(a.is_pinned);
+        }
+        return new Date(b.updated_at) - new Date(a.updated_at);
+      });
 
       setNotes(sortedNotes);
     } catch (error) {
@@ -114,8 +117,25 @@ function Dashboard() {
 
   const handlePin = async (id) => {
     try {
-      await togglePinNote(id);
-      fetchNotes();
+      const res = await togglePinNote(id);
+      setNotes((prevNotes) =>
+        prevNotes
+          .map((note) =>
+            note.id === id
+              ? {
+                  ...note,
+                  is_pinned: res.data.pinned ? 1 : 0,
+                  updated_at: new Date().toISOString(),
+                }
+              : note
+          )
+          .sort((a, b) => {
+            if (a.is_pinned !== b.is_pinned) {
+              return Number(b.is_pinned) - Number(a.is_pinned);
+            }
+            return new Date(b.updated_at) - new Date(a.updated_at);
+          })
+      );
     } catch (error) {
       console.error(error);
       alert("Unable to pin note.");
@@ -125,8 +145,14 @@ function Dashboard() {
 
   const handleFavorite = async (id) => {
     try {
-      await toggleFavoriteNote(id);
-      fetchNotes();
+      const res = await toggleFavoriteNote(id);
+      setNotes((prev) =>
+        prev.map((note) =>
+          note.id === id
+            ? { ...note, is_favorite: res.data.favorite ? 1 : 0 }
+            : note
+        )
+      );
     } catch (error) {
       console.error(error);
       alert("Unable to favorite note.");

@@ -66,7 +66,11 @@ export const getNotes = async (req, res) => {
     const userId = req.user.id;
 
     const [notes] = await pool.query(
-      "SELECT * FROM notes WHERE user_id = ? ORDER BY created_at DESC",
+      `SELECT *
+       FROM notes
+       WHERE user_id = ?
+         AND is_deleted = 0
+       ORDER BY is_pinned DESC, updated_at DESC`,
       [userId]
     );
 
@@ -75,7 +79,35 @@ export const getNotes = async (req, res) => {
       notes,
     });
   } catch (error) {
-    console.error(error);
+    console.error("Get Notes Error:", error);
+
+    res.status(500).json({
+      success: false,
+      message: "Server Error",
+    });
+  }
+};
+
+// Get Trash Notes
+export const getTrashNotes = async (req, res) => {
+  try {
+    const userId = req.user.id;
+
+    const [notes] = await pool.query(
+      `SELECT *
+       FROM notes
+       WHERE user_id = ?
+         AND is_deleted = 1
+       ORDER BY deleted_at DESC`,
+      [userId]
+    );
+
+    res.status(200).json({
+      success: true,
+      notes,
+    });
+  } catch (error) {
+    console.error("Get Trash Notes Error:", error);
 
     res.status(500).json({
       success: false,
@@ -103,7 +135,8 @@ export const searchNotes = async (req, res) => {
       `SELECT *
        FROM notes
        WHERE user_id = ?
-       AND (title LIKE ? OR content LIKE ?)
+         AND is_deleted = 0
+         AND (title LIKE ? OR content LIKE ?)
        ORDER BY updated_at DESC`,
       [userId, search, search]
     );
@@ -382,6 +415,50 @@ export const toggleLockNote = async (req, res) => {
     });
   } catch (error) {
     console.error(error);
+
+    res.status(500).json({
+      success: false,
+      message: "Server Error",
+    });
+  }
+};
+
+// =========================
+// MOVE NOTE TO TRASH
+// =========================
+export const moveToTrash = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const userId = req.user.id;
+
+    // Check if note exists
+    const [rows] = await pool.query(
+      "SELECT id FROM notes WHERE id = ? AND user_id = ?",
+      [id, userId]
+    );
+
+    if (rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "Note not found.",
+      });
+    }
+
+    await pool.query(
+      `UPDATE notes
+       SET is_deleted = 1,
+           deleted_at = NOW(),
+           updated_at = NOW()
+       WHERE id = ? AND user_id = ?`,
+      [id, userId]
+    );
+
+    res.status(200).json({
+      success: true,
+      message: "Note moved to Trash successfully.",
+    });
+  } catch (error) {
+    console.error("Move To Trash Error:", error);
 
     res.status(500).json({
       success: false,
