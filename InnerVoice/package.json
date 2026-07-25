@@ -11,6 +11,7 @@
     "concurrently": "^9.1.2"
   },
   "dependencies": {
-    "lucide-react": "^1.25.0"
+    "lucide-react": "^1.25.0",
+    "recharts": "^3.10.0"
   }
 }
