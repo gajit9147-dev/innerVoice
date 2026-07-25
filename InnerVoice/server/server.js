@@ -60,9 +60,22 @@ app.get("/", (req, res) => {
 // =========================
 app.get("/api/glass-theme", (req, res) => {
   res.json({
-    primary:   "#c084fc",  // Purple — used for glare & glow
-    secondary: "#22d3ee",  // Cyan  — used for mesh gradient layer 2
-    accent:    "#f472b6",  // Pink  — used for mesh gradient layer 3
+    dark: {
+      primary: "#c084fc",      // vibrant purple
+      secondary: "#22d3ee",    // vibrant cyan
+      accent: "#f472b6",       // vibrant pink
+      glassBg: "rgba(15, 23, 42, 0.45)", // dark slate glass background
+      glassBorder: "rgba(255, 255, 255, 0.08)",
+      glassInset: "inset 0 1px 0 rgba(255, 255, 255, 0.1), inset 0 -1px 0 rgba(0, 0, 0, 0.2)"
+    },
+    light: {
+      primary: "#d8b4fe",      // soft pastel lavender
+      secondary: "#a5f3fc",    // soft pastel sky cyan
+      accent: "#fbcfe8",       // soft pastel pink
+      glassBg: "rgba(255, 255, 255, 0.4)", // light mode glass background
+      glassBorder: "rgba(255, 255, 255, 0.4)",
+      glassInset: "inset 0 1px 0 rgba(255, 255, 255, 0.5), inset 0 -1px 0 rgba(0, 0, 0, 0.03)"
+    }
   });
 });
 

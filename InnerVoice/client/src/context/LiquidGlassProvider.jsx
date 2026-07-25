@@ -8,59 +8,76 @@
 // ============================================================
 
 import { createContext, useContext, useEffect, useState } from "react";
+import { useTheme } from "./ThemeContext";
 import { useLiquidGlare } from "../hooks/useLiquidGlare";
 import MeshBackground from "../components/glass/MeshBackground";
 
-// Default theme — used before the API responds
+// Default theme configuration containing configurations for both modes
 const DEFAULT_THEME = {
-  primary:   "#c084fc",
-  secondary: "#22d3ee",
-  accent:    "#f472b6",
+  dark: {
+    primary:   "#c084fc",
+    secondary: "#22d3ee",
+    accent:    "#f472b6",
+    glassBg:   "rgba(15, 23, 42, 0.45)",
+    glassBorder: "rgba(255, 255, 255, 0.08)",
+    glassInset: "inset 0 1px 0 rgba(255, 255, 255, 0.1), inset 0 -1px 0 rgba(0, 0, 0, 0.2)"
+  },
+  light: {
+    primary:   "#d8b4fe",
+    secondary: "#a5f3fc",
+    accent:    "#fbcfe8",
+    glassBg:   "rgba(255, 255, 255, 0.4)",
+    glassBorder: "rgba(255, 255, 255, 0.4)",
+    glassInset: "inset 0 1px 0 rgba(255, 255, 255, 0.5), inset 0 -1px 0 rgba(0, 0, 0, 0.03)"
+  }
 };
 
-const LiquidGlassContext = createContext(DEFAULT_THEME);
+const LiquidGlassContext = createContext(DEFAULT_THEME.light);
 
-// Hook for child components to read the current palette
+// Hook for child components to read the active configuration properties
 export function useLiquidGlass() {
   return useContext(LiquidGlassContext);
 }
 
 export function LiquidGlassProvider({ children }) {
-  const [theme, setTheme] = useState(DEFAULT_THEME);
+  const { theme: activeMode } = useTheme(); // Read light/dark state
+  const [themes, setThemes] = useState(DEFAULT_THEME);
 
-  // ── Step 1: Fetch palette from backend on load ──
+  // ── Step 1: Fetch theme config containing both dark & light schemes ──
   useEffect(() => {
     fetch("/api/glass-theme")
       .then((res) => res.json())
       .then((data) => {
-        if (data.primary) {
-          setTheme(data);
+        if (data.dark && data.light) {
+          setThemes(data);
         }
       })
       .catch(() => {
-        // Fall back silently to DEFAULT_THEME if server is unreachable
-        console.warn("[LiquidGlass] Could not fetch theme — using defaults.");
+        console.warn("[LiquidGlass] Could not fetch theme config — using local defaults.");
       });
   }, []);
 
-  // ── Step 2: Inject palette into CSS custom properties ──
-  // This makes --glass-primary / --glass-secondary / --glass-accent
-  // available to every CSS rule and glass component globally
+  // Get configuration corresponding to the active mode
+  const activeTheme = themes[activeMode] || themes.light;
+
+  // ── Step 2: Inject active theme values into root variables ──
   useEffect(() => {
     const root = document.documentElement;
-    root.style.setProperty("--glass-primary",   theme.primary);
-    root.style.setProperty("--glass-secondary", theme.secondary);
-    root.style.setProperty("--glass-accent",    theme.accent);
-  }, [theme]);
+    root.style.setProperty("--glass-primary",   activeTheme.primary);
+    root.style.setProperty("--glass-secondary", activeTheme.secondary);
+    root.style.setProperty("--glass-accent",    activeTheme.accent);
+    root.style.setProperty("--glass-bg",        activeTheme.glassBg);
+    root.style.setProperty("--glass-border",    activeTheme.glassBorder);
+    root.style.setProperty("--glass-inset",     activeTheme.glassInset);
+  }, [activeTheme]);
 
-  // ── Step 3: Activate the mouse glare overlay ──
+  // ── Step 3: Activate mouse glare overlay tracking ──
   useLiquidGlare();
 
   return (
-    <LiquidGlassContext.Provider value={theme}>
-      {/* Animated mesh gradient background (sits behind everything) */}
+    <LiquidGlassContext.Provider value={activeTheme}>
+      {/* Animated background gradient blobs */}
       <MeshBackground />
-
       {children}
     </LiquidGlassContext.Provider>
   );
