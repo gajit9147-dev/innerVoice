@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import Layout from "../components/layout/Layout";
+import NoteCard from "../components/notes/NoteCard";
 import {
   getTrashNotes,
   restoreNote,
@@ -73,37 +74,13 @@ function Trash() {
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
 
             {notes.map((note) => (
-              <div
+              <NoteCard
                 key={note.id}
-                className="rounded-xl border p-5 bg-white dark:bg-slate-900"
-              >
-                <h2 className="font-bold text-lg">
-                  {note.title}
-                </h2>
-
-                <p className="mt-3 text-gray-500">
-                  {note.content}
-                </p>
-
-                <div className="flex gap-3 mt-5">
-
-                  <button
-                    onClick={() => handleRestore(note.id)}
-                    className="px-4 py-2 rounded-lg bg-green-600 text-white"
-                  >
-                    Restore
-                  </button>
-
-                  <button
-                    onClick={() => handleDeleteForever(note.id)}
-                    className="px-4 py-2 rounded-lg bg-red-600 text-white"
-                  >
-                    Delete Forever
-                  </button>
-
-                </div>
-
-              </div>
+                note={note}
+                mode="trash"
+                onRestore={handleRestore}
+                onDeleteForever={handleDeleteForever}
+              />
             ))}
 
           </div>

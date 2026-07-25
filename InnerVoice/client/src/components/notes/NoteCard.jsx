@@ -1,6 +1,6 @@
 import { Pencil, Trash2, Pin, Star, Lock, RotateCcw } from "lucide-react";
 
-function NoteCard({ note, onDelete, onEdit, onPin, onFavorite, onLock, onRestore, isSessionUnlocked = false }) {
+function NoteCard({ note, onDelete, onEdit, onPin, onFavorite, onLock, onRestore, onDeleteForever, isSessionUnlocked = false, mode = "dashboard" }) {
   const categoryColors = {
     General: "bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-200",
     Work: "bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300",
@@ -201,7 +201,7 @@ function NoteCard({ note, onDelete, onEdit, onPin, onFavorite, onLock, onRestore
           </div>
         </div>
 
-        {onLock && !note.is_deleted && (
+        {onLock && mode !== "trash" && (
           <button
             onClick={() => onLock(note)}
             className={`transition duration-200 ${
@@ -224,7 +224,7 @@ function NoteCard({ note, onDelete, onEdit, onPin, onFavorite, onLock, onRestore
 
         <div className="flex items-center gap-2">
           {/* Favorite */}
-          {onFavorite && !note.is_deleted && (
+          {onFavorite && mode !== "trash" && (
             <button
               onClick={() => onFavorite(note.id)}
               className={`transition duration-200 ${
@@ -242,7 +242,7 @@ function NoteCard({ note, onDelete, onEdit, onPin, onFavorite, onLock, onRestore
           )}
 
           {/* Pin */}
-          {onPin && !note.is_deleted && (
+          {onPin && mode !== "trash" && (
             <button
               onClick={() => onPin(note.id)}
               className={`transition duration-200 ${
@@ -279,9 +279,16 @@ function NoteCard({ note, onDelete, onEdit, onPin, onFavorite, onLock, onRestore
         </p>
       )}
 
+      {/* Deleted Date (Only in Trash Mode) */}
+      {mode === "trash" && note.deleted_at && (
+        <div className="mt-4 text-xs text-gray-500 dark:text-gray-400 mb-4 italic">
+          Deleted on {new Date(note.deleted_at).toLocaleDateString()}
+        </div>
+      )}
+
       {/* Footer */}
       <div className="flex justify-end gap-3">
-        {note.is_deleted ? (
+        {mode === "trash" ? (
           <>
             {onRestore && (
               <button
@@ -304,9 +311,13 @@ function NoteCard({ note, onDelete, onEdit, onPin, onFavorite, onLock, onRestore
         )}
 
         <button
-          onClick={() => onDelete(note.id)}
+          onClick={() =>
+            mode === "trash"
+              ? onDeleteForever && onDeleteForever(note.id)
+              : onDelete && onDelete(note.id)
+          }
           className="text-red-500 hover:text-red-700 transition"
-          title={note.is_deleted ? "Delete Permanently" : "Move to Trash"}
+          title={mode === "trash" ? "Delete Permanently" : "Move to Trash"}
         >
           <Trash2 size={18} />
         </button>
