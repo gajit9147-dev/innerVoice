@@ -43,3 +43,6 @@ export const deleteNotePassword = (id, password) =>
 
 export const changeNotePassword = (id, data) =>
   API.put(`/notes/${id}/change-password`, data);
+
+export const resetNotePassword = (id, data) =>
+  API.post(`/notes/${id}/reset-password`, data);
