@@ -18,6 +18,7 @@ import {
   getTrashNotes,
   restoreNote,
   deleteForever,
+  getDashboardStats,
 } from "../controllers/noteController.js";
 
 import authMiddleware from "../middleware/authMiddleware.js";
@@ -38,6 +39,7 @@ router.post("/", authMiddleware, createNote);
 router.get("/", authMiddleware, getNotes);
 router.get("/search", authMiddleware, searchNotes);
 router.get("/trash", authMiddleware, getTrashNotes);
+router.get("/stats", authMiddleware, getDashboardStats);
 
 // ==========================
 // Trash

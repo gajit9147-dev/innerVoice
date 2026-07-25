@@ -914,3 +914,39 @@ export const resetNotePassword = async (req, res) => {
     });
   }
 };
+
+// =========================
+// GET DASHBOARD STATS
+// =========================
+export const getDashboardStats = async (req, res) => {
+  try {
+    const userId = req.user.id;
+
+    const [[stats]] = await pool.query(
+      `
+      SELECT
+        COUNT(CASE WHEN is_deleted = 0 THEN 1 END) AS total,
+        COUNT(CASE WHEN is_pinned = 1 AND is_deleted = 0 THEN 1 END) AS pinned,
+        COUNT(CASE WHEN is_favorite = 1 AND is_deleted = 0 THEN 1 END) AS favorite,
+        COUNT(CASE WHEN is_archived = 1 AND is_deleted = 0 THEN 1 END) AS archived,
+        COUNT(CASE WHEN is_deleted = 1 THEN 1 END) AS trash,
+        COUNT(CASE WHEN is_locked = 1 AND is_deleted = 0 THEN 1 END) AS locked
+      FROM notes
+      WHERE user_id = ?
+      `,
+      [userId]
+    );
+
+    res.status(200).json({
+      success: true,
+      stats,
+    });
+  } catch (error) {
+    console.error("Dashboard Stats Error:", error);
+
+    res.status(500).json({
+      success: false,
+      message: "Server Error",
+    });
+  }
+};

@@ -62,3 +62,7 @@ export const restoreNote = (id) =>
 // Permanently delete a note
 export const deleteForever = (id) =>
   API.delete(`/notes/${id}/permanent`);
+
+// Get dashboard stats
+export const getDashboardStats = () =>
+  API.get("/notes/stats");
