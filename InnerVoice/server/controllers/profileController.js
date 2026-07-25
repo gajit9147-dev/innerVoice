@@ -186,4 +186,25 @@ return res.status(200).json({
   }
 };
 
-export { getProfile, updateProfile, changePassword };
+const deleteAccount = async (req, res) => {
+  try {
+    const userId = req.user.id;
+
+    await db.query("DELETE FROM users WHERE id = ?", [userId]);
+
+    return res.status(200).json({
+      success: true,
+      message: "Account deleted successfully.",
+    });
+
+  } catch (error) {
+    console.error("Delete Account Error:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Server Error",
+    });
+  }
+};
+
+export { getProfile, updateProfile, changePassword, deleteAccount };
