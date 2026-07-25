@@ -40,6 +40,13 @@ function Dashboard() {
   // Track notes unlocked this session via custom password (resets on refresh)
   const [sessionUnlockedIds, setSessionUnlockedIds] = useState(new Set());
 
+  // Advanced search & filtering state
+  const [selectedFeeling, setSelectedFeeling] = useState("All");
+  const [selectedTag, setSelectedTag] = useState("");
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
+  const [showAdvanced, setShowAdvanced] = useState(false);
+
   const fetchNotes = async () => {
     try {
       const res = await getNotes();
@@ -169,25 +176,8 @@ function Dashboard() {
   };
 
   // Search Notes
-  const handleSearch = async (query) => {
+  const handleSearch = (query) => {
     setSearchQuery(query);
-
-    try {
-      if (query.trim() === "") {
-        fetchNotes();
-        return;
-      }
-
-      const res = await searchNotes(query);
-
-      const sortedNotes = [...res.data.notes].sort(
-        (a, b) => b.is_pinned - a.is_pinned,
-      );
-
-      setNotes(sortedNotes);
-    } catch (error) {
-      console.error(error);
-    }
   };
 
   const categories = [
@@ -200,6 +190,71 @@ function Dashboard() {
     "Journal",
   ];
 
+  // List of all unique feelings available to select
+  const feelingsList = [
+    "All",
+    "Neutral",
+    "Happy",
+    "Excited",
+    "Grateful",
+    "Motivated",
+    "Proud",
+    "Hopeful",
+    "Peaceful",
+    "Inspired",
+    "Lonely",
+    "Sad",
+    "Heartbroken",
+    "Disappointed",
+    "Anxious",
+    "Worried",
+    "Overwhelmed",
+    "Exhausted",
+    "Angry",
+    "Frustrated",
+    "Confused",
+    "Overthinking",
+    "Stressed",
+    "Love",
+    "Crush",
+    "Friendship",
+    "Family",
+    "Breakup",
+    "Healing",
+    "Learning",
+    "Focused",
+    "Self Growth",
+    "Dream",
+    "Goal",
+    "Career",
+    "Finance",
+    "Fitness",
+    "Secret",
+    "Confession",
+    "Fantasy",
+    "Memory",
+    "Random Thoughts",
+    "Private",
+    "Travel",
+    "Food",
+    "Gaming",
+    "Music",
+    "Movies",
+    "Photography",
+    "Pets",
+  ];
+
+  // Extract unique hashtags dynamically from all notes
+  const allHashtags = Array.from(
+    new Set(
+      notes.flatMap((note) => {
+        if (!note.content) return [];
+        const matches = note.content.match(/#\w+/g);
+        return matches ? matches.map((tag) => tag.toLowerCase()) : [];
+      })
+    )
+  );
+
   const filter = searchParams.get("filter");
 
   let displayNotes = notes;
@@ -211,6 +266,46 @@ function Dashboard() {
   } else if (filter === "trash") {
     // If you support trash in future, you can filter by note.is_deleted. For now, empty placeholder.
     displayNotes = [];
+  }
+
+  // 1. Text Search Filter (Fuzzy Search in title & content)
+  if (searchQuery.trim() !== "") {
+    const q = searchQuery.toLowerCase().trim();
+    displayNotes = displayNotes.filter(
+      (note) =>
+        (note.title && note.title.toLowerCase().includes(q)) ||
+        (note.content && note.content.toLowerCase().includes(q))
+    );
+  }
+
+  // 2. Feeling / Emotion Filter
+  if (selectedFeeling !== "All") {
+    displayNotes = displayNotes.filter((note) => note.feeling === selectedFeeling);
+  }
+
+  // 3. Dynamic Hashtag Filter
+  if (selectedTag) {
+    displayNotes = displayNotes.filter(
+      (note) =>
+        note.content &&
+        note.content.toLowerCase().includes(selectedTag.toLowerCase())
+    );
+  }
+
+  // 4. Date Range Filter
+  if (startDate) {
+    displayNotes = displayNotes.filter((note) => {
+      if (!note.created_at) return false;
+      const noteDate = new Date(note.created_at).toISOString().split("T")[0];
+      return noteDate >= startDate;
+    });
+  }
+  if (endDate) {
+    displayNotes = displayNotes.filter((note) => {
+      if (!note.created_at) return false;
+      const noteDate = new Date(note.created_at).toISOString().split("T")[0];
+      return noteDate <= endDate;
+    });
   }
 
   const filteredNotes =
@@ -244,15 +339,139 @@ function Dashboard() {
           </button>
         </div>
 
-        {/* Search */}
-        <div className="mb-6">
-          <input
-            type="text"
-            placeholder="🔍 Search notes..."
-            value={searchQuery}
-            onChange={(e) => handleSearch(e.target.value)}
-            className="w-full rounded-xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
-          />
+        {/* Search & Filtering */}
+        <div className="mb-6 space-y-4">
+          <div className="flex gap-3">
+            <div className="relative flex-1">
+              <input
+                type="text"
+                placeholder="🔍 Search notes by title or content..."
+                value={searchQuery}
+                onChange={(e) => handleSearch(e.target.value)}
+                className="w-full rounded-xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
+              />
+              {searchQuery && (
+                <button
+                  onClick={() => setSearchQuery("")}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 text-sm font-medium"
+                >
+                  Clear
+                </button>
+              )}
+            </div>
+
+            <button
+              onClick={() => setShowAdvanced(!showAdvanced)}
+              className={`px-5 py-3 rounded-xl font-medium border transition-all duration-200 flex items-center gap-2 select-none ${
+                showAdvanced || selectedFeeling !== "All" || selectedTag || startDate || endDate
+                  ? "bg-blue-50 border-blue-200 text-blue-600 dark:bg-blue-950/40 dark:border-blue-900 dark:text-blue-400"
+                  : "bg-white border-gray-300 text-gray-700 hover:bg-gray-50 dark:bg-gray-900 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
+              }`}
+            >
+              <span>⚙️</span>
+              <span>Filters</span>
+              {(selectedFeeling !== "All" || selectedTag || startDate || endDate) && (
+                <span className="w-2.5 h-2.5 bg-blue-500 rounded-full animate-pulse" />
+              )}
+            </button>
+          </div>
+
+          {/* Advanced Filtering Panel */}
+          {showAdvanced && (
+            <div className="p-5 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-2xl shadow-sm space-y-5 animate-fade-scale">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+                {/* Feeling selector */}
+                <div>
+                  <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">
+                    Emotion / Feeling
+                  </label>
+                  <select
+                    value={selectedFeeling}
+                    onChange={(e) => setSelectedFeeling(e.target.value)}
+                    className="w-full bg-gray-50 dark:bg-slate-950 border border-gray-200 dark:border-slate-800 rounded-xl p-3 text-sm text-gray-700 dark:text-gray-200 outline-none focus:ring-2 focus:ring-blue-500 transition"
+                  >
+                    {feelingsList.map((f) => (
+                      <option key={f} value={f}>
+                        {f === "All" ? "Any Emotion" : f}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Start Date */}
+                <div>
+                  <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">
+                    From Date
+                  </label>
+                  <input
+                    type="date"
+                    value={startDate}
+                    onChange={(e) => setStartDate(e.target.value)}
+                    className="w-full bg-gray-50 dark:bg-slate-950 border border-gray-200 dark:border-slate-800 rounded-xl p-3 text-sm text-gray-700 dark:text-gray-200 outline-none focus:ring-2 focus:ring-blue-500 transition"
+                  />
+                </div>
+
+                {/* End Date */}
+                <div>
+                  <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">
+                    To Date
+                  </label>
+                  <input
+                    type="date"
+                    value={endDate}
+                    onChange={(e) => setEndDate(e.target.value)}
+                    className="w-full bg-gray-50 dark:bg-slate-950 border border-gray-200 dark:border-slate-800 rounded-xl p-3 text-sm text-gray-700 dark:text-gray-200 outline-none focus:ring-2 focus:ring-blue-500 transition"
+                  />
+                </div>
+              </div>
+
+              {/* Dynamic Hashtag Pills */}
+              {allHashtags.length > 0 && (
+                <div>
+                  <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">
+                    Hashtags in your notes
+                  </label>
+                  <div className="flex flex-wrap gap-2">
+                    {allHashtags.map((tag) => {
+                      const isSelected = selectedTag === tag;
+                      return (
+                        <button
+                          key={tag}
+                          onClick={() => setSelectedTag(isSelected ? "" : tag)}
+                          className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all ${
+                            isSelected
+                              ? "bg-blue-600 border-blue-600 text-white shadow-sm"
+                              : "bg-gray-50 border-gray-200 text-gray-600 hover:bg-gray-100 dark:bg-slate-950 dark:border-slate-800 dark:text-slate-400 dark:hover:bg-slate-800"
+                          }`}
+                        >
+                          {tag}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {/* Reset controls */}
+              {(selectedFeeling !== "All" || selectedTag || startDate || endDate || searchQuery) && (
+                <div className="flex justify-end pt-2 border-t border-gray-100 dark:border-slate-800">
+                  <button
+                    onClick={() => {
+                      setSelectedFeeling("All");
+                      setSelectedTag("");
+                      setStartDate("");
+                      setEndDate("");
+                      setSearchQuery("");
+                    }}
+                    className="text-xs text-red-500 hover:text-red-700 font-bold transition flex items-center gap-1.5"
+                  >
+                    <span>🗑️</span>
+                    <span>Clear All Filters</span>
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Categories */}
