@@ -25,6 +25,7 @@ import {
 
 function Dashboard() {
   const [searchParams] = useSearchParams();
+  const filter = searchParams.get("filter");
   const [notes, setNotes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
@@ -52,7 +53,8 @@ function Dashboard() {
 
   const fetchNotes = async () => {
     try {
-      const res = await getNotes();
+      setLoading(true);
+      const res = filter === "trash" ? await getTrashNotes() : await getNotes();
 
       const sortedNotes = [...res.data.notes].sort((a, b) => {
         if (a.is_pinned !== b.is_pinned) {
@@ -71,7 +73,7 @@ function Dashboard() {
 
   useEffect(() => {
     fetchNotes();
-  }, []);
+  }, [filter]);
   // Create Note
   const handleCreateNote = async (data) => {
     try {
@@ -101,19 +103,35 @@ function Dashboard() {
   };
   // Delete Note
   const handleDeleteNote = async (id) => {
-    const confirmDelete = window.confirm(
-      "Are you sure you want to delete this note?",
-    );
+    const isTrash = filter === "trash";
+    const confirmMessage = isTrash
+      ? "Are you sure you want to permanently delete this note? This action cannot be undone."
+      : "Are you sure you want to delete this note?";
 
+    const confirmDelete = window.confirm(confirmMessage);
     if (!confirmDelete) return;
 
     try {
-      await moveToTrash(id);
-
+      if (isTrash) {
+        await deleteForever(id);
+      } else {
+        await moveToTrash(id);
+      }
       fetchNotes();
     } catch (error) {
       console.error(error);
-      alert("Unable to delete note.");
+      alert(isTrash ? "Unable to permanently delete note." : "Unable to delete note.");
+    }
+  };
+
+  // Restore Note
+  const handleRestore = async (id) => {
+    try {
+      await restoreNote(id);
+      fetchNotes();
+    } catch (error) {
+      console.error(error);
+      alert("Unable to restore note.");
     }
   };
   // Toggle Pin Note
@@ -284,8 +302,6 @@ function Dashboard() {
     )
   );
 
-  const filter = searchParams.get("filter");
-
   let displayNotes = notes;
   if (filter === "favorites") {
     displayNotes = notes.filter((note) => note.is_favorite);
@@ -293,8 +309,8 @@ function Dashboard() {
     // If you support archiving in future, you can filter by note.is_archived. For now, empty placeholder.
     displayNotes = [];
   } else if (filter === "trash") {
-    // If you support trash in future, you can filter by note.is_deleted. For now, empty placeholder.
-    displayNotes = [];
+    // Show all trash notes
+    displayNotes = notes;
   }
 
   // 1. Text Search Filter (Fuzzy Search in title & content)
@@ -535,6 +551,7 @@ function Dashboard() {
                 onPin={handlePin}
                 onFavorite={handleFavorite}
                 onLock={handleLock}
+                onRestore={handleRestore}
                 isSessionUnlocked={sessionUnlockedIds.has(note.id)}
                 onEdit={(noteToEdit) => {
                   setEditingNote(noteToEdit);

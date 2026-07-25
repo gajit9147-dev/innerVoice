@@ -1,6 +1,6 @@
-import { Pencil, Trash2, Pin, Star, Lock } from "lucide-react";
+import { Pencil, Trash2, Pin, Star, Lock, RotateCcw } from "lucide-react";
 
-function NoteCard({ note, onDelete, onEdit, onPin, onFavorite, onLock, isSessionUnlocked = false }) {
+function NoteCard({ note, onDelete, onEdit, onPin, onFavorite, onLock, onRestore, isSessionUnlocked = false }) {
   const categoryColors = {
     General: "bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-200",
     Work: "bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300",
@@ -201,7 +201,7 @@ function NoteCard({ note, onDelete, onEdit, onPin, onFavorite, onLock, isSession
           </div>
         </div>
 
-        {onLock && (
+        {onLock && !note.is_deleted && (
           <button
             onClick={() => onLock(note)}
             className={`transition duration-200 ${
@@ -224,7 +224,7 @@ function NoteCard({ note, onDelete, onEdit, onPin, onFavorite, onLock, isSession
 
         <div className="flex items-center gap-2">
           {/* Favorite */}
-          {onFavorite && (
+          {onFavorite && !note.is_deleted && (
             <button
               onClick={() => onFavorite(note.id)}
               className={`transition duration-200 ${
@@ -242,7 +242,7 @@ function NoteCard({ note, onDelete, onEdit, onPin, onFavorite, onLock, isSession
           )}
 
           {/* Pin */}
-          {onPin && (
+          {onPin && !note.is_deleted && (
             <button
               onClick={() => onPin(note.id)}
               className={`transition duration-200 ${
@@ -281,16 +281,32 @@ function NoteCard({ note, onDelete, onEdit, onPin, onFavorite, onLock, isSession
 
       {/* Footer */}
       <div className="flex justify-end gap-3">
-        <button
-          onClick={() => onEdit(note)}
-          className="text-blue-500 hover:text-blue-700 transition"
-        >
-          <Pencil size={18} />
-        </button>
+        {note.is_deleted ? (
+          <>
+            {onRestore && (
+              <button
+                onClick={() => onRestore(note.id)}
+                className="text-green-500 hover:text-green-700 transition"
+                title="Restore Note"
+              >
+                <RotateCcw size={18} />
+              </button>
+            )}
+          </>
+        ) : (
+          <button
+            onClick={() => onEdit(note)}
+            className="text-blue-500 hover:text-blue-700 transition"
+            title="Edit Note"
+          >
+            <Pencil size={18} />
+          </button>
+        )}
 
         <button
           onClick={() => onDelete(note.id)}
           className="text-red-500 hover:text-red-700 transition"
+          title={note.is_deleted ? "Delete Permanently" : "Move to Trash"}
         >
           <Trash2 size={18} />
         </button>
