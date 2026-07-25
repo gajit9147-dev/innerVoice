@@ -14,61 +14,55 @@ import {
   deleteNotePassword,
   changeNotePassword,
   resetNotePassword,
+  moveToTrash,
+  getTrashNotes,
 } from "../controllers/noteController.js";
+
 import authMiddleware from "../middleware/authMiddleware.js";
 
 const router = express.Router();
 
+router.get("/test", (req, res) => {
+  res.json({
+    success: true,
+    message: "noteRoutes.js is loaded",
+  });
+});
+
+// ==========================
+// Notes
+// ==========================
 router.post("/", authMiddleware, createNote);
-
 router.get("/", authMiddleware, getNotes);
-
 router.get("/search", authMiddleware, searchNotes);
+router.get("/trash", authMiddleware, getTrashNotes);
 
-router.put("/pin/:id", authMiddleware, togglePinNote);
+// ==========================
+// Trash
+// ==========================
+router.patch("/:id/trash", authMiddleware, moveToTrash);
 
-router.put("/favorite/:id", authMiddleware, toggleFavoriteNote);
+// ==========================
+// Pin / Favorite / Lock
+// ==========================
+router.patch("/:id/pin", authMiddleware, togglePinNote);
+router.patch("/:id/favorite", authMiddleware, toggleFavoriteNote);
+router.patch("/:id/lock", authMiddleware, toggleLockNote);
 
+// ==========================
+// Password Protection
+// ==========================
+router.post("/:id/set-password", authMiddleware, setNotePassword);
+router.post("/:id/verify-password", authMiddleware, verifyNotePassword);
+router.delete("/:id/password", authMiddleware, deleteNotePassword);
+router.put("/:id/change-password", authMiddleware, changeNotePassword);
+router.post("/:id/reset-password", authMiddleware, resetNotePassword);
 
-router.put("/lock/:id", authMiddleware, toggleLockNote);
-
-router.post(
-  "/:id/set-password",
-  authMiddleware,
-  setNotePassword
-);
-
-router.post(
-  "/:id/verify-password",
-  authMiddleware,
-  verifyNotePassword
-);
-
-router.delete(
-  "/:id/password",
-  authMiddleware,
-  deleteNotePassword
-);
-
-router.put(
-  "/:id/change-password",
-  authMiddleware,
-  changeNotePassword
-);
-
-router.post(
-  "/:id/reset-password",
-  authMiddleware,
-  resetNotePassword
-);
-
+// ==========================
+// CRUD
+// ==========================
 router.get("/:id", authMiddleware, getNoteById);
-
 router.put("/:id", authMiddleware, updateNote);
-
 router.delete("/:id", authMiddleware, deleteNote);
-
-
-
 
 export default router;
