@@ -13,7 +13,10 @@ import {
   getNotes,
   createNote,
   updateNote,
-  deleteNote,
+  moveToTrash,
+  getTrashNotes,
+  restoreNote,
+  deleteForever,
   searchNotes,
   togglePinNote,
   toggleFavoriteNote,
@@ -105,7 +108,7 @@ function Dashboard() {
     if (!confirmDelete) return;
 
     try {
-      await deleteNote(id);
+      await moveToTrash(id);
 
       fetchNotes();
     } catch (error) {
