@@ -21,12 +21,15 @@ import {
   togglePinNote,
   toggleFavoriteNote,
   toggleLockNote,
+  getDashboardStats,
 } from "../api/note";
+import StatsGrid from "../components/dashboard/StatsGrid";
 
 function Dashboard() {
   const [searchParams] = useSearchParams();
   const filter = searchParams.get("filter");
   const [notes, setNotes] = useState([]);
+  const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [editingNote, setEditingNote] = useState(null);
@@ -51,6 +54,15 @@ function Dashboard() {
   const [endDate, setEndDate] = useState("");
   const [showAdvanced, setShowAdvanced] = useState(false);
 
+  const fetchStats = async () => {
+    try {
+      const res = await getDashboardStats();
+      setStats(res.data.stats);
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
   const fetchNotes = async () => {
     try {
       setLoading(true);
@@ -64,6 +76,7 @@ function Dashboard() {
       });
 
       setNotes(sortedNotes);
+      await fetchStats();
     } catch (error) {
       console.error(error);
     } finally {
@@ -383,6 +396,12 @@ function Dashboard() {
             + New Note
           </button>
         </div>
+
+        {stats && (
+          <div className="mb-8">
+            <StatsGrid stats={stats} />
+          </div>
+        )}
 
         {/* Search & Filtering */}
         <div className="mb-6 space-y-4">
