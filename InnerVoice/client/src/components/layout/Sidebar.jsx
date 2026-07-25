@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import {
   LayoutDashboard,
   NotebookPen,
@@ -26,8 +27,20 @@ function Sidebar({ onClose }) {
   const location = useLocation();
   const navigate = useNavigate();
 
-  const userStr = localStorage.getItem("user");
-  const user = userStr ? JSON.parse(userStr) : { full_name: "Guest", email: "guest@example.com" };
+  const readUser = () => {
+    const userStr = localStorage.getItem("user");
+    return userStr ? JSON.parse(userStr) : { full_name: "Guest", email: "guest@example.com" };
+  };
+
+  const [user, setUser] = useState(readUser);
+
+  // Re-read user whenever profile image is updated (AvatarUpload dispatches "storage")
+  useEffect(() => {
+    const handleStorage = () => setUser(readUser());
+    window.addEventListener("storage", handleStorage);
+    return () => window.removeEventListener("storage", handleStorage);
+  }, []);
+
   const initials = user.full_name ? user.full_name.substring(0, 2).toUpperCase() : "GU";
 
   const handleLogout = () => {
@@ -100,8 +113,16 @@ function Sidebar({ onClose }) {
       <div className="border-t border-gray-100 dark:border-slate-700 p-4 transition-colors">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3 overflow-hidden">
-            <div className="w-10 h-10 shrink-0 rounded-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white flex items-center justify-center text-sm font-bold shadow-md">
-              {initials}
+            <div className="w-10 h-10 shrink-0 rounded-full overflow-hidden bg-gradient-to-r from-blue-600 to-indigo-600 text-white flex items-center justify-center text-sm font-bold shadow-md">
+              {user.profile_image ? (
+                <img
+                  src={user.profile_image}
+                  alt="Profile"
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                initials
+              )}
             </div>
             <div className="overflow-hidden">
               <h3 className="font-semibold text-gray-800 dark:text-gray-100 text-sm truncate">

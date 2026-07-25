@@ -41,7 +41,13 @@ function AvatarUpload({ user, onUploadSuccess }) {
       setIsUploading(true);
       const res = await uploadProfileImage(formData);
 
-      setAvatar(res.data.image);
+      const imageUrl = res.data.image;
+      setAvatar(imageUrl);
+
+      // Save profile_image into localStorage so Header reflects it immediately
+      const savedUser = JSON.parse(localStorage.getItem("user") || "{}");
+      localStorage.setItem("user", JSON.stringify({ ...savedUser, profile_image: imageUrl }));
+      window.dispatchEvent(new Event("storage"));
 
       if (onUploadSuccess) {
         onUploadSuccess();
@@ -62,6 +68,11 @@ function AvatarUpload({ user, onUploadSuccess }) {
       setIsDeleting(true);
       await updateProfileInfo({ profile_image: null });
       setAvatar(null);
+
+      // Clear profile_image from localStorage so Header reflects removal immediately
+      const savedUser = JSON.parse(localStorage.getItem("user") || "{}");
+      localStorage.setItem("user", JSON.stringify({ ...savedUser, profile_image: null }));
+      window.dispatchEvent(new Event("storage"));
 
       if (onUploadSuccess) {
         onUploadSuccess();

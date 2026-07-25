@@ -1,14 +1,27 @@
+import { useState, useEffect } from "react";
 import { Bell, Moon, Sun, Calendar, Menu } from "lucide-react";
 import { useTheme } from "../../context/ThemeContext";
 import { Link } from "react-router-dom";
 
 function Header({ onMenuClick }) {
   const { theme, toggleTheme } = useTheme();
-  
-  const userStr = localStorage.getItem("user");
-  const user = userStr ? JSON.parse(userStr) : { full_name: "Guest" };
+
+  const readUser = () => {
+    const userStr = localStorage.getItem("user");
+    return userStr ? JSON.parse(userStr) : { full_name: "Guest" };
+  };
+
+  const [user, setUser] = useState(readUser);
+
+  // Re-read user from localStorage whenever profile updates (AvatarUpload dispatches "storage")
+  useEffect(() => {
+    const handleStorage = () => setUser(readUser());
+    window.addEventListener("storage", handleStorage);
+    return () => window.removeEventListener("storage", handleStorage);
+  }, []);
+
   const initials = user.full_name ? user.full_name.substring(0, 2).toUpperCase() : "GU";
-  
+
   // Generate greeting based on time of day
   const hour = new Date().getHours();
   let greeting = "Good evening";
@@ -70,8 +83,17 @@ function Header({ onMenuClick }) {
           to="/profile"
           className="flex items-center gap-3 hover:bg-gray-50 dark:hover:bg-slate-700/50 p-1.5 pr-3 rounded-2xl transition-colors cursor-pointer"
         >
-          <div className="w-10 h-10 lg:w-11 lg:h-11 rounded-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white flex items-center justify-center text-sm lg:text-base font-bold shadow-sm">
-            {initials}
+          {/* Avatar: show profile image if set, otherwise initials */}
+          <div className="w-10 h-10 lg:w-11 lg:h-11 rounded-full overflow-hidden bg-gradient-to-r from-blue-600 to-indigo-600 text-white flex items-center justify-center text-sm lg:text-base font-bold shadow-sm flex-shrink-0">
+            {user.profile_image ? (
+              <img
+                src={user.profile_image}
+                alt="Profile"
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              initials
+            )}
           </div>
           <div className="hidden sm:block">
             <h3 className="font-semibold text-gray-800 dark:text-white text-sm truncate max-w-[120px]">
@@ -89,3 +111,4 @@ function Header({ onMenuClick }) {
 }
 
 export default Header;
+
