@@ -315,6 +315,63 @@ function Dashboard() {
     )
   );
 
+  const user = JSON.parse(localStorage.getItem("user") || "{}");
+
+  const getGreeting = () => {
+    const hr = new Date().getHours();
+    if (hr < 12) return "Good Morning";
+    if (hr < 18) return "Good Afternoon";
+    return "Good Evening";
+  };
+
+  const moodCounts = notes.reduce((acc, note) => {
+    if (note.is_deleted) return acc;
+    const m = note.mood || "Neutral";
+    acc[m] = (acc[m] || 0) + 1;
+    return acc;
+  }, {});
+
+  const moodIcons = {
+    Happy: "😊",
+    Calm: "😌",
+    Sad: "😢",
+    Angry: "😡",
+    Motivated: "🔥",
+    Excited: "🤩",
+    Neutral: "😐",
+  };
+
+  const moodColors = {
+    Happy: "bg-green-500",
+    Calm: "bg-blue-500",
+    Sad: "bg-indigo-500",
+    Angry: "bg-red-500",
+    Motivated: "bg-orange-500",
+    Excited: "bg-purple-500",
+    Neutral: "bg-gray-500",
+  };
+
+  const maxMoodCount = Math.max(...Object.values(moodCounts), 1);
+
+  const tagCounts = notes.reduce((acc, note) => {
+    if (note.is_deleted) return acc;
+    let tags = [];
+    try {
+      tags = typeof note.ai_tags === "string" ? JSON.parse(note.ai_tags) : note.ai_tags;
+    } catch (e) {}
+    if (Array.isArray(tags)) {
+      tags.forEach(t => {
+        acc[t] = (acc[t] || 0) + 1;
+      });
+    }
+    return acc;
+  }, {});
+
+  const trendingTags = Object.entries(tagCounts)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 5)
+    .map(entry => entry[0]);
+
   let displayNotes = notes;
   if (filter === "favorites") {
     displayNotes = notes.filter((note) => note.is_favorite);
@@ -373,214 +430,285 @@ function Dashboard() {
 
   return (
     <Layout>
-      <div className="max-w-6xl mx-auto p-6">
-        {/* Header */}
-        <div className="flex justify-between items-center mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-            {filter === "favorites"
-              ? "Favorite Notes"
-              : filter === "archive"
-              ? "Archived Notes"
-              : filter === "trash"
-              ? "Trash Notes"
-              : "My Notes"}
+      <div className="max-w-7xl mx-auto p-6">
+        
+        {/* Greeting & Welcome Banner */}
+        <div className="mb-8 border-b border-gray-100 dark:border-slate-800 pb-5">
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
+            👋 {getGreeting()}, {user.name || "Ajeet"}
           </h1>
-
-          <button
-            onClick={() => {
-              setEditingNote(null);
-              setShowModal(true);
-            }}
-            className="bg-blue-600 hover:bg-blue-700 text-white font-medium px-5 py-3 rounded-lg shadow-md transition"
-          >
-            + New Note
-          </button>
+          <p className="text-gray-500 dark:text-slate-400 mt-1.5 italic font-medium">
+            "Capture your thoughts, AI will organize them."
+          </p>
         </div>
 
+        {/* Statistics Grid Overview */}
         {stats && (
           <div className="mb-8">
+            <h2 className="text-sm font-semibold uppercase tracking-wider text-gray-400 dark:text-slate-500 mb-4">
+              📊 Overview
+            </h2>
             <StatsGrid stats={stats} />
           </div>
         )}
 
-        {/* Search & Filtering */}
-        <div className="mb-6 space-y-4">
-          <div className="flex gap-3">
-            <div className="relative flex-1">
-              <input
-                type="text"
-                placeholder="🔍 Search notes by title or content..."
-                value={searchQuery}
-                onChange={(e) => handleSearch(e.target.value)}
-                className="w-full rounded-xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
-              />
-              {searchQuery && (
-                <button
-                  onClick={() => setSearchQuery("")}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 text-sm font-medium"
-                >
-                  Clear
-                </button>
-              )}
-            </div>
-
-            <button
-              onClick={() => setShowAdvanced(!showAdvanced)}
-              className={`px-5 py-3 rounded-xl font-medium border transition-all duration-200 flex items-center gap-2 select-none ${
-                showAdvanced || selectedFeeling !== "All" || selectedTag || startDate || endDate
-                  ? "bg-blue-50 border-blue-200 text-blue-600 dark:bg-blue-950/40 dark:border-blue-900 dark:text-blue-400"
-                  : "bg-white border-gray-300 text-gray-700 hover:bg-gray-50 dark:bg-gray-900 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
-              }`}
-            >
-              <span>⚙️</span>
-              <span>Filters</span>
-              {(selectedFeeling !== "All" || selectedTag || startDate || endDate) && (
-                <span className="w-2.5 h-2.5 bg-blue-500 rounded-full animate-pulse" />
-              )}
-            </button>
-          </div>
-
-          {/* Advanced Filtering Panel */}
-          {showAdvanced && (
-            <div className="p-5 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-2xl shadow-sm space-y-5 animate-fade-scale">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-                {/* Feeling selector */}
-                <div>
-                  <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">
-                    Emotion / Feeling
-                  </label>
-                  <select
-                    value={selectedFeeling}
-                    onChange={(e) => setSelectedFeeling(e.target.value)}
-                    className="w-full bg-gray-50 dark:bg-slate-950 border border-gray-200 dark:border-slate-800 rounded-xl p-3 text-sm text-gray-700 dark:text-gray-200 outline-none focus:ring-2 focus:ring-blue-500 transition"
-                  >
-                    {feelingsList.map((f) => (
-                      <option key={f} value={f}>
-                        {f === "All" ? "Any Emotion" : f}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                {/* Start Date */}
-                <div>
-                  <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">
-                    From Date
-                  </label>
-                  <input
-                    type="date"
-                    value={startDate}
-                    onChange={(e) => setStartDate(e.target.value)}
-                    className="w-full bg-gray-50 dark:bg-slate-950 border border-gray-200 dark:border-slate-800 rounded-xl p-3 text-sm text-gray-700 dark:text-gray-200 outline-none focus:ring-2 focus:ring-blue-500 transition"
-                  />
-                </div>
-
-                {/* End Date */}
-                <div>
-                  <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">
-                    To Date
-                  </label>
-                  <input
-                    type="date"
-                    value={endDate}
-                    onChange={(e) => setEndDate(e.target.value)}
-                    className="w-full bg-gray-50 dark:bg-slate-950 border border-gray-200 dark:border-slate-800 rounded-xl p-3 text-sm text-gray-700 dark:text-gray-200 outline-none focus:ring-2 focus:ring-blue-500 transition"
-                  />
-                </div>
-              </div>
-
-              {/* Dynamic Hashtag Pills */}
-              {allHashtags.length > 0 && (
-                <div>
-                  <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">
-                    Hashtags in your notes
-                  </label>
-                  <div className="flex flex-wrap gap-2">
-                    {allHashtags.map((tag) => {
-                      const isSelected = selectedTag === tag;
-                      return (
-                        <button
-                          key={tag}
-                          onClick={() => setSelectedTag(isSelected ? "" : tag)}
-                          className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all ${
-                            isSelected
-                              ? "bg-blue-600 border-blue-600 text-white shadow-sm"
-                              : "bg-gray-50 border-gray-200 text-gray-600 hover:bg-gray-100 dark:bg-slate-950 dark:border-slate-800 dark:text-slate-400 dark:hover:bg-slate-800"
-                          }`}
-                        >
-                          {tag}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
-
-              {/* Reset controls */}
-              {(selectedFeeling !== "All" || selectedTag || startDate || endDate || searchQuery) && (
-                <div className="flex justify-end pt-2 border-t border-gray-100 dark:border-slate-800">
-                  <button
-                    onClick={() => {
-                      setSelectedFeeling("All");
-                      setSelectedTag("");
-                      setStartDate("");
-                      setEndDate("");
-                      setSearchQuery("");
-                    }}
-                    className="text-xs text-red-500 hover:text-red-700 font-bold transition flex items-center gap-1.5"
-                  >
-                    <span>🗑️</span>
-                    <span>Clear All Filters</span>
-                  </button>
-                </div>
-              )}
-            </div>
-          )}
-        </div>
-
-        {/* Categories */}
-        <div className="flex flex-wrap gap-3 mb-6">
-          {categories.map((category) => (
-            <button
-              key={category}
-              onClick={() => setSelectedCategory(category)}
-              className={`px-4 py-2 rounded-full text-sm font-medium transition ${
-                selectedCategory === category
-                  ? "bg-blue-600 text-white"
-                  : "bg-gray-200 dark:bg-slate-800 text-gray-700 dark:text-gray-300 hover:bg-blue-100 dark:hover:bg-slate-700"
-              }`}
-            >
-              {category}
-            </button>
-          ))}
-        </div>
-
-        {/* Notes */}
-        {loading ? (
-          <p className="text-gray-500 dark:text-slate-400">Loading...</p>
-        ) : filteredNotes.length === 0 ? (
-          <p className="text-gray-500 dark:text-slate-400">No notes found.</p>
-        ) : (
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredNotes.map((note) => (
-              <NoteCard
-                key={note.id}
-                note={note}
-                onDelete={handleDeleteNote}
-                onPin={handlePin}
-                onFavorite={handleFavorite}
-                onLock={handleLock}
-                onRestore={handleRestore}
-                isSessionUnlocked={sessionUnlockedIds.has(note.id)}
-                onEdit={(noteToEdit) => {
-                  setEditingNote(noteToEdit);
+        {/* Main Grid Layout */}
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+          
+          {/* Main Left Content Area */}
+          <div className="lg:col-span-3 space-y-6">
+            
+            {/* Header section with + New Note */}
+            <div className="flex justify-between items-center">
+              <h2 className="text-xl font-bold text-gray-900 dark:text-white">
+                🕒 Recent Notes
+              </h2>
+              <button
+                onClick={() => {
+                  setEditingNote(null);
                   setShowModal(true);
                 }}
-                mode="dashboard"
-              />
-            ))}
+                className="bg-blue-600 hover:bg-blue-700 text-white font-medium px-5 py-2.5 rounded-xl shadow-md transition"
+              >
+                + New Note
+              </button>
+            </div>
+
+            {/* Search & Filtering Panel */}
+            <div className="space-y-4">
+              <div className="flex gap-3">
+                <div className="relative flex-1">
+                  <input
+                    type="text"
+                    placeholder="🔍 Search notes by title or content..."
+                    value={searchQuery}
+                    onChange={(e) => handleSearch(e.target.value)}
+                    className="w-full rounded-xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
+                  />
+                  {searchQuery && (
+                    <button
+                      onClick={() => setSearchQuery("")}
+                      className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 text-sm font-medium"
+                    >
+                      Clear
+                    </button>
+                  )}
+                </div>
+
+                <button
+                  onClick={() => setShowAdvanced(!showAdvanced)}
+                  className={`px-5 py-3 rounded-xl font-medium border transition-all duration-200 flex items-center gap-2 select-none ${
+                    showAdvanced || selectedFeeling !== "All" || selectedTag || startDate || endDate
+                      ? "bg-blue-50 border-blue-200 text-blue-600 dark:bg-blue-950/40 dark:border-blue-900 dark:text-blue-400"
+                      : "bg-white border-gray-300 text-gray-700 hover:bg-gray-50 dark:bg-gray-900 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
+                  }`}
+                >
+                  <span>⚙️</span>
+                  <span>Filters</span>
+                  {(selectedFeeling !== "All" || selectedTag || startDate || endDate) && (
+                    <span className="w-2.5 h-2.5 bg-blue-500 rounded-full animate-pulse" />
+                  )}
+                </button>
+              </div>
+
+              {/* Advanced Filtering Panel */}
+              {showAdvanced && (
+                <div className="p-5 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-2xl shadow-sm space-y-5 animate-fade-scale">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+                    {/* Feeling selector */}
+                    <div>
+                      <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">
+                        Emotion / Feeling
+                      </label>
+                      <select
+                        value={selectedFeeling}
+                        onChange={(e) => setSelectedFeeling(e.target.value)}
+                        className="w-full bg-gray-50 dark:bg-slate-950 border border-gray-200 dark:border-slate-800 rounded-xl p-3 text-sm text-gray-700 dark:text-gray-200 outline-none focus:ring-2 focus:ring-blue-500 transition"
+                      >
+                        {feelingsList.map((f) => (
+                          <option key={f} value={f}>
+                            {f === "All" ? "Any Emotion" : f}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    {/* Start Date */}
+                    <div>
+                      <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">
+                        From Date
+                      </label>
+                      <input
+                        type="date"
+                        value={startDate}
+                        onChange={(e) => setStartDate(e.target.value)}
+                        className="w-full bg-gray-50 dark:bg-slate-950 border border-gray-200 dark:border-slate-800 rounded-xl p-3 text-sm text-gray-700 dark:text-gray-200 outline-none focus:ring-2 focus:ring-blue-500 transition"
+                      />
+                    </div>
+
+                    {/* End Date */}
+                    <div>
+                      <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">
+                        To Date
+                      </label>
+                      <input
+                        type="date"
+                        value={endDate}
+                        onChange={(e) => setEndDate(e.target.value)}
+                        className="w-full bg-gray-50 dark:bg-slate-950 border border-gray-200 dark:border-slate-800 rounded-xl p-3 text-sm text-gray-700 dark:text-gray-200 outline-none focus:ring-2 focus:ring-blue-500 transition"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Dynamic Hashtag Pills */}
+                  {allHashtags.length > 0 && (
+                    <div>
+                      <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">
+                        Hashtags in your notes
+                      </label>
+                      <div className="flex flex-wrap gap-2">
+                        {allHashtags.map((tag) => {
+                          const isSelected = selectedTag === tag;
+                          return (
+                            <button
+                              key={tag}
+                              onClick={() => setSelectedTag(isSelected ? "" : tag)}
+                              className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all ${
+                                isSelected
+                                  ? "bg-blue-600 border-blue-600 text-white shadow-sm"
+                                  : "bg-gray-50 border-gray-200 text-gray-600 hover:bg-gray-100 dark:bg-slate-950 dark:border-slate-800 dark:text-slate-400 dark:hover:bg-slate-800"
+                              }`}
+                            >
+                              {tag}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Reset controls */}
+                  {(selectedFeeling !== "All" || selectedTag || startDate || endDate || searchQuery) && (
+                    <div className="flex justify-end pt-2 border-t border-gray-100 dark:border-slate-800">
+                      <button
+                        onClick={() => {
+                          setSelectedFeeling("All");
+                          setSelectedTag("");
+                          setStartDate("");
+                          setEndDate("");
+                          setSearchQuery("");
+                        }}
+                        className="text-xs text-red-500 hover:text-red-700 font-bold transition flex items-center gap-1.5"
+                      >
+                        <span>🗑️</span>
+                        <span>Clear All Filters</span>
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* Categories */}
+            <div className="flex flex-wrap gap-3">
+              {categories.map((category) => (
+                <button
+                  key={category}
+                  onClick={() => setSelectedCategory(category)}
+                  className={`px-4 py-2 rounded-full text-sm font-medium transition ${
+                    selectedCategory === category
+                      ? "bg-blue-600 text-white"
+                      : "bg-gray-200 dark:bg-slate-800 text-gray-700 dark:text-gray-300 hover:bg-blue-100 dark:hover:bg-slate-700"
+                  }`}
+                >
+                  {category}
+                </button>
+              ))}
+            </div>
+
+            {/* Notes Grid */}
+            {loading ? (
+              <p className="text-gray-500 dark:text-slate-400">Loading...</p>
+            ) : filteredNotes.length === 0 ? (
+              <p className="text-gray-500 dark:text-slate-400">No notes found.</p>
+            ) : (
+              <div className="grid md:grid-cols-2 gap-6">
+                {filteredNotes.map((note) => (
+                  <NoteCard
+                    key={note.id}
+                    note={note}
+                    onDelete={handleDeleteNote}
+                    onPin={handlePin}
+                    onFavorite={handleFavorite}
+                    onLock={handleLock}
+                    onRestore={handleRestore}
+                    isSessionUnlocked={sessionUnlockedIds.has(note.id)}
+                    onEdit={(noteToEdit) => {
+                      setEditingNote(noteToEdit);
+                      setShowModal(true);
+                    }}
+                    mode="dashboard"
+                  />
+                ))}
+              </div>
+            )}
           </div>
-        )}
+
+          {/* Sidebar Area: Mood Analysis & Trending Tags */}
+          <div className="space-y-6">
+            
+            {/* Mood Analysis */}
+            <div className="bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm">
+              <h2 className="text-lg font-bold text-gray-950 dark:text-white mb-4 flex items-center gap-2">
+                📈 Mood Analysis
+              </h2>
+              <div className="space-y-4">
+                {Object.entries(moodCounts).map(([mood, count]) => {
+                  const percent = Math.round((count / maxMoodCount) * 100);
+                  return (
+                    <div key={mood} className="space-y-1">
+                      <div className="flex justify-between text-sm font-medium text-gray-700 dark:text-gray-300">
+                        <span>{moodIcons[mood] || "😐"} {mood}</span>
+                        <span className="text-gray-400 font-semibold">{count}</span>
+                      </div>
+                      <div className="w-full bg-gray-100 dark:bg-slate-800 h-2 rounded-full overflow-hidden">
+                        <div
+                          className={`h-full ${moodColors[mood] || "bg-gray-500"} rounded-full transition-all duration-500`}
+                          style={{ width: `${percent}%` }}
+                        />
+                      </div>
+                    </div>
+                  );
+                })}
+                {Object.keys(moodCounts).length === 0 && (
+                  <p className="text-sm text-gray-400 dark:text-slate-500 italic">No moods analyzed yet.</p>
+                )}
+              </div>
+            </div>
+
+            {/* Trending Tags */}
+            <div className="bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm">
+              <h2 className="text-lg font-bold text-gray-950 dark:text-white mb-4 flex items-center gap-2">
+                🏷️ Trending Tags
+              </h2>
+              <div className="flex flex-wrap gap-2">
+                {trendingTags.map((tag) => (
+                  <span
+                    key={tag}
+                    className="rounded-full bg-violet-100 dark:bg-violet-900/30 px-3 py-1 text-sm font-medium text-violet-700 dark:text-violet-400 border border-violet-200/50 dark:border-violet-800/30"
+                  >
+                    #{tag}
+                  </span>
+                ))}
+                {trendingTags.length === 0 && (
+                  <p className="text-sm text-gray-400 dark:text-slate-500 italic">No tags found.</p>
+                )}
+              </div>
+            </div>
+
+          </div>
+
+        </div>
 
         {/* Modal */}
         {showModal && (

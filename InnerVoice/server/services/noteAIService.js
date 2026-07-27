@@ -36,41 +36,56 @@ Content:
 ${note.content}
 `;
 
-  // Run AI analysis
-  const result = await analyzeNoteWithAI(analyzePrompt(content));
+  try {
+    // Run AI analysis
+    const result = await analyzeNoteWithAI(analyzePrompt(content));
 
-  const ai = parseJSONSafely(result);
+    const ai = parseJSONSafely(result);
 
-  await pool.query(
-    `
-    UPDATE notes
-    SET
-      ai_title = ?,
-      ai_summary = ?,
-      mood = ?,
-      category = ?,
-      ai_tags = ?,
-      ai_confidence = ?
-    WHERE id = ?
-    `,
-    [
-      ai.title,
-      ai.summary,
-      ai.mood,
-      ai.category,
-      JSON.stringify(ai.tags),
-      ai.confidence,
-      noteId,
-    ]
-  );
+    await pool.query(
+      `
+      UPDATE notes
+      SET
+        ai_title = ?,
+        ai_summary = ?,
+        mood = ?,
+        category = ?,
+        ai_tags = ?,
+        ai_confidence = ?,
+        ai_status = 'completed'
+      WHERE id = ?
+      `,
+      [
+        ai.title,
+        ai.summary,
+        ai.mood,
+        ai.category,
+        JSON.stringify(ai.tags),
+        ai.confidence,
+        noteId,
+      ]
+    );
 
-  return {
-    ...note,
-    ai_title: ai.title,
-    ai_summary: ai.summary,
-    mood: ai.mood,
-    category: ai.category,
-    ai_tags: ai.tags,
-    ai_confidence: ai.confidence,
-  };
+    return {
+      ...note,
+      ai_title: ai.title,
+      ai_summary: ai.summary,
+      mood: ai.mood,
+      category: ai.category,
+      ai_tags: ai.tags,
+      ai_confidence: ai.confidence,
+      ai_status: "completed",
+    };
+  } catch (error) {
+    console.error(`AI analysis failed for note ${noteId}:`, error);
+    await pool.query(
+      `
+      UPDATE notes
+      SET ai_status = 'failed'
+      WHERE id = ?
+      `,
+      [noteId]
+    );
+    throw error;
+  }
 };

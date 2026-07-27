@@ -1,4 +1,6 @@
 import { Pencil, Trash2, Pin, Star, Lock, RotateCcw } from "lucide-react";
+import MoodBadge from "./MoodBadge";
+import Tag from "./Tag";
 
 function NoteCard({ note, onDelete, onEdit, onPin, onFavorite, onLock, onRestore, onDeleteForever, isSessionUnlocked = false, mode = "dashboard" }) {
   const categoryColors = {
@@ -170,7 +172,20 @@ function NoteCard({ note, onDelete, onEdit, onPin, onFavorite, onLock, onRestore
   };
 
   return (
-    <div className="bg-white dark:bg-slate-900 rounded-xl shadow-md hover:shadow-xl transition-all duration-300 p-5 border border-gray-200 dark:border-slate-700">
+    <div className="group bg-white dark:bg-slate-900 rounded-2xl border bg-white shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl p-5 border-gray-200 dark:border-slate-700">
+      
+      {/* Category and Mood Header */}
+      <div className="mb-4 flex items-center justify-between">
+        <span className="rounded-full bg-blue-100 dark:bg-blue-900/30 px-3 py-1 text-xs font-semibold text-blue-700 dark:text-blue-400">
+          📂 {note.category || "General"}
+        </span>
+
+        <MoodBadge
+          mood={note.mood}
+          confidence={null}
+        />
+      </div>
+
       {/* Header */}
       <div className="flex justify-between items-start mb-4">
         <div className="flex-1 pr-2">
@@ -178,27 +193,17 @@ function NoteCard({ note, onDelete, onEdit, onPin, onFavorite, onLock, onRestore
             {note.title}
           </h2>
 
-          {/* Badges */}
-          <div className="flex flex-wrap gap-2 mt-2">
-            <span
-              className={`px-3 py-1 text-xs font-semibold rounded-full ${
-                categoryColors[note.category] || categoryColors.General
-              }`}
-            >
-              {categoryEmojis[note.category] || "📒"}{" "}
-              {note.category || "General"}
-            </span>
+          {note.ai_title && (
+            <div className="mt-2 rounded-lg bg-violet-50 px-3 py-2 dark:bg-violet-900/20">
+              <p className="text-xs font-semibold uppercase tracking-wide text-violet-600 dark:text-violet-400">
+                AI Title
+              </p>
 
-            {note.feeling && (
-              <span
-                className={`px-3 py-1 text-xs font-semibold rounded-full ${
-                  feelingColors[note.feeling] || feelingColors.Neutral
-                }`}
-              >
-                {feelingEmojis[note.feeling] || "😊"} {note.feeling}
-              </span>
-            )}
-          </div>
+              <p className="text-sm font-medium text-violet-700 dark:text-violet-300">
+                🤖 {note.ai_title}
+              </p>
+            </div>
+          )}
         </div>
 
         {onLock && mode !== "trash" && (
@@ -277,6 +282,32 @@ function NoteCard({ note, onDelete, onEdit, onPin, onFavorite, onLock, onRestore
         <p className="text-gray-600 dark:text-gray-300 mb-6 line-clamp-4 leading-relaxed">
           {note.content}
         </p>
+      )}
+
+      {/* AI Tags */}
+      {Array.isArray(note.ai_tags) &&
+       note.ai_tags.length > 0 && (
+        <div className="mt-3 mb-4 flex flex-wrap gap-2">
+          {note.ai_tags.slice(0, 3).map((tag) => (
+            <Tag
+              key={tag}
+              text={tag}
+            />
+          ))}
+        </div>
+      )}
+
+      {/* AI Status Indicator */}
+      {note.ai_status === "pending" && (
+        <div className="mt-3 mb-4 rounded-lg bg-yellow-100 px-3 py-2 text-sm text-yellow-700">
+          ✨ AI is analyzing...
+        </div>
+      )}
+
+      {note.ai_status === "failed" && (
+        <div className="mt-3 mb-4 rounded-lg bg-red-100 px-3 py-2 text-sm text-red-700">
+          ⚠ AI analysis failed
+        </div>
       )}
 
       {/* Deleted Date (Only in Trash Mode) */}

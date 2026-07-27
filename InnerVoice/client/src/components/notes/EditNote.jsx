@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Save } from "lucide-react";
+import AIInsights from "./AIInsights";
 
 function EditNote({ note, onClose, onSave }) {
   const [title, setTitle] = useState("");
