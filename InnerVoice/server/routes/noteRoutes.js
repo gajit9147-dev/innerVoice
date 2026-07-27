@@ -38,7 +38,10 @@ router.get("/test", (req, res) => {
 // ==========================
 // Notes
 // ==========================
-router.post("/", authMiddleware, createNote);
+import validate from "../middleware/validate.js";
+import { createNoteValidation } from "../validators/noteValidator.js";
+
+router.post("/", authMiddleware, createNoteValidation, validate, createNote);
 router.get("/", authMiddleware, getNotes);
 router.get("/search", authMiddleware, searchNotes);
 router.get("/trash", authMiddleware, getTrashNotes);
