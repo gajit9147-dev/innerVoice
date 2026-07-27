@@ -31,3 +31,7 @@ dist-ssr/
 # System files
 Thumbs.db
 desktop.ini
+
+# Test Coverage
+coverage/
+**/coverage/
