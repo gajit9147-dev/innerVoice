@@ -1,10 +1,15 @@
+import { errorResponse } from "../utils/apiResponse.js";
+
 export function notFound(req, res, _next) {
   res.status(404).json({ message: `Route not found: ${req.originalUrl}` });
 }
 
-export function errorHandler(err, _req, res, _next) {
-  const statusCode = res.statusCode && res.statusCode !== 200 ? res.statusCode : 500;
-  res.status(statusCode).json({
-    message: err.message || "Internal server error"
-  });
+export function errorHandler(err, req, res, next) {
+  console.error(err);
+
+  return errorResponse(
+    res,
+    err.message || "Internal Server Error",
+    err.statusCode || 500
+  );
 }
