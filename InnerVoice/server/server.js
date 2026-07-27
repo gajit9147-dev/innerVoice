@@ -13,6 +13,8 @@ import aiRoutes from "./routes/aiRoutes.js";
 import { notFound, errorHandler } from "./middleware/errorMiddleware.js";
 import liquidLogger from "./middleware/liquidLogger.js";
 import logger from "./utils/logger.js";
+import swaggerUi from "swagger-ui-express";
+import swaggerSpec from "./config/swagger.js";
 
 const app = express();
 
@@ -42,6 +44,7 @@ app.use((err, req, res, next) => {
 });
 
 // Routes
+app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 app.use("/api/auth", authRoutes);
 app.use("/api/notes", noteRoutes);
 app.use("/api/ai", aiRoutes);
