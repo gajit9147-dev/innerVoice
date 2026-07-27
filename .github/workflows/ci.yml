@@ -13,17 +13,17 @@ jobs:
     runs-on: ubuntu-latest
 
     # secrets context is NOT available inside 'services:' blocks on GitHub Actions.
-    # Use a hardcoded CI-only password for the ephemeral MySQL test container.
+    # Use a simple alphanumeric CI-only password — special chars like @ break --health-cmd.
     services:
       mysql:
         image: mysql:8.0
         env:
-          MYSQL_ROOT_PASSWORD: CI_Test@1234
+          MYSQL_ROOT_PASSWORD: CITestPass123
           MYSQL_DATABASE: innervoice
         ports:
           - 3306:3306
         options: >-
-          --health-cmd="mysqladmin ping -h localhost -u root --password=CI_Test@1234"
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -u root -pCITestPass123"
           --health-interval=10s
           --health-timeout=5s
           --health-retries=10
@@ -48,7 +48,7 @@ jobs:
 
       - name: 🗄️ Apply DB schema
         run: |
-          mysql -h 127.0.0.1 -P 3306 -u root -pCI_Test@1234 innervoice < ../docker/init.sql
+          mysql -h 127.0.0.1 -P 3306 -u root -pCITestPass123 innervoice < ../docker/init.sql
 
       - name: ✅ Run tests
         env:
@@ -57,7 +57,7 @@ jobs:
           DB_HOST: 127.0.0.1
           DB_PORT: 3306
           DB_USER: root
-          DB_PASSWORD: CI_Test@1234  # must match the service container password above
+          DB_PASSWORD: CITestPass123  # must match the service container password above
           DB_NAME: innervoice
           JWT_SECRET: ${{ secrets.JWT_SECRET }}
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
@@ -140,6 +140,24 @@ jobs:
     steps:
       - name: ⬇️ Checkout code
         uses: actions/checkout@v4
+
+      - name: 📄 Create stub .env.docker for compose validation
+        # server/.env.docker is gitignored — create a minimal stub so docker compose
+        # config can resolve the env_file reference without failing.
+        run: |
+          cat > InnerVoice/server/.env.docker << 'EOF'
+          PORT=5000
+          DB_HOST=db
+          DB_USER=root
+          DB_PASSWORD=test
+          DB_NAME=innervoice
+          DB_PORT=3306
+          JWT_SECRET=ci-stub-secret-for-validation-only
+          GEMINI_API_KEY=stub
+          CLOUDINARY_CLOUD_NAME=stub
+          CLOUDINARY_API_KEY=stub
+          CLOUDINARY_API_SECRET=stub
+          EOF
 
       - name: 🐳 Validate compose config
         run: docker compose -f InnerVoice/docker-compose.yml config --quiet
