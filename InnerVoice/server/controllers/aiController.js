@@ -203,9 +203,11 @@ export const generateTagsFromNote = async (req, res) => {
 export const analyzeNote = async (req, res) => {
   try {
     const { noteId } = req.params;
-    const note = await analyzeNoteById(noteId, req.user.id);
+    const userId = req.user.id;
 
-    return res.json({
+    const note = await analyzeNoteById(noteId, userId);
+
+    return res.status(200).json({
       success: true,
       note,
     });
@@ -214,7 +216,7 @@ export const analyzeNote = async (req, res) => {
 
     return res.status(500).json({
       success: false,
-      message: error.message === "Note not found." ? "Note not found." : "AI analysis failed.",
+      message: error.message || "AI analysis failed.",
     });
   }
 };

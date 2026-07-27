@@ -1,6 +1,7 @@
 import pool from "../config/db.js";
 import bcrypt from "bcryptjs";
 import fs from "fs";
+import { analyzeNoteById } from "../services/noteAIService.js";
 
 const logDebug = (msg) => {
   try {
@@ -47,10 +48,26 @@ export const createNote = async (req, res) => {
 
     const noteId = result.insertId;
 
-    res.status(201).json({
+    let aiNote;
+
+    try {
+      aiNote = await analyzeNoteById(noteId, userId);
+    } catch (aiError) {
+      console.error("AI Analysis Failed on creation:", aiError);
+
+      // Fetch the original note so the user still gets a successful response
+      const [rows] = await pool.query(
+        "SELECT * FROM notes WHERE id = ?",
+        [noteId]
+      );
+
+      aiNote = rows[0];
+    }
+
+    return res.status(201).json({
       success: true,
-      message: "Note created successfully",
-      noteId,
+      message: "Note created successfully.",
+      note: aiNote,
     });
   } catch (error) {
     console.error(error);
@@ -233,9 +250,29 @@ export const updateNote = async (req, res) => {
       });
     }
 
-    res.json({
+    let updatedNote;
+
+    try {
+      updatedNote = await analyzeNoteById(id, userId);
+    } catch (error) {
+      console.error("AI Update Failed:", error);
+
+      const [rows] = await pool.query(
+        `
+        SELECT *
+        FROM notes
+        WHERE id = ? AND user_id = ?
+        `,
+        [id, userId]
+      );
+
+      updatedNote = rows[0];
+    }
+
+    return res.json({
       success: true,
-      message: "Note updated successfully",
+      message: "Note updated successfully.",
+      note: updatedNote,
     });
   } catch (error) {
     console.error(error);

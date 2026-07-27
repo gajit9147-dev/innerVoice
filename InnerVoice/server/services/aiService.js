@@ -45,5 +45,15 @@ export const generateTags = async (prompt) => {
   return response.text;
 };
 
+export const analyzeNoteWithAI = async (prompt) => {
+  const response = await ai.models.generateContent({
+    model: "gemini-3.5-flash",
+    contents: prompt,
+  });
+
+  return response.text;
+};
+
+
 
 
