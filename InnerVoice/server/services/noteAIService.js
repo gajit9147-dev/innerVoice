@@ -1,18 +1,8 @@
 import pool from "../config/db.js";
 
-import { summarizePrompt } from "../prompts/summarizePrompt.js";
-import { moodPrompt } from "../prompts/moodPrompt.js";
-import { titlePrompt } from "../prompts/titlePrompt.js";
-import { categoryPrompt } from "../prompts/categoryPrompt.js";
-import { tagsPrompt } from "../prompts/tagsPrompt.js";
+import { analyzePrompt } from "../prompts/analyzePrompt.js";
 
-import {
-  generateSummary,
-  detectMood,
-  generateTitle,
-  detectCategory,
-  generateTags,
-} from "./aiService.js";
+import { analyzeNoteWithAI } from "./aiService.js";
 
 const parseJSONSafely = (text) => {
   let clean = text.trim();
@@ -46,27 +36,10 @@ Content:
 ${note.content}
 `;
 
-  // Run all AI tasks in parallel
-  const [
-    summaryText,
-    moodText,
-    titleText,
-    categoryText,
-    tagsText,
-  ] = await Promise.all([
-    generateSummary(summarizePrompt(content)),
-    detectMood(moodPrompt(content)),
-    generateTitle(titlePrompt(content)),
-    detectCategory(categoryPrompt(content)),
-    generateTags(tagsPrompt(content)),
-  ]);
+  // Run AI analysis
+  const result = await analyzeNoteWithAI(analyzePrompt(content));
 
-  const summary = summaryText;
-
-  const mood = parseJSONSafely(moodText);
-  const aiTitle = parseJSONSafely(titleText);
-  const category = parseJSONSafely(categoryText);
-  const tags = parseJSONSafely(tagsText);
+  const ai = parseJSONSafely(result);
 
   await pool.query(
     `
@@ -81,23 +54,23 @@ ${note.content}
     WHERE id = ?
     `,
     [
-      aiTitle.title,
-      summary,
-      mood.mood,
-      category.category,
-      JSON.stringify(tags.tags),
-      mood.confidence,
+      ai.title,
+      ai.summary,
+      ai.mood,
+      ai.category,
+      JSON.stringify(ai.tags),
+      ai.confidence,
       noteId,
     ]
   );
 
   return {
     ...note,
-    ai_title: aiTitle.title,
-    ai_summary: summary,
-    mood: mood.mood,
-    category: category.category,
-    ai_tags: tags.tags,
-    ai_confidence: mood.confidence,
+    ai_title: ai.title,
+    ai_summary: ai.summary,
+    mood: ai.mood,
+    category: ai.category,
+    ai_tags: ai.tags,
+    ai_confidence: ai.confidence,
   };
 };
