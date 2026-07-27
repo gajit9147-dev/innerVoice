@@ -1,0 +1,22 @@
+# Ignore these for ALL services (client, server) during docker build context
+**/node_modules
+**/dist
+**/dist-ssr
+**/.env
+**/.env.*
+**/coverage
+**/.git
+**/.gitignore
+**/logs
+**/*.log
+**/npm-debug.log*
+**/debug.log
+**/scratch
+**/.vscode
+**/README.md
+**/architecture.md
+**/database.md
+**/phase.md
+**/prompts.md
+**/security.md
+**/error-handling.md

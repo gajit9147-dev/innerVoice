@@ -5,7 +5,7 @@ import logger from "./utils/logger.js";
 const PORT = env.PORT || 5000;
 
 // Server start listener
-const server = app.listen(PORT, "127.0.0.1", () => {
+const server = app.listen(PORT, "0.0.0.0", () => {
   logger.info(`🚀 Server running on port ${PORT}`);
 });
 
