@@ -20,7 +20,7 @@ const COLORS = [
 
 function MoodChart({ data }) {
   return (
-    <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-md border border-gray-200 dark:border-slate-700 p-6">
+    <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-md border border-gray-200 dark:border-slate-700 p-6 flex-1">
       <h2 className="text-xl font-bold mb-6 text-gray-900 dark:text-white">
         😊 Mood Distribution
       </h2>
