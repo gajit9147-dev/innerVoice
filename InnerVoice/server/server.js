@@ -11,6 +11,7 @@ import adminRoutes from "./routes/adminRoutes.js";
 import aiRoutes from "./routes/aiRoutes.js";
 import { notFound, errorHandler } from "./middleware/errorMiddleware.js";
 import liquidLogger from "./middleware/liquidLogger.js";
+import logger from "./utils/logger.js";
 
 const app = express();
 
@@ -88,29 +89,28 @@ app.use(errorHandler);
 // Test MySQL Connection
 try {
   const connection = await pool.getConnection();
-  console.log("✅ MySQL Connected Successfully");
+  logger.info("✅ MySQL Connected Successfully");
   connection.release();
 } catch (error) {
-  console.error("❌ Database Connection Failed");
-  console.error(error.message);
+  logger.error("❌ Database Connection Failed: " + error.message);
 }
 
 const PORT = 5000;
 
 // Server start listener
 const server = app.listen(PORT, "127.0.0.1", () => {
-  console.log(`🚀 Server running on http://127.0.0.1:${PORT}`);
+  logger.info(`🚀 Server running on port ${PORT}`);
 });
 
 server.on("error", (err) => {
   if (err.code === "EADDRINUSE") {
-    console.error(`❌ Port ${PORT} is already in use. Please close the other process and restart.`);
+    logger.error(`❌ Port ${PORT} is already in use. Please close the other process and restart.`);
     process.exit(1);
   } else {
-    console.error("❌ Server Error:", err);
+    logger.error("❌ Server Error: " + (err.stack || err.message));
   }
 });
 
 server.on("listening", () => {
-  console.log("✅ Express is actually listening");
+  logger.info("✅ Express is actually listening");
 });

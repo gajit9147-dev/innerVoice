@@ -9,6 +9,7 @@ import jwt from "jsonwebtoken";      // Used to create & verify JWT tokens
 import pool from "../config/db.js";  // MySQL database connection pool
 import cloudinary from "../config/cloudinary.js";  // Cloudinary CDN for image uploads
 import streamifier from "streamifier";  // Converts a buffer into a readable stream for Cloudinary
+import logger from "../utils/logger.js";
 
 // =========================
 // SIGNUP
@@ -41,12 +42,14 @@ export const signup = async (req, res) => {
       [full_name, email, hashedPassword]
     );
 
+    logger.info(`New user registered: ${email}`);
+
     return res.status(201).json({
       success: true,
       message: "User registered successfully",
     });
   } catch (error) {
-    console.error("Signup Error:", error);
+    logger.error("Signup Error: " + (error.stack || error.message));
 
     return res.status(500).json({
       success: false,
@@ -64,8 +67,7 @@ export const login = async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    // Debug log — shows what email is being attempted
-    console.log("Login Email:", email);
+    logger.info(`Login attempt for ${email}`);
 
     // Look up the user by email
     const [rows] = await pool.query(
@@ -73,10 +75,9 @@ export const login = async (req, res) => {
       [email]
     );
 
-    console.log("Database Result:", rows);
-
     // If no user found, return 404
     if (rows.length === 0) {
+      logger.warn(`Failed login attempt (user not found) for ${email}`);
       return res.status(404).json({
         success: false,
         message: "User not found",
@@ -89,6 +90,7 @@ export const login = async (req, res) => {
     const isMatch = await bcrypt.compare(password, user.password);
 
     if (!isMatch) {
+      logger.warn(`Failed login attempt for ${email}`);
       return res.status(401).json({
         success: false,
         message: "Invalid password",
@@ -109,6 +111,8 @@ export const login = async (req, res) => {
       }
     );
 
+    logger.info(`User ${user.email} logged in`);
+
     // Return token + basic user info (no password)
     return res.status(200).json({
       success: true,
@@ -123,7 +127,7 @@ export const login = async (req, res) => {
       },
     });
   } catch (error) {
-    console.error("Login Error:", error);
+    logger.error("Login Error: " + (error.stack || error.message));
 
     return res.status(500).json({
       success: false,
