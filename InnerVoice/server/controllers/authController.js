@@ -20,6 +20,13 @@ export const signup = async (req, res) => {
   try {
     const { full_name, email, password } = req.body;
 
+    if (!full_name || !email || !password) {
+      return res.status(400).json({
+        success: false,
+        message: "Missing required fields",
+      });
+    }
+
     // Check if an account with this email already exists
     const [existingUser] = await pool.query(
       "SELECT id FROM users WHERE email = ?",
