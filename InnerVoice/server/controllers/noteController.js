@@ -45,10 +45,12 @@ export const createNote = async (req, res) => {
       [userId, title, content, category || "General", feeling || "Neutral", isLocked]
     );
 
+    const noteId = result.insertId;
+
     res.status(201).json({
       success: true,
       message: "Note created successfully",
-      noteId: result.insertId,
+      noteId,
     });
   } catch (error) {
     console.error(error);
