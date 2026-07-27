@@ -2,6 +2,7 @@ import pool from "../config/db.js";
 import bcrypt from "bcryptjs";
 import fs from "fs";
 import { analyzeNoteById } from "../services/noteAIService.js";
+import asyncHandler from "../utils/asyncHandler.js";
 
 const logDebug = (msg) => {
   try {
@@ -12,71 +13,62 @@ const logDebug = (msg) => {
 };
 
 // Create Note
-export const createNote = async (req, res) => {
-  try {
-    const { title, content, category, feeling, is_locked } = req.body;
-    const userId = req.user.id;
+export const createNote = asyncHandler(async (req, res) => {
+  const { title, content, category, feeling, is_locked } = req.body;
+  const userId = req.user.id;
 
-    if (!title || !content) {
-      return res.status(400).json({
-        success: false,
-        message: "Title and content are required",
-      });
-    }
-
-    const isLocked = is_locked ? 1 : 0;
-
-    if (isLocked === 1) {
-      const [userRows] = await pool.query(
-        "SELECT vault_pin FROM users WHERE id = ?",
-        [userId]
-      );
-      if (userRows.length === 0 || !userRows[0].vault_pin) {
-        return res.status(400).json({
-          success: false,
-          message: "Vault PIN not set. Please set a Vault PIN first.",
-          pinNotSet: true,
-        });
-      }
-    }
-
-    const [result] = await pool.query(
-      `INSERT INTO notes (user_id, title, content, category, feeling, is_locked)
-       VALUES (?, ?, ?, ?, ?, ?)`,
-      [userId, title, content, category || "General", feeling || "Neutral", isLocked]
-    );
-
-    const noteId = result.insertId;
-
-    // Run AI analysis automatically
-    analyzeNoteById(noteId, userId)
-      .then(() => {
-        console.log(`✅ AI analysis completed for note ${noteId}`);
-      })
-      .catch((err) => {
-        console.error(`❌ AI analysis failed for note ${noteId}`, err);
-      });
-
-    // Fetch the original note so the user gets a successful response
-    const [rows] = await pool.query(
-      "SELECT * FROM notes WHERE id = ?",
-      [noteId]
-    );
-
-    return res.status(201).json({
-      success: true,
-      message: "Note created successfully.",
-      note: rows[0],
-    });
-  } catch (error) {
-    console.error(error);
-
-    res.status(500).json({
+  if (!title || !content) {
+    return res.status(400).json({
       success: false,
-      message: "Server Error",
+      message: "Title and content are required",
     });
   }
-};
+
+  const isLocked = is_locked ? 1 : 0;
+
+  if (isLocked === 1) {
+    const [userRows] = await pool.query(
+      "SELECT vault_pin FROM users WHERE id = ?",
+      [userId]
+    );
+    if (userRows.length === 0 || !userRows[0].vault_pin) {
+      return res.status(400).json({
+        success: false,
+        message: "Vault PIN not set. Please set a Vault PIN first.",
+        pinNotSet: true,
+      });
+    }
+  }
+
+  const [result] = await pool.query(
+    `INSERT INTO notes (user_id, title, content, category, feeling, is_locked)
+     VALUES (?, ?, ?, ?, ?, ?)`,
+    [userId, title, content, category || "General", feeling || "Neutral", isLocked]
+  );
+
+  const noteId = result.insertId;
+
+  // Run AI analysis automatically
+  analyzeNoteById(noteId, userId)
+    .then(() => {
+      console.log(`✅ AI analysis completed for note ${noteId}`);
+    })
+    .catch((err) => {
+      console.error(`❌ AI analysis failed for note ${noteId}`, err);
+    });
+
+  // Fetch the original note so the user gets a successful response
+  const [rows] = await pool.query(
+    "SELECT * FROM notes WHERE id = ?",
+    [noteId]
+  );
+
+  return res.status(201).json({
+    success: true,
+    message: "Note created successfully.",
+    note: rows[0],
+  });
+});
 
 // Get All Notes
 export const getNotes = async (req, res) => {
