@@ -1,15 +1,16 @@
+import "dotenv/config";
+
 import express from "express";
-import noteRoutes from "./routes/noteRoutes.js";
 import cors from "cors";
-import dotenv from "dotenv";
+
+import noteRoutes from "./routes/noteRoutes.js";
 import pool from "./config/db.js";
 import authRoutes from "./routes/authRoutes.js";
 import profileRoutes from "./routes/profileRoutes.js";
 import adminRoutes from "./routes/adminRoutes.js";
+import aiRoutes from "./routes/aiRoutes.js";
 import { notFound, errorHandler } from "./middleware/errorMiddleware.js";
 import liquidLogger from "./middleware/liquidLogger.js";
-
-dotenv.config();
 
 const app = express();
 
@@ -41,6 +42,7 @@ app.use((err, req, res, next) => {
 // Routes
 app.use("/api/auth", authRoutes);
 app.use("/api/notes", noteRoutes);
+app.use("/api/ai", aiRoutes);
 app.use("/api/profile", profileRoutes);
 app.use("/api/admin", adminRoutes);
 
