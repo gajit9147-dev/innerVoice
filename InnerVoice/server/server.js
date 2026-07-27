@@ -1,4 +1,5 @@
 import "dotenv/config";
+import env from "./config/env.js";
 
 import express from "express";
 import cors from "cors";
@@ -95,7 +96,7 @@ try {
   logger.error("❌ Database Connection Failed: " + error.message);
 }
 
-const PORT = 5000;
+const PORT = env.PORT || 5000;
 
 // Server start listener
 const server = app.listen(PORT, "127.0.0.1", () => {
