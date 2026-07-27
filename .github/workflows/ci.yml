@@ -62,11 +62,11 @@ jobs:
           DB_USER: root
           DB_PASSWORD: CITestPass123  # must match the service container password above
           DB_NAME: innervoice
-          JWT_SECRET: ${{ secrets.JWT_SECRET }}
-          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
-          CLOUDINARY_CLOUD_NAME: ${{ secrets.CLOUDINARY_CLOUD_NAME }}
-          CLOUDINARY_API_KEY: ${{ secrets.CLOUDINARY_API_KEY }}
-          CLOUDINARY_API_SECRET: ${{ secrets.CLOUDINARY_API_SECRET }}
+          JWT_SECRET: 'ci-test-secure-jwt-secret-key-12345'
+          GEMINI_API_KEY: 'ci-test-gemini-key'
+          CLOUDINARY_CLOUD_NAME: 'ci-test-cloudinary-cloud-name'
+          CLOUDINARY_API_KEY: 'ci-test-cloudinary-api-key'
+          CLOUDINARY_API_SECRET: 'ci-test-cloudinary-api-secret'
         run: |
           npm test > test_output.log 2>&1 || (cat test_output.log && exit 1)
 
