@@ -1,6 +1,6 @@
 import express from "express";
-import { summarizeNote } from "../controllers/aiController.js";
 import authMiddleware from "../middleware/authMiddleware.js";
+import { summarizeNote } from "../controllers/aiController.js";
 
 const router = express.Router();
 
