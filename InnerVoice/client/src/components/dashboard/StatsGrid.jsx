@@ -2,9 +2,9 @@ import {
   BookOpen,
   Pin,
   Star,
-  Archive,
   Trash2,
-  Lock,
+  Sparkles,
+  Hourglass,
 } from "lucide-react";
 
 import StatsCard from "./StatsCard";
@@ -12,19 +12,11 @@ import StatsCard from "./StatsCard";
 function StatsGrid({ stats }) {
   return (
     <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-
       <StatsCard
         title="Total Notes"
         value={stats.total}
         icon={<BookOpen />}
         color="text-blue-500"
-      />
-
-      <StatsCard
-        title="Pinned"
-        value={stats.pinned}
-        icon={<Pin />}
-        color="text-cyan-500"
       />
 
       <StatsCard
@@ -35,10 +27,10 @@ function StatsGrid({ stats }) {
       />
 
       <StatsCard
-        title="Archived"
-        value={stats.archived}
-        icon={<Archive />}
-        color="text-purple-500"
+        title="Pinned"
+        value={stats.pinned}
+        icon={<Pin />}
+        color="text-cyan-500"
       />
 
       <StatsCard
@@ -49,12 +41,18 @@ function StatsGrid({ stats }) {
       />
 
       <StatsCard
-        title="Locked"
-        value={stats.locked}
-        icon={<Lock />}
-        color="text-green-500"
+        title="AI Completed"
+        value={stats.ai_completed || 0}
+        icon={<Sparkles />}
+        color="text-violet-500"
       />
 
+      <StatsCard
+        title="AI Pending"
+        value={stats.ai_pending || 0}
+        icon={<Hourglass />}
+        color="text-amber-500"
+      />
     </div>
   );
 }

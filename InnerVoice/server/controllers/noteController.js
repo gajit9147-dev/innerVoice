@@ -48,26 +48,25 @@ export const createNote = async (req, res) => {
 
     const noteId = result.insertId;
 
-    let aiNote;
+    // Run AI analysis automatically
+    analyzeNoteById(noteId, userId)
+      .then(() => {
+        console.log(`✅ AI analysis completed for note ${noteId}`);
+      })
+      .catch((err) => {
+        console.error(`❌ AI analysis failed for note ${noteId}`, err);
+      });
 
-    try {
-      aiNote = await analyzeNoteById(noteId, userId);
-    } catch (aiError) {
-      console.error("AI Analysis Failed on creation:", aiError);
-
-      // Fetch the original note so the user still gets a successful response
-      const [rows] = await pool.query(
-        "SELECT * FROM notes WHERE id = ?",
-        [noteId]
-      );
-
-      aiNote = rows[0];
-    }
+    // Fetch the original note so the user gets a successful response
+    const [rows] = await pool.query(
+      "SELECT * FROM notes WHERE id = ?",
+      [noteId]
+    );
 
     return res.status(201).json({
       success: true,
       message: "Note created successfully.",
-      note: aiNote,
+      note: rows[0],
     });
   } catch (error) {
     console.error(error);
@@ -969,7 +968,9 @@ export const getDashboardStats = async (req, res) => {
         COUNT(CASE WHEN is_favorite = 1 AND is_deleted = 0 THEN 1 END) AS favorite,
         COUNT(CASE WHEN is_archived = 1 AND is_deleted = 0 THEN 1 END) AS archived,
         COUNT(CASE WHEN is_deleted = 1 THEN 1 END) AS trash,
-        COUNT(CASE WHEN is_locked = 1 AND is_deleted = 0 THEN 1 END) AS locked
+        COUNT(CASE WHEN is_locked = 1 AND is_deleted = 0 THEN 1 END) AS locked,
+        COUNT(CASE WHEN ai_status = 'completed' AND is_deleted = 0 THEN 1 END) AS ai_completed,
+        COUNT(CASE WHEN ai_status = 'pending' AND is_deleted = 0 THEN 1 END) AS ai_pending
       FROM notes
       WHERE user_id = ?
       `,
