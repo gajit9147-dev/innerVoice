@@ -12,16 +12,18 @@ jobs:
     name: 🧪 Backend Tests
     runs-on: ubuntu-latest
 
+    # secrets context is NOT available inside 'services:' blocks on GitHub Actions.
+    # Use a hardcoded CI-only password for the ephemeral MySQL test container.
     services:
       mysql:
         image: mysql:8.0
         env:
-          MYSQL_ROOT_PASSWORD: ${{ secrets.DB_PASSWORD }}
+          MYSQL_ROOT_PASSWORD: CI_Test@1234
           MYSQL_DATABASE: innervoice
         ports:
           - 3306:3306
         options: >-
-          --health-cmd="mysqladmin ping -h localhost -u root --password=${{ secrets.DB_PASSWORD }}"
+          --health-cmd="mysqladmin ping -h localhost -u root --password=CI_Test@1234"
           --health-interval=10s
           --health-timeout=5s
           --health-retries=10
@@ -46,7 +48,7 @@ jobs:
 
       - name: 🗄️ Apply DB schema
         run: |
-          mysql -h 127.0.0.1 -P 3306 -u root -p"${{ secrets.DB_PASSWORD }}" innervoice < ../docker/init.sql
+          mysql -h 127.0.0.1 -P 3306 -u root -pCI_Test@1234 innervoice < ../docker/init.sql
 
       - name: ✅ Run tests
         env:
@@ -55,7 +57,7 @@ jobs:
           DB_HOST: 127.0.0.1
           DB_PORT: 3306
           DB_USER: root
-          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+          DB_PASSWORD: CI_Test@1234  # must match the service container password above
           DB_NAME: innervoice
           JWT_SECRET: ${{ secrets.JWT_SECRET }}
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
