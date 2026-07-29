@@ -3,11 +3,16 @@ import app from "../../app.js";
 import pool from "../../config/db.js";
 
 describe("POST /api/auth/signup", () => {
+  const testEmail = `test_${Date.now()}_signup@example.com`;
+
   afterAll(async () => {
+    try {
+      await pool.query("DELETE FROM users WHERE email = ?", [testEmail]);
+    } catch (e) {
+      // Ignore if pool already closed or user not found
+    }
     await pool.end();
   });
-
-  const testEmail = `test_${Date.now()}_signup@example.com`;
 
   test("should register a user successfully", async () => {
     const res = await request(app)
