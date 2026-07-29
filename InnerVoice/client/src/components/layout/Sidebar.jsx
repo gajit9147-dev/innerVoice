@@ -29,7 +29,7 @@ function Sidebar({ onClose }) {
 
   const readUser = () => {
     const userStr = localStorage.getItem("user");
-    return userStr ? JSON.parse(userStr) : { full_name: "Guest", email: "guest@example.com" };
+    return userStr ? JSON.parse(userStr) : { full_name: "User", email: "" };
   };
 
   const [user, setUser] = useState(readUser);
