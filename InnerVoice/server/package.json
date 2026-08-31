@@ -5,7 +5,7 @@
   "type": "module",
   "main": "server.js",
   "scripts": {
-    "dev": "nodemon server.js",
+    "dev": "nodemon --watch . --ignore logs --ignore node_modules server.js",
     "start": "node server.js",
     "test": "cross-env NODE_OPTIONS=--experimental-vm-modules jest --runInBand",
     "test:coverage": "cross-env NODE_OPTIONS=--experimental-vm-modules jest --coverage --runInBand"
