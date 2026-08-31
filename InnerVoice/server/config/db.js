@@ -26,11 +26,53 @@ const convertPlaceholders = (sql) => {
   });
 };
 
+const BOOLEAN_COLUMNS = ["is_locked", "is_pinned", "is_favorite", "is_deleted"];
+
+const normalizeBooleanParams = (sql, params) => {
+  if (!Array.isArray(params) || params.length === 0) {
+    return params;
+  }
+
+  const placeholders = [...sql.matchAll(/\?/g)];
+  const normalized = [...params];
+
+  for (let index = 0; index < normalized.length; index += 1) {
+    const value = normalized[index];
+
+    if (value !== 0 && value !== 1) {
+      continue;
+    }
+
+    const placeholder = placeholders[index];
+    if (!placeholder) {
+      continue;
+    }
+
+    const placeholderIndex = placeholder.index;
+    const contextStart = Math.max(0, placeholderIndex - 120);
+    const contextEnd = Math.min(sql.length, placeholderIndex + 120);
+    const context = sql.slice(contextStart, contextEnd).toLowerCase();
+
+    const isBooleanAssignment = BOOLEAN_COLUMNS.some((column) => {
+      const pattern = new RegExp(`\\b${column}\\b\\s*(?:=|\\)|,|\\s*\\?)`, "i");
+      return pattern.test(context);
+    });
+
+    if (isBooleanAssignment) {
+      normalized[index] = value === 0 ? false : true;
+    }
+  }
+
+  return normalized;
+};
+
 // Compatibility wrapper so most existing controllers can continue using:
 // const [rows] = await pool.query(...)
 const pool = {
   async query(sql, params = []) {
-    const normalizedSql = convertPlaceholders(sql.trim());
+    const trimmedSql = sql.trim();
+    const normalizedSql = convertPlaceholders(trimmedSql);
+    const normalizedParams = normalizeBooleanParams(trimmedSql, params);
 
     const isSelect = /^\s*(SELECT|SHOW|DESCRIBE|WITH)\b/i.test(normalizedSql);
 
@@ -47,7 +89,7 @@ const pool = {
       querySql = `${normalizedSql.replace(/;$/, "")} RETURNING id`;
     }
 
-    const result = await pgPool.query(querySql, params);
+    const result = await pgPool.query(querySql, normalizedParams);
 
     if (isSelect) {
       return [result.rows];
