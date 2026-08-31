@@ -1,90 +1,37 @@
-import pg from "pg";
+import mysql from "mysql2/promise";
 import env from "./env.js";
+import { execSync } from "child_process";
+import fs from "fs";
 
-const { Pool } = pg;
+// Detect if we are running in WSL
+const isWSL = process.platform === "linux" && 
+  (fs.existsSync("/proc/sys/fs/binfmt_misc/WSLInterop") || 
+   process.env.WSL_DISTRO_NAME !== undefined);
 
-// PostgreSQL connection pool
-const pgPool = new Pool({
-  host: env.DB_HOST,
+let dbHost = env.DB_HOST;
+
+if (isWSL && (dbHost === "localhost" || dbHost === "127.0.0.1")) {
+  try {
+    const routeInfo = execSync("ip route", { encoding: "utf8" });
+    const match = routeInfo.match(/default via (\S+)/);
+    if (match && match[1]) {
+      dbHost = match[1];
+      console.log(`[WSL Database Connection] Dynamic DB_HOST resolved to Windows host IP: ${dbHost}`);
+    }
+  } catch (err) {
+    console.warn(`[WSL Database Connection] Failed to resolve WSL gateway: ${err.message}. Using default DB_HOST: ${dbHost}`);
+  }
+}
+
+const pool = mysql.createPool({
+  host: dbHost,
   user: env.DB_USER,
   password: env.DB_PASSWORD,
   database: env.DB_NAME,
-  port: Number(env.DB_PORT || 5432),
-  ssl:
-    process.env.NODE_ENV === "production"
-      ? { rejectUnauthorized: false }
-      : false,
+  port: env.DB_PORT || 3306,
+  waitForConnections: true,
+  connectionLimit: 10,
+  dateStrings: true,
 });
-
-// Convert MySQL-style ? placeholders to PostgreSQL $1, $2, $3...
-const convertPlaceholders = (sql) => {
-  let index = 0;
-
-  return sql.replace(/\?/g, () => {
-    index++;
-    return `$${index}`;
-  });
-};
-
-// Compatibility wrapper so most existing controllers can continue using:
-// const [rows] = await pool.query(...)
-const pool = {
-  async query(sql, params = []) {
-    const normalizedSql = convertPlaceholders(sql.trim());
-
-    const isSelect = /^\s*(SELECT|SHOW|DESCRIBE|WITH)\b/i.test(normalizedSql);
-
-    const isInsert = /^\s*INSERT\b/i.test(normalizedSql);
-
-    const isUpdate = /^\s*UPDATE\b/i.test(normalizedSql);
-
-    const isDelete = /^\s*DELETE\b/i.test(normalizedSql);
-
-    let querySql = normalizedSql;
-
-    // PostgreSQL needs RETURNING id for insertId compatibility
-    if (isInsert && !/\bRETURNING\b/i.test(normalizedSql)) {
-      querySql = `${normalizedSql.replace(/;$/, "")} RETURNING id`;
-    }
-
-    const result = await pgPool.query(querySql, params);
-
-    if (isSelect) {
-      return [result.rows];
-    }
-
-    if (isInsert) {
-      return [
-        {
-          insertId: result.rows[0]?.id ?? null,
-          affectedRows: result.rowCount,
-        },
-      ];
-    }
-
-    if (isUpdate || isDelete) {
-      return [
-        {
-          affectedRows: result.rowCount,
-        },
-      ];
-    }
-
-    return [result.rows];
-  },
-
-  async getConnection() {
-    const client = await pgPool.connect();
-
-    return {
-      query: (...args) => client.query(...args),
-      release: () => client.release(),
-    };
-  },
-
-  async end() {
-    await pgPool.end();
-  },
-};
 
 export default pool;
