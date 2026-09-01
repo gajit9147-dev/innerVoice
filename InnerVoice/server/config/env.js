@@ -47,6 +47,10 @@ const envSchema = z.object({
   CLOUDINARY_API_KEY: z.string(),
 
   CLOUDINARY_API_SECRET: z.string(),
+
+  RESEND_API_KEY: z.string().optional(),
+
+  EMAIL_FROM: z.string().optional(),
 });
 
 const parsed = envSchema.safeParse(process.env);
