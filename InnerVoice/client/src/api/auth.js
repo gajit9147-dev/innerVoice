@@ -1,6 +1,8 @@
 import API from "./axios";
 
 export const signupUser = (userData) => API.post("/auth/signup", userData);
+export const verifySignupOTP = (data) =>
+  API.post("/auth/verify-signup-otp", data);
 
 export const loginUser = (userData) => API.post("/auth/login", userData);
 export const setVaultPin = (pin) =>
