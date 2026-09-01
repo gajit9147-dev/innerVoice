@@ -4,16 +4,17 @@
 //          Get/Update Profile, Set/Verify Vault PIN
 // ============================================================
 
-import bcrypt from "bcryptjs";      // Used to hash & compare passwords securely
-import jwt from "jsonwebtoken";      // Used to create & verify JWT tokens
-import pool from "../config/db.js";  // MySQL database connection pool
-import cloudinary from "../config/cloudinary.js";  // Cloudinary CDN for image uploads
-import streamifier from "streamifier";  // Converts a buffer into a readable stream for Cloudinary
+import bcrypt from "bcryptjs"; // Used to hash & compare passwords securely
+import jwt from "jsonwebtoken"; // Used to create & verify JWT tokens
+import pool from "../config/db.js"; // MySQL database connection pool
+import cloudinary from "../config/cloudinary.js"; // Cloudinary CDN for image uploads
+import streamifier from "streamifier"; // Converts a buffer into a readable stream for Cloudinary
 import logger from "../utils/logger.js";
+import { sendOTPEmail } from "../utils/emailService.js";
 
 // =========================
 // SIGNUP
-// Registers a new user account
+// Sends OTP to verify email before creating account
 // POST /api/auth/signup
 // =========================
 export const signup = async (req, res) => {
@@ -27,36 +28,182 @@ export const signup = async (req, res) => {
       });
     }
 
-    // Check if an account with this email already exists
+    const cleanEmail = email.trim().toLowerCase();
+
+    // Basic email format validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+    if (!emailRegex.test(cleanEmail)) {
+      return res.status(400).json({
+        success: false,
+        message: "Please enter a valid email address.",
+      });
+    }
+
+    // Check if account already exists
     const [existingUser] = await pool.query(
       "SELECT id FROM users WHERE email = ?",
-      [email]
+      [cleanEmail],
     );
 
     if (existingUser.length > 0) {
       return res.status(400).json({
         success: false,
-        message: "User already exists",
+        message: "An account with this email already exists.",
       });
     }
 
-    // Hash the password with bcrypt (saltRounds = 10) before saving
-    const hashedPassword = await bcrypt.hash(password, 10);
+    // Generate a secure 6-digit OTP
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
 
-    // Insert the new user into the database
+    // Hash OTP before storing it
+    const otpHash = await bcrypt.hash(otp, 10);
+
+    // OTP expires after 10 minutes
+    const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
+
+    // Remove previous signup OTPs for this email
+    await pool.query("DELETE FROM email_otps WHERE email = ? AND purpose = ?", [
+      cleanEmail,
+      "signup",
+    ]);
+
+    // Store hashed OTP
     await pool.query(
-      "INSERT INTO users (full_name, email, password) VALUES (?, ?, ?)",
-      [full_name, email, hashedPassword]
+      `INSERT INTO email_otps
+       (email, otp_hash, purpose, expires_at)
+       VALUES (?, ?, ?, ?)`,
+      [cleanEmail, otpHash, "signup", expiresAt],
     );
 
-    logger.info(`New user registered: ${email}`);
+    // Send OTP to email
+    await sendOTPEmail(cleanEmail, otp, "signup");
 
-    return res.status(201).json({
+    logger.info(`Signup OTP sent to ${cleanEmail}`);
+
+    return res.status(200).json({
       success: true,
-      message: "User registered successfully",
+      message:
+        "OTP sent to your email. Please verify your email to complete signup.",
+      email: cleanEmail,
     });
   } catch (error) {
     logger.error("Signup Error: " + (error.stack || error.message));
+
+    return res.status(500).json({
+      success: false,
+      message: "Failed to send verification OTP.",
+    });
+  }
+};
+
+// =========================
+// VERIFY SIGNUP OTP
+// POST /api/auth/verify-signup-otp
+// =========================
+export const verifySignupOTP = async (req, res) => {
+  try {
+    const { full_name, email, password, otp } = req.body;
+
+    if (!full_name || !email || !password || !otp) {
+      return res.status(400).json({
+        success: false,
+        message: "All fields are required.",
+      });
+    }
+
+    const cleanEmail = email.trim().toLowerCase();
+
+    // Find the latest signup OTP
+    const [rows] = await pool.query(
+      `SELECT * FROM email_otps
+       WHERE email = ? AND purpose = ?
+       ORDER BY created_at DESC
+       LIMIT 1`,
+      [cleanEmail, "signup"],
+    );
+
+    if (rows.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: "OTP not found. Please request a new OTP.",
+      });
+    }
+
+    const otpRecord = rows[0];
+
+    // Check OTP expiration
+    if (new Date(otpRecord.expires_at) < new Date()) {
+      await pool.query("DELETE FROM email_otps WHERE id = ?", [otpRecord.id]);
+
+      return res.status(400).json({
+        success: false,
+        message: "OTP has expired. Please request a new OTP.",
+      });
+    }
+
+    // Limit incorrect attempts
+    if (otpRecord.attempts >= 5) {
+      await pool.query("DELETE FROM email_otps WHERE id = ?", [otpRecord.id]);
+
+      return res.status(429).json({
+        success: false,
+        message: "Too many incorrect attempts. Please request a new OTP.",
+      });
+    }
+
+    // Check OTP
+    const isValidOTP = await bcrypt.compare(otp.toString(), otpRecord.otp_hash);
+
+    if (!isValidOTP) {
+      await pool.query(
+        "UPDATE email_otps SET attempts = attempts + 1 WHERE id = ?",
+        [otpRecord.id],
+      );
+
+      return res.status(400).json({
+        success: false,
+        message: "Invalid OTP.",
+      });
+    }
+
+    // Make sure the email wasn't registered while verification was pending
+    const [existingUser] = await pool.query(
+      "SELECT id FROM users WHERE email = ?",
+      [cleanEmail],
+    );
+
+    if (existingUser.length > 0) {
+      await pool.query("DELETE FROM email_otps WHERE id = ?", [otpRecord.id]);
+
+      return res.status(400).json({
+        success: false,
+        message: "An account with this email already exists.",
+      });
+    }
+
+    // Hash password before storing
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    // Create the account only after successful OTP verification
+    await pool.query(
+      `INSERT INTO users
+       (full_name, email, password)
+       VALUES (?, ?, ?)`,
+      [full_name, cleanEmail, hashedPassword],
+    );
+
+    // Delete used OTP
+    await pool.query("DELETE FROM email_otps WHERE id = ?", [otpRecord.id]);
+
+    logger.info(`Email verified and user registered: ${cleanEmail}`);
+
+    return res.status(201).json({
+      success: true,
+      message: "Email verified and account created successfully.",
+    });
+  } catch (error) {
+    logger.error("Verify Signup OTP Error: " + (error.stack || error.message));
 
     return res.status(500).json({
       success: false,
@@ -77,10 +224,9 @@ export const login = async (req, res) => {
     logger.info(`Login attempt for ${email}`);
 
     // Look up the user by email
-    const [rows] = await pool.query(
-      "SELECT * FROM users WHERE email = ?",
-      [email]
-    );
+    const [rows] = await pool.query("SELECT * FROM users WHERE email = ?", [
+      email,
+    ]);
 
     // If no user found, return 404
     if (rows.length === 0) {
@@ -112,10 +258,10 @@ export const login = async (req, res) => {
         email: user.email,
         role: user.role,
       },
-      process.env.JWT_SECRET,  // Secret key from .env file
+      process.env.JWT_SECRET, // Secret key from .env file
       {
         expiresIn: "7d",
-      }
+      },
     );
 
     logger.info(`User ${user.email} logged in`);
@@ -164,12 +310,12 @@ export const uploadProfileImage = async (req, res) => {
       new Promise((resolve, reject) => {
         const stream = cloudinary.uploader.upload_stream(
           {
-            folder: "innervoice/profile-images",  // Folder inside Cloudinary
+            folder: "innervoice/profile-images", // Folder inside Cloudinary
           },
           (error, result) => {
             if (error) return reject(error);
-            resolve(result);  // result.secure_url = the CDN image URL
-          }
+            resolve(result); // result.secure_url = the CDN image URL
+          },
         );
 
         // Convert req.file.buffer (in-memory file from multer) into a readable stream
@@ -179,10 +325,10 @@ export const uploadProfileImage = async (req, res) => {
     const result = await uploadFromBuffer();
 
     // Save the Cloudinary image URL to the user's record in MySQL
-    await pool.query(
-      "UPDATE users SET profile_image = ? WHERE id = ?",
-      [result.secure_url, req.user.id]
-    );
+    await pool.query("UPDATE users SET profile_image = ? WHERE id = ?", [
+      result.secure_url,
+      req.user.id,
+    ]);
 
     // Return the CDN URL so the frontend can display it immediately
     return res.json({
@@ -211,7 +357,7 @@ export const getProfile = async (req, res) => {
       `SELECT id, full_name, email, username, phone, bio, role, profile_image
        FROM users
        WHERE id = ?`,
-      [req.user.id]  // req.user is set by authMiddleware after JWT decode
+      [req.user.id], // req.user is set by authMiddleware after JWT decode
     );
 
     if (rows.length === 0) {
@@ -245,13 +391,14 @@ export const updateProfile = async (req, res) => {
     const { full_name, username, phone, bio } = req.body || {};
 
     // Treat empty/whitespace username as null (allow clearing it)
-    const cleanUsername = username && username.trim() !== "" ? username.trim() : null;
+    const cleanUsername =
+      username && username.trim() !== "" ? username.trim() : null;
 
     // If a new username is provided, make sure it's not taken by another user
     if (cleanUsername) {
       const [existingUser] = await pool.query(
         "SELECT id FROM users WHERE username = ? AND id != ?",
-        [cleanUsername, req.user.id]
+        [cleanUsername, req.user.id],
       );
 
       if (existingUser.length > 0) {
@@ -272,8 +419,8 @@ export const updateProfile = async (req, res) => {
         cleanUsername,
         phone || null,
         bio || null,
-        req.user.id
-      ]
+        req.user.id,
+      ],
     );
 
     // Re-fetch the updated row so the frontend gets fresh data
@@ -281,7 +428,7 @@ export const updateProfile = async (req, res) => {
       `SELECT id, full_name, email, username, phone, bio, profile_image, role
        FROM users
        WHERE id = ?`,
-      [req.user.id]
+      [req.user.id],
     );
 
     return res.status(200).json({
@@ -328,10 +475,10 @@ export const setVaultPin = async (req, res) => {
     const hashedPin = await bcrypt.hash(pin, 10);
 
     // Save the hashed PIN in the user's row
-    await pool.query(
-      "UPDATE users SET vault_pin = ? WHERE id = ?",
-      [hashedPin, req.user.id]
-    );
+    await pool.query("UPDATE users SET vault_pin = ? WHERE id = ?", [
+      hashedPin,
+      req.user.id,
+    ]);
 
     return res.json({
       success: true,
@@ -359,7 +506,7 @@ export const verifyVaultPin = async (req, res) => {
     // Fetch the stored hashed PIN for this user
     const [rows] = await pool.query(
       "SELECT vault_pin FROM users WHERE id = ?",
-      [req.user.id]
+      [req.user.id],
     );
 
     if (rows.length === 0) {

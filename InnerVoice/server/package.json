@@ -23,6 +23,7 @@
     "multer": "^2.2.0",
     "mysql2": "^3.23.0",
     "openai": "^6.49.0",
+    "resend": "^6.25.0",
     "streamifier": "^0.1.1",
     "swagger-jsdoc": "^6.3.0",
     "swagger-ui-express": "^5.0.1",

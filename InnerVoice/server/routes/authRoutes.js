@@ -4,6 +4,7 @@ import upload from "../middleware/upload.js";
 
 import {
   signup,
+  verifySignupOTP,
   login,
   uploadProfileImage,
   getProfile,
@@ -18,6 +19,7 @@ const router = express.Router();
 // AUTH ROUTES
 // =========================
 router.post("/signup", signup);
+router.post("/verify-signup-otp", verifySignupOTP);
 /**
  * @swagger
  * /api/auth/login:
