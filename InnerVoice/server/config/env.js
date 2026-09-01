@@ -1,6 +1,24 @@
 import "dotenv/config";
 import { z } from "zod";
 
+// Railway provides MySQL variables as MYSQLHOST, MYSQLUSER, etc.
+// Map them to our DB_* variables so the app works on Railway without manual config.
+if (process.env.MYSQLHOST && !process.env.DB_HOST) {
+  process.env.DB_HOST = process.env.MYSQLHOST;
+}
+if (process.env.MYSQLUSER && !process.env.DB_USER) {
+  process.env.DB_USER = process.env.MYSQLUSER;
+}
+if (process.env.MYSQLPASSWORD && !process.env.DB_PASSWORD) {
+  process.env.DB_PASSWORD = process.env.MYSQLPASSWORD;
+}
+if (process.env.MYSQLDATABASE && !process.env.DB_NAME) {
+  process.env.DB_NAME = process.env.MYSQLDATABASE;
+}
+if (process.env.MYSQLPORT && !process.env.DB_PORT) {
+  process.env.DB_PORT = process.env.MYSQLPORT;
+}
+
 const envSchema = z.object({
   PORT: z.string().default("5000"),
 
