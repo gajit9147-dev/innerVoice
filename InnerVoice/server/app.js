@@ -18,10 +18,20 @@ import swaggerSpec from "./config/swagger.js";
 
 const app = express();
 
-// Middleware
+// CORS — allow localhost for dev + CORS_ORIGIN env var for production (Railway)
+const allowedOrigins = [
+  "http://localhost:5173",
+  "http://127.0.0.1:5173",
+];
+if (process.env.CORS_ORIGIN) {
+  process.env.CORS_ORIGIN.split(",").forEach((origin) =>
+    allowedOrigins.push(origin.trim()),
+  );
+}
+
 app.use(
   cors({
-    origin: ["http://localhost:5173", "http://127.0.0.1:5173"],
+    origin: allowedOrigins,
     credentials: true,
   }),
 );
