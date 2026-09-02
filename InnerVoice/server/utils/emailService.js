@@ -1,4 +1,5 @@
 import nodemailer from "nodemailer";
+import dns from "node:dns";
 import logger from "./logger.js";
 
 const getEmailTransporter = () => {
@@ -9,20 +10,29 @@ const getEmailTransporter = () => {
     return null;
   }
 
+  const ipv4Lookup = (hostname, options, callback) => {
+    dns.lookup(hostname, { family: 4 }, callback);
+  };
+
   return nodemailer.createTransport({
     host: "smtp.gmail.com",
     port: 587,
     secure: false,
-    family: 4,
+    lookup: ipv4Lookup,
     auth: {
       user: emailUser,
       pass: emailPassword,
     },
     tls: {
+      servername: "smtp.gmail.com",
       rejectUnauthorized: true,
     },
+    connectionTimeout: 30000,
+    greetingTimeout: 30000,
+    socketTimeout: 60000,
   });
 };
+
 
 export const sendOTPEmail = async (email, otp, purpose = "signup") => {
   const subject =
