@@ -1,5 +1,12 @@
-import "dotenv/config";
+import dotenv from "dotenv";
+import path from "path";
+import { fileURLToPath } from "url";
 import { z } from "zod";
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+// Load both local server/.env and root .env
+dotenv.config({ path: path.resolve(__dirname, "../.env") });
+dotenv.config();
 
 // Railway provides MySQL variables as MYSQLHOST, MYSQLUSER, etc.
 // Map them to our DB_* variables so the app works on Railway without manual config.

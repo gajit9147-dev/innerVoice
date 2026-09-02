@@ -45,7 +45,8 @@ export function LiquidGlassProvider({ children }) {
 
   // ── Step 1: Fetch theme config containing both dark & light schemes ──
   useEffect(() => {
-    const apiBase = import.meta.env.VITE_API_URL || "";
+    const rawApi = (import.meta.env.VITE_API_URL || "").trim().replace(/\/+$/, "");
+    const apiBase = rawApi.endsWith("/api") ? rawApi.replace(/\/api$/, "") : rawApi;
     fetch(`${apiBase}/api/glass-theme`)
       .then((res) => res.json())
       .then((data) => {
