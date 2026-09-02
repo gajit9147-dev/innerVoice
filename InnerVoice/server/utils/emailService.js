@@ -2,6 +2,10 @@ import nodemailer from "nodemailer";
 import dns from "node:dns";
 import logger from "./logger.js";
 
+if (dns.setDefaultResultOrder) {
+  dns.setDefaultResultOrder("ipv4first");
+}
+
 const getEmailTransporter = () => {
   const emailUser = process.env.EMAIL_USER;
   const emailPassword = process.env.EMAIL_APP_PASSWORD;
@@ -11,8 +15,10 @@ const getEmailTransporter = () => {
   }
 
   const ipv4Lookup = (hostname, options, callback) => {
-    dns.lookup(hostname, { family: 4 }, callback);
+    const cb = typeof options === "function" ? options : callback;
+    dns.lookup(hostname, { family: 4 }, cb);
   };
+
 
   return nodemailer.createTransport({
     host: "smtp.gmail.com",
