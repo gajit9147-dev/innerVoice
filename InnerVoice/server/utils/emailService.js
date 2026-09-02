@@ -10,10 +10,16 @@ const getEmailTransporter = () => {
   }
 
   return nodemailer.createTransport({
-    service: "gmail",
+    host: "smtp.gmail.com",
+    port: 587,
+    secure: false,
+    family: 4,
     auth: {
       user: emailUser,
       pass: emailPassword,
+    },
+    tls: {
+      rejectUnauthorized: true,
     },
   });
 };
