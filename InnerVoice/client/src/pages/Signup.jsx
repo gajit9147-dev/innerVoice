@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { signupUser, verifySignupOTP } from "../api/auth";
+import { signupUser } from "../api/auth";
 
 function Signup() {
   const navigate = useNavigate();
@@ -11,10 +11,8 @@ function Signup() {
     password: "",
   });
 
-  const [otp, setOtp] = useState("");
-  const [step, setStep] = useState(1); // 1: Details, 2: OTP Verification
   const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState("");
+  const [error, setError] = useState("");
 
   const handleChange = (e) => {
     setFormData({
@@ -23,15 +21,15 @@ function Signup() {
     });
   };
 
-  const handleSendOTP = async (e) => {
+  const handleSignup = async (e) => {
     e.preventDefault();
-    setMessage("");
+    setError("");
     setLoading(true);
 
     try {
       const res = await signupUser(formData);
-      setMessage(res.data.message || "OTP sent to your email.");
-      setStep(2);
+      alert(res.data.message || "Account created successfully! Please log in.");
+      navigate("/login");
     } catch (err) {
       const errMsg =
         err.response?.data?.message || err.message || "Signup Failed";
@@ -42,29 +40,7 @@ function Signup() {
         return;
       }
 
-      alert(errMsg);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleVerifyOTP = async (e) => {
-    e.preventDefault();
-    setMessage("");
-    setLoading(true);
-
-    try {
-      const res = await verifySignupOTP({
-        ...formData,
-        otp: otp.trim(),
-      });
-
-      alert(res.data.message || "Account created successfully!");
-      navigate("/login");
-    } catch (err) {
-      const errMsg =
-        err.response?.data?.message || err.message || "Verification Failed";
-      alert(errMsg);
+      setError(errMsg);
     } finally {
       setLoading(false);
     }
@@ -78,106 +54,63 @@ function Signup() {
         </h1>
 
         <p className="text-center text-gray-400 mt-2">
-          {step === 1 ? "Create your account" : "Verify your email"}
+          Create your account
         </p>
 
-        {step === 1 ? (
-          <form onSubmit={handleSendOTP} className="mt-8 space-y-5">
-            <div>
-              <label className="text-gray-300 block mb-2">Full Name</label>
-              <input
-                type="text"
-                name="full_name"
-                value={formData.full_name}
-                onChange={handleChange}
-                placeholder="Enter your name"
-                className="w-full rounded-lg bg-slate-700 px-4 py-3 text-white"
-                required
-              />
-            </div>
-
-            <div>
-              <label className="text-gray-300 block mb-2">Email</label>
-              <input
-                type="email"
-                name="email"
-                value={formData.email}
-                onChange={handleChange}
-                placeholder="Enter your email"
-                className="w-full rounded-lg bg-slate-700 px-4 py-3 text-white"
-                required
-              />
-            </div>
-
-            <div>
-              <label className="text-gray-300 block mb-2">Password</label>
-              <input
-                type="password"
-                name="password"
-                value={formData.password}
-                onChange={handleChange}
-                placeholder="Enter password"
-                className="w-full rounded-lg bg-slate-700 px-4 py-3 text-white"
-                required
-              />
-            </div>
-
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full bg-cyan-500 hover:bg-cyan-600 disabled:opacity-50 transition py-3 rounded-lg font-semibold text-white"
-            >
-              {loading ? "Sending OTP..." : "Continue"}
-            </button>
-          </form>
-        ) : (
-          <form onSubmit={handleVerifyOTP} className="mt-8 space-y-5">
-            <div className="bg-slate-700/50 p-3 rounded-lg text-sm text-cyan-300 text-center">
-              Enter the 6-digit OTP sent to <strong>{formData.email}</strong>
-            </div>
-
-            <div>
-              <label className="text-gray-300 block mb-2">Verification Code (OTP)</label>
-              <input
-                type="text"
-                name="otp"
-                maxLength={6}
-                value={otp}
-                onChange={(e) => setOtp(e.target.value)}
-                placeholder="123456"
-                className="w-full text-center tracking-widest text-2xl font-mono rounded-lg bg-slate-700 px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-cyan-500"
-                required
-                autoFocus
-              />
-            </div>
-
-            <button
-              type="submit"
-              disabled={loading || otp.length < 6}
-              className="w-full bg-cyan-500 hover:bg-cyan-600 disabled:opacity-50 transition py-3 rounded-lg font-semibold text-white"
-            >
-              {loading ? "Verifying..." : "Verify & Create Account"}
-            </button>
-
-            <div className="flex justify-between items-center text-xs text-gray-400 mt-3">
-              <button
-                type="button"
-                onClick={() => setStep(1)}
-                className="text-gray-400 hover:text-white underline"
-              >
-                Change details
-              </button>
-              <button
-                type="button"
-                onClick={handleSendOTP}
-                disabled={loading}
-                className="text-cyan-400 hover:underline"
-              >
-                Resend OTP
-              </button>
-            </div>
-          </form>
+        {error && (
+          <div className="mt-4 p-3 bg-red-500/20 border border-red-500/50 rounded-lg text-red-300 text-sm text-center">
+            {error}
+          </div>
         )}
+
+        <form onSubmit={handleSignup} className="mt-6 space-y-5">
+          <div>
+            <label className="text-gray-300 block mb-2">Full Name</label>
+            <input
+              type="text"
+              name="full_name"
+              value={formData.full_name}
+              onChange={handleChange}
+              placeholder="Enter your name"
+              className="w-full rounded-lg bg-slate-700 px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-cyan-500"
+              required
+            />
+          </div>
+
+          <div>
+            <label className="text-gray-300 block mb-2">Email</label>
+            <input
+              type="email"
+              name="email"
+              value={formData.email}
+              onChange={handleChange}
+              placeholder="Enter your email"
+              className="w-full rounded-lg bg-slate-700 px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-cyan-500"
+              required
+            />
+          </div>
+
+          <div>
+            <label className="text-gray-300 block mb-2">Password</label>
+            <input
+              type="password"
+              name="password"
+              value={formData.password}
+              onChange={handleChange}
+              placeholder="Enter password"
+              className="w-full rounded-lg bg-slate-700 px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-cyan-500"
+              required
+            />
+          </div>
+
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full bg-cyan-500 hover:bg-cyan-600 disabled:opacity-50 transition py-3 rounded-lg font-semibold text-white"
+          >
+            {loading ? "Creating Account..." : "Sign Up"}
+          </button>
+        </form>
 
         <p className="text-center text-gray-400 mt-6">
           Already have an account?

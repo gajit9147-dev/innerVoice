@@ -14,7 +14,7 @@ import { sendOTPEmail } from "../utils/emailService.js";
 
 // =========================
 // SIGNUP
-// Sends OTP to verify email before creating account
+// Directly creates an account with email and password (no OTP required)
 // POST /api/auth/signup
 // =========================
 export const signup = async (req, res) => {
@@ -53,46 +53,30 @@ export const signup = async (req, res) => {
       });
     }
 
-    // Generate a secure 6-digit OTP
-    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    // Hash password securely
+    const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Hash OTP before storing it
-    const otpHash = await bcrypt.hash(otp, 10);
-
-    // OTP expires after 10 minutes
-    const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
-
-    // Remove previous signup OTPs for this email
-    await pool.query("DELETE FROM email_otps WHERE email = ? AND purpose = ?", [
-      cleanEmail,
-      "signup",
-    ]);
-
-    // Store hashed OTP
-    await pool.query(
-      `INSERT INTO email_otps
-       (email, otp_hash, purpose, expires_at)
-       VALUES (?, ?, ?, ?)`,
-      [cleanEmail, otpHash, "signup", expiresAt],
+    // Create user in database
+    const [result] = await pool.query(
+      `INSERT INTO users
+       (full_name, email, password)
+       VALUES (?, ?, ?)`,
+      [full_name.trim(), cleanEmail, hashedPassword],
     );
 
-    // Send OTP to email
-    await sendOTPEmail(cleanEmail, otp, "signup");
+    logger.info(`User registered successfully: ${cleanEmail}`);
 
-    logger.info(`Signup OTP sent to ${cleanEmail}`);
-
-    return res.status(200).json({
+    return res.status(201).json({
       success: true,
-      message:
-        "OTP sent to your email. Please verify your email to complete signup.",
-      email: cleanEmail,
+      message: "Account created successfully! Please log in.",
+      userId: result.insertId,
     });
   } catch (error) {
     logger.error("Signup Error: " + (error.stack || error.message));
 
     return res.status(500).json({
       success: false,
-      message: error.message || "Failed to send verification OTP.",
+      message: error.message || "Signup failed. Please try again.",
     });
   }
 };
