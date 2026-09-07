@@ -128,6 +128,22 @@ app.use(errorHandler);
 try {
   const connection = await pool.getConnection();
   logger.info("✅ Database Connected Successfully");
+
+  // Ensure email_otps table exists
+  await connection.query(`
+    CREATE TABLE IF NOT EXISTS email_otps (
+      id INT NOT NULL AUTO_INCREMENT,
+      email VARCHAR(255) NOT NULL,
+      otp_hash VARCHAR(255) NOT NULL,
+      purpose VARCHAR(50) NOT NULL DEFAULT 'signup',
+      attempts INT NOT NULL DEFAULT 0,
+      expires_at TIMESTAMP NOT NULL,
+      created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      PRIMARY KEY (id),
+      INDEX idx_email_purpose (email, purpose)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+  `);
+
   connection.release();
 } catch (error) {
   logger.warn(

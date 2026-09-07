@@ -92,7 +92,7 @@ export const signup = async (req, res) => {
 
     return res.status(500).json({
       success: false,
-      message: "Failed to send verification OTP.",
+      message: error.message || "Failed to send verification OTP.",
     });
   }
 };
