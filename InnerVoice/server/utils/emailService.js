@@ -7,7 +7,7 @@ if (dns.setDefaultResultOrder) {
   dns.setDefaultResultOrder("ipv4first");
 }
 
-const getEmailTransporter = () => {
+const getEmailTransporter = async () => {
   const emailUser = process.env.EMAIL_USER;
   const emailPassword = process.env.EMAIL_APP_PASSWORD;
 
@@ -17,23 +17,33 @@ const getEmailTransporter = () => {
 
   const port = parseInt(process.env.EMAIL_PORT || "465", 10);
   const isSecure = port === 465;
+  const smtpHost = process.env.EMAIL_HOST || "smtp.gmail.com";
 
-  const ipv4Lookup = (hostname, options, callback) => {
-    const cb = typeof options === "function" ? options : callback;
-    dns.lookup(hostname, { family: 4 }, cb);
-  };
+  // Force IPv4 by resolving hostname to IPv4 address before connecting.
+  // This completely prevents Nodemailer's internal resolver from randomly picking
+  // an IPv6 address in Docker/cloud environments that lack outbound IPv6 routing (ENETUNREACH).
+  let hostToConnect = smtpHost;
+  try {
+    const { address } = await dns.promises.lookup(smtpHost, { family: 4 });
+    if (address) {
+      hostToConnect = address;
+    }
+  } catch (dnsErr) {
+    logger.warn(
+      `Could not resolve IPv4 for ${smtpHost}: ${dnsErr.message}. Using hostname.`,
+    );
+  }
 
   return nodemailer.createTransport({
-    host: process.env.EMAIL_HOST || "smtp.gmail.com",
+    host: hostToConnect,
     port,
     secure: isSecure,
-    lookup: ipv4Lookup,
     auth: {
       user: emailUser,
       pass: emailPassword,
     },
     tls: {
-      servername: process.env.EMAIL_HOST || "smtp.gmail.com",
+      servername: smtpHost,
       rejectUnauthorized: true,
     },
     connectionTimeout: 15000,
@@ -97,20 +107,22 @@ export const sendOTPEmail = async (email, otp, purpose = "signup") => {
       });
 
       if (error) {
-        logger.error(`Resend API Error: ${JSON.stringify(error)}`);
-        throw new Error(error.message || "Failed to send OTP email via Resend");
+        logger.warn(
+          `Resend API Error: ${JSON.stringify(error)}. Trying SMTP fallback if configured...`,
+        );
+      } else {
+        logger.info(`OTP email sent successfully to ${email} via Resend`);
+        return data;
       }
-
-      logger.info(`OTP email sent successfully to ${email} via Resend`);
-      return data;
     } catch (resendErr) {
-      logger.error(`Resend sending error: ${resendErr.message}`);
-      throw new Error("Failed to send OTP email");
+      logger.warn(
+        `Resend sending error: ${resendErr.message}. Trying SMTP fallback if configured...`,
+      );
     }
   }
 
-  // 2. Try Nodemailer (Gmail SMTP Port 465 SSL/TLS)
-  const transporter = getEmailTransporter();
+  // 2. Try Nodemailer (Gmail SMTP Port 465 SSL/TLS over forced IPv4)
+  const transporter = await getEmailTransporter();
 
   if (!transporter) {
     logger.warn(

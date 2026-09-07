@@ -18,23 +18,44 @@ import swaggerSpec from "./config/swagger.js";
 
 const app = express();
 
-// CORS — allow localhost for dev + CORS_ORIGIN env var for production (Railway)
-const allowedOrigins = [
+// CORS — allow localhost for dev, Cloudflare Pages, Vercel, and CORS_ORIGIN env var
+const explicitOrigins = [
   "http://localhost:5173",
   "http://127.0.0.1:5173",
+  "http://localhost:3000",
+  "http://127.0.0.1:3000",
+  "https://innervoice-bt6.pages.dev",
 ];
+
 if (process.env.CORS_ORIGIN) {
-  process.env.CORS_ORIGIN.split(",").forEach((origin) =>
-    allowedOrigins.push(origin.trim()),
-  );
+  process.env.CORS_ORIGIN.split(",").forEach((origin) => {
+    const trimmed = origin.trim();
+    if (trimmed) explicitOrigins.push(trimmed);
+  });
 }
 
 app.use(
   cors({
-    origin: allowedOrigins,
+    origin: (origin, callback) => {
+      // Allow requests with no origin (like mobile apps, curl, or Postman)
+      if (!origin) return callback(null, true);
+
+      if (
+        explicitOrigins.includes(origin) ||
+        /\.pages\.dev$/.test(origin) ||
+        /\.vercel\.app$/.test(origin)
+      ) {
+        return callback(null, true);
+      }
+
+      callback(null, false);
+    },
     credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"],
   }),
 );
+
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
