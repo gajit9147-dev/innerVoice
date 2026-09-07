@@ -25,7 +25,7 @@ describe("POST /api/auth/signup", () => {
 
     expect(res.statusCode).toBe(201);
     expect(res.body.success).toBe(true);
-    expect(res.body.message).toBe("User registered successfully");
+    expect(res.body.message).toBe("Account created successfully! Please log in.");
   });
 
   test("should fail for duplicate email registration", async () => {
@@ -39,7 +39,7 @@ describe("POST /api/auth/signup", () => {
 
     expect(res.statusCode).toBe(400);
     expect(res.body.success).toBe(false);
-    expect(res.body.message).toBe("User already exists");
+    expect(res.body.message).toBe("An account with this email already exists.");
   });
 
   test("should fail when missing required fields", async () => {
