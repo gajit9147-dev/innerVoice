@@ -4,6 +4,7 @@ import { useAuth } from "../context/AuthContext";
 import SlimRail from "../components/layout/SlimRail";
 import NotebookSidebar from "../components/layout/NotebookSidebar";
 import Header from "../components/layout/Header";
+import CalendarView from "../components/calendar/CalendarView";
 import NoteDisplayCard from "../components/notes/NoteDisplayCard";
 import AudioVoiceMemo from "../components/notes/AudioVoiceMemo";
 import TagCard from "../components/notes/TagCard";
@@ -73,7 +74,7 @@ const DEFAULT_RECORDINGS = [
   },
 ];
 
-function Dashboard() {
+function Dashboard({ initialTab = "overview" }) {
   const navigate = useNavigate();
   const { user, logout } = useAuth();
   const [searchParams] = useSearchParams();
@@ -117,7 +118,28 @@ function Dashboard() {
     return false;
   });
   const [showAllNotesSection, setShowAllNotesSection] = useState(true);
-  const [activeTab, setActiveTab] = useState("overview");
+  const [activeTab, setActiveTab] = useState(initialTab);
+
+  // Synchronize activeTab when initialTab changes (e.g. navigation to /calendar or /dashboard)
+  useEffect(() => {
+    if (initialTab) {
+      setActiveTab(initialTab);
+    }
+  }, [initialTab]);
+
+  // Handle Dashboard Icon click in SlimRail:
+  // If on overview -> toggles sidebar open/closed smoothly (OPEN -> CLOSE -> OPEN -> CLOSE)
+  // If on calendar or other view -> navigates to overview and opens sidebar
+  const handleDashboardToggle = () => {
+    if (activeTab === "overview") {
+      setIsSidebarOpen((prev) => !prev);
+    } else {
+      setActiveTab("overview");
+      setIsDashboardOverview(true);
+      setIsSidebarOpen(true);
+      navigate("/dashboard");
+    }
+  };
 
   // Mobile drawer Escape key handler
   useEffect(() => {
@@ -694,13 +716,19 @@ function Dashboard() {
             activeTab={activeTab}
             onSelectTab={(tab) => {
               setActiveTab(tab);
-              setIsSidebarOpen(true);
-              if (tab === "notes") {
-                setShowAllNotesSection(true);
-              } else if (tab === "overview") {
-                handleSelectDashboard();
+              if (tab === "calendar") {
+                navigate("/calendar");
+              } else {
+                navigate("/dashboard");
+                setIsSidebarOpen(true);
+                if (tab === "notes") {
+                  setShowAllNotesSection(true);
+                } else if (tab === "overview") {
+                  handleSelectDashboard();
+                }
               }
             }}
+            onToggleDashboard={handleDashboardToggle}
             onToggleDrawer={() => setIsSidebarOpen((prev) => !prev)}
             onOpenNewNote={() => {
               setEditingNote(null);
@@ -726,51 +754,53 @@ function Dashboard() {
             isSidebarOpen
               ? "w-[85vw] max-w-xs sm:w-64 opacity-100 shadow-2xl lg:shadow-none pointer-events-auto"
               : "w-0 opacity-0 pointer-events-none"
-          } transition-all duration-300 shrink-0 overflow-hidden h-screen`}
+          } transition-all duration-300 ease-in-out shrink-0 overflow-hidden h-screen`}
         >
-          <NotebookSidebar
-            notebooks={notebooks}
-            selectedNotebook={selectedNotebook}
-            onSelectNotebook={(name) => {
-              handleSelectNotebook(name);
-              if (window.innerWidth < 1024) setIsSidebarOpen(false);
-            }}
-            selectedFolder={selectedFolder}
-            onSelectFolder={(folder) => {
-              handleSelectFolder(folder);
-              if (window.innerWidth < 1024) setIsSidebarOpen(false);
-            }}
-            selectedTag={selectedTag}
-            onSelectTag={(tag) => {
-              handleSelectTag(tag);
-              if (window.innerWidth < 1024) setIsSidebarOpen(false);
-            }}
-            onAddNewNotebook={handleAddNewNotebook}
-            onDeleteNotebook={handleDeleteNotebook}
-            notesCountByNotebook={notesCountByNotebook}
-            totalNotesCount={totalNotesCount}
-            starredNotesCount={starredNotesCount}
-            onSelectDashboard={() => {
-              handleSelectDashboard();
-              if (window.innerWidth < 1024) setIsSidebarOpen(false);
-            }}
-            isDashboardActive={isDashboardActive}
-            recordings={recordings}
-            activeRecordingId={activeRecording?.id}
-            onSelectRecording={(rec) => {
-              setActiveRecording(rec);
-              if (window.innerWidth < 1024) setIsSidebarOpen(false);
-            }}
-            onDeleteRecording={handleDeleteRecording}
-            isPlayingAudio={isPlayingAudio}
-            onClose={() => setIsSidebarOpen(false)}
-            onOpenGuide={() => setShowGuideModal(true)}
-            onOpenHelp={() => setShowHelpModal(true)}
-            onLogout={async () => {
-              await logout();
-              navigate("/login");
-            }}
-          />
+          <div className="w-[85vw] max-w-xs sm:w-64 min-w-[16rem] h-full">
+            <NotebookSidebar
+              notebooks={notebooks}
+              selectedNotebook={selectedNotebook}
+              onSelectNotebook={(name) => {
+                handleSelectNotebook(name);
+                if (window.innerWidth < 1024) setIsSidebarOpen(false);
+              }}
+              selectedFolder={selectedFolder}
+              onSelectFolder={(folder) => {
+                handleSelectFolder(folder);
+                if (window.innerWidth < 1024) setIsSidebarOpen(false);
+              }}
+              selectedTag={selectedTag}
+              onSelectTag={(tag) => {
+                handleSelectTag(tag);
+                if (window.innerWidth < 1024) setIsSidebarOpen(false);
+              }}
+              onAddNewNotebook={handleAddNewNotebook}
+              onDeleteNotebook={handleDeleteNotebook}
+              notesCountByNotebook={notesCountByNotebook}
+              totalNotesCount={totalNotesCount}
+              starredNotesCount={starredNotesCount}
+              onSelectDashboard={() => {
+                handleSelectDashboard();
+                if (window.innerWidth < 1024) setIsSidebarOpen(false);
+              }}
+              isDashboardActive={isDashboardActive}
+              recordings={recordings}
+              activeRecordingId={activeRecording?.id}
+              onSelectRecording={(rec) => {
+                setActiveRecording(rec);
+                if (window.innerWidth < 1024) setIsSidebarOpen(false);
+              }}
+              onDeleteRecording={handleDeleteRecording}
+              isPlayingAudio={isPlayingAudio}
+              onClose={() => setIsSidebarOpen(false)}
+              onOpenGuide={() => setShowGuideModal(true)}
+              onOpenHelp={() => setShowHelpModal(true)}
+              onLogout={async () => {
+                await logout();
+                navigate("/login");
+              }}
+            />
+          </div>
         </div>
 
         {/* 3. Main Center Note & Audio Workspace */}
@@ -785,162 +815,183 @@ function Dashboard() {
 
           {/* Scrollable Workspace Container */}
           <div className="flex-1 overflow-y-auto space-y-6 pt-2 pr-1 sm:pr-2 min-w-0">
-            {/* Note Title & Date Header */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 min-w-0">
-              <div className="min-w-0 flex-1">
-                <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-extrabold tracking-tight text-white drop-shadow-sm break-words">
-                  {displayTitle}
-                </h1>
-                <p className="text-xs sm:text-sm font-medium text-slate-400 mt-1">
-                  {displayDate}
-                </p>
-              </div>
-
-              {/* View Switchers & New Note */}
-              <div className="flex items-center gap-2 sm:gap-3 shrink-0 flex-wrap">
-                <button
-                  type="button"
-                  onClick={() => setShowAllNotesSection(!showAllNotesSection)}
-                  className="flex items-center gap-1.5 sm:gap-2 px-3 sm:px-3.5 py-2 rounded-xl bg-slate-900/80 hover:bg-slate-800 text-slate-200 border border-white/10 text-xs font-medium transition cursor-pointer min-h-[38px]"
-                >
-                  {showAllNotesSection ? <List size={15} /> : <Grid size={15} />}
-                  <span>{showAllNotesSection ? "Hide All Notes" : "View All Notes"}</span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => {
-                    setEditingNote(null);
-                    setShowModal(true);
-                  }}
-                  className="flex items-center gap-1.5 px-3.5 sm:px-4 py-2 rounded-xl bg-cyan-500/20 text-cyan-300 border border-cyan-400 hover:bg-cyan-500/30 text-xs font-semibold tracking-wide transition shadow-[0_0_16px_rgba(6,182,212,0.4)] cursor-pointer min-h-[38px]"
-                >
-                  <Plus size={15} />
-                  <span>New Note</span>
-                </button>
-              </div>
-            </div>
-
-            {/* Quick Note Switcher Pills in active notebook */}
-            {filteredNotes.length > 1 && (
-              <div className="flex items-center gap-2 overflow-x-auto pb-1 text-xs">
-                <span className="text-slate-400 shrink-0 font-medium">Entries:</span>
-                {filteredNotes.slice(0, 8).map((n) => (
-                  <button
-                    key={n.id}
-                    type="button"
-                    onClick={() => handleSelectActiveNote(n)}
-                    className={`px-3 py-1.5 rounded-lg truncate max-w-[160px] transition cursor-pointer shrink-0 ${
-                      activeNote?.id === n.id
-                        ? "bg-cyan-500/20 text-cyan-300 border border-cyan-400 shadow-[0_0_10px_rgba(6,182,212,0.3)]"
-                        : "bg-slate-900/60 text-slate-400 hover:text-white border border-white/5"
-                    }`}
-                  >
-                    {n.title || "Untitled"}
-                  </button>
-                ))}
-              </div>
-            )}
-
-            {/* Main 2-Column Cards Grid */}
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 sm:gap-6 items-start min-w-0">
-              {/* Left Card: Formatted Markdown Journal Card */}
-              <div className="lg:col-span-7 w-full min-w-0">
-                <NoteDisplayCard
-                  note={activeNote}
-                  onUpdateContent={handleQuickContentUpdate}
-                  onOpenFullEdit={() => {
-                    if (activeNote) {
-                      setEditingNote(activeNote);
-                      setShowModal(true);
-                    }
-                  }}
-                />
-              </div>
-
-              {/* Right Cards: Audio Voice Memo Card + Tag Card */}
-              <div className="lg:col-span-5 space-y-5 sm:space-y-6 w-full min-w-0">
-                <AudioVoiceMemo
-                  activeRecording={activeRecording}
-                  onSaveNewRecording={handleSaveNewRecording}
-                  onDeleteRecording={handleDeleteRecording}
-                  onAudioPlayStateChange={setIsPlayingAudio}
-                />
-
-                <TagCard
-                  tags={["reflection", "growth", "productivity"]}
-                  onAddTag={(tag) => console.log("Added tag:", tag)}
-                />
-              </div>
-            </div>
-
-            {/* Mobile and Tablet Journaling Insights (Stacked below main cards without horizontal scroll) */}
-            <div className="xl:hidden mt-8 pt-6 border-t border-white/10">
-              <JournalingInsights
-                stats={stats}
+            {activeTab === "calendar" ? (
+              <CalendarView
                 notes={notes}
-                isInline={true}
+                isLoading={loading}
+                onSelectNote={(note) => {
+                  handleSelectActiveNote(note);
+                  setActiveTab("overview");
+                  navigate("/dashboard");
+                }}
+                onNewNote={() => {
+                  setEditingNote(null);
+                  setShowModal(true);
+                }}
+                onRetry={fetchNotes}
               />
-            </div>
+            ) : (
+              <>
+                {/* Note Title & Date Header */}
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 min-w-0">
+                  <div className="min-w-0 flex-1">
+                    <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-extrabold tracking-tight text-white drop-shadow-sm break-words">
+                      {displayTitle}
+                    </h1>
+                    <p className="text-xs sm:text-sm font-medium text-slate-400 mt-1">
+                      {displayDate}
+                    </p>
+                  </div>
 
-            {/* All Notes Expandable Grid */}
-            {showAllNotesSection && (
-              <div className="mt-8 sm:mt-10 pt-6 border-t border-white/10 space-y-4">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                  <h3 className="text-base sm:text-lg font-bold text-white flex items-center gap-2">
-                    <Sparkles size={18} className="text-cyan-400" />
-                    <span>
-                      {selectedNotebook ? `${selectedNotebook} Notes` : "All Notes"} ({filteredNotes.length})
-                    </span>
-                  </h3>
-                  <span className="text-xs text-slate-400">
-                    Click any note to display it in the journal card
-                  </span>
+                  {/* View Switchers & New Note */}
+                  <div className="flex items-center gap-2 sm:gap-3 shrink-0 flex-wrap">
+                    <button
+                      type="button"
+                      onClick={() => setShowAllNotesSection(!showAllNotesSection)}
+                      className="flex items-center gap-1.5 sm:gap-2 px-3 sm:px-3.5 py-2 rounded-xl bg-slate-900/80 hover:bg-slate-800 text-slate-200 border border-white/10 text-xs font-medium transition cursor-pointer min-h-[38px]"
+                    >
+                      {showAllNotesSection ? <List size={15} /> : <Grid size={15} />}
+                      <span>{showAllNotesSection ? "Hide All Notes" : "View All Notes"}</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setEditingNote(null);
+                        setShowModal(true);
+                      }}
+                      className="flex items-center gap-1.5 px-3.5 sm:px-4 py-2 rounded-xl bg-cyan-500/20 text-cyan-300 border border-cyan-400 hover:bg-cyan-500/30 text-xs font-semibold tracking-wide transition shadow-[0_0_16px_rgba(6,182,212,0.4)] cursor-pointer min-h-[38px]"
+                    >
+                      <Plus size={15} />
+                      <span>New Note</span>
+                    </button>
+                  </div>
                 </div>
 
-                {filteredNotes.length === 0 ? (
-                  <div className="text-center py-10 sm:py-12 glass-panel rounded-2xl text-slate-400 text-xs sm:text-sm">
-                    No notes in this view yet. Click <strong>+ New Note</strong> to start writing!
-                  </div>
-                ) : (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-4 sm:gap-5">
-                    {filteredNotes.map((note) => (
-                      <div
-                        key={note.id}
-                        onClick={() => handleSelectActiveNote(note)}
-                        className={`cursor-pointer transition-all min-w-0 ${
-                          activeNote?.id === note.id
-                            ? "ring-2 ring-cyan-400 rounded-2xl"
-                            : ""
+                {/* Quick Note Switcher Pills in active notebook */}
+                {filteredNotes.length > 1 && (
+                  <div className="flex items-center gap-2 overflow-x-auto pb-1 text-xs">
+                    <span className="text-slate-400 shrink-0 font-medium">Entries:</span>
+                    {filteredNotes.slice(0, 8).map((n) => (
+                      <button
+                        key={n.id}
+                        type="button"
+                        onClick={() => handleSelectActiveNote(n)}
+                        className={`px-3 py-1.5 rounded-lg truncate max-w-[160px] transition cursor-pointer shrink-0 ${
+                          activeNote?.id === n.id
+                            ? "bg-cyan-500/20 text-cyan-300 border border-cyan-400 shadow-[0_0_10px_rgba(6,182,212,0.3)]"
+                            : "bg-slate-900/60 text-slate-400 hover:text-white border border-white/5"
                         }`}
                       >
-                        <NoteCard
-                          note={note}
-                          onDelete={handleDeleteNote}
-                          onEdit={(n) => {
-                            setEditingNote(n);
-                            setShowModal(true);
-                          }}
-                          onRestore={handleRestore}
-                          isTrash={filter === "trash"}
-                          onPin={handlePin}
-                          onFavorite={handleFavorite}
-                          onLock={handleLock}
-                          isUnlocked={sessionUnlockedIds.has(note.id)}
-                        />
-                      </div>
+                        {n.title || "Untitled"}
+                      </button>
                     ))}
                   </div>
                 )}
-              </div>
+
+                {/* Main 2-Column Cards Grid */}
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 sm:gap-6 items-start min-w-0">
+                  {/* Left Card: Formatted Markdown Journal Card */}
+                  <div className="lg:col-span-7 w-full min-w-0">
+                    <NoteDisplayCard
+                      note={activeNote}
+                      onUpdateContent={handleQuickContentUpdate}
+                      onOpenFullEdit={() => {
+                        if (activeNote) {
+                          setEditingNote(activeNote);
+                          setShowModal(true);
+                        }
+                      }}
+                    />
+                  </div>
+
+                  {/* Right Cards: Audio Voice Memo Card + Tag Card */}
+                  <div className="lg:col-span-5 space-y-5 sm:space-y-6 w-full min-w-0">
+                    <AudioVoiceMemo
+                      activeRecording={activeRecording}
+                      onSaveNewRecording={handleSaveNewRecording}
+                      onDeleteRecording={handleDeleteRecording}
+                      onAudioPlayStateChange={setIsPlayingAudio}
+                    />
+
+                    <TagCard
+                      tags={["reflection", "growth", "productivity"]}
+                      onAddTag={(tag) => console.log("Added tag:", tag)}
+                    />
+                  </div>
+                </div>
+
+                {/* Mobile and Tablet Journaling Insights (Stacked below main cards without horizontal scroll) */}
+                <div className="xl:hidden mt-8 pt-6 border-t border-white/10">
+                  <JournalingInsights
+                    stats={stats}
+                    notes={notes}
+                    isInline={true}
+                  />
+                </div>
+
+                {/* All Notes Expandable Grid */}
+                {showAllNotesSection && (
+                  <div className="mt-8 sm:mt-10 pt-6 border-t border-white/10 space-y-4">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                      <h3 className="text-base sm:text-lg font-bold text-white flex items-center gap-2">
+                        <Sparkles size={18} className="text-cyan-400" />
+                        <span>
+                          {selectedNotebook ? `${selectedNotebook} Notes` : "All Notes"} ({filteredNotes.length})
+                        </span>
+                      </h3>
+                      <span className="text-xs text-slate-400">
+                        Click any note to display it in the journal card
+                      </span>
+                    </div>
+
+                    {filteredNotes.length === 0 ? (
+                      <div className="text-center py-10 sm:py-12 glass-panel rounded-2xl text-slate-400 text-xs sm:text-sm">
+                        No notes in this view yet. Click <strong>+ New Note</strong> to start writing!
+                      </div>
+                    ) : (
+                      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-4 sm:gap-5">
+                        {filteredNotes.map((note) => (
+                          <div
+                            key={note.id}
+                            onClick={() => handleSelectActiveNote(note)}
+                            className={`cursor-pointer transition-all min-w-0 ${
+                              activeNote?.id === note.id
+                                ? "ring-2 ring-cyan-400 rounded-2xl"
+                                : ""
+                            }`}
+                          >
+                            <NoteCard
+                              note={note}
+                              onDelete={handleDeleteNote}
+                              onEdit={(n) => {
+                                setEditingNote(n);
+                                setShowModal(true);
+                              }}
+                              onRestore={handleRestore}
+                              isTrash={filter === "trash"}
+                              onPin={handlePin}
+                              onFavorite={handleFavorite}
+                              onLock={handleLock}
+                              isUnlocked={sessionUnlockedIds.has(note.id)}
+                            />
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </>
             )}
           </div>
         </main>
 
         {/* 4. Rightmost Column: Journaling Insights Analytics (Desktop only) */}
-        <div className="hidden xl:block border-l border-white/5 bg-[#070d15]/50 backdrop-blur-xl shrink-0">
-          <JournalingInsights stats={stats} notes={notes} isInline={false} />
-        </div>
+        {activeTab !== "calendar" && (
+          <div className="hidden xl:block border-l border-white/5 bg-[#070d15]/50 backdrop-blur-xl shrink-0">
+            <JournalingInsights stats={stats} notes={notes} isInline={false} />
+          </div>
+        )}
       </div>
 
       {/* Create / Edit Note Modal */}

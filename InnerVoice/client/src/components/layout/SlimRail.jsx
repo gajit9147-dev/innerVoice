@@ -17,6 +17,7 @@ export default function SlimRail({
   activeTab = "overview",
   onSelectTab,
   onToggleDrawer,
+  onToggleDashboard,
   onOpenNewNote,
   onOpenGuide,
   onOpenHelp,
@@ -62,21 +63,29 @@ export default function SlimRail({
           onClick={onToggleDrawer}
           className="p-2 text-slate-400 hover:text-cyan-400 hover:bg-white/5 rounded-xl transition-all cursor-pointer"
           title="Toggle Notebooks Sidebar"
+          aria-label="Toggle sidebar"
         >
           <Menu size={22} />
         </button>
 
         {/* Nav Items */}
         <div className="flex flex-col items-center gap-3 w-full px-2">
-          {/* Active Grid Launcher (Glowing cyan pill in reference image) */}
+          {/* Active Grid Launcher (Dashboard Icon) - Toggles sidebar when clicked */}
           <button
-            onClick={() => handleTabClick("overview")}
+            onClick={() => {
+              if (onToggleDashboard) {
+                onToggleDashboard();
+              } else {
+                handleTabClick("overview");
+              }
+            }}
             className={`w-11 h-11 rounded-xl flex items-center justify-center transition-all cursor-pointer ${
               activeTab === "overview"
                 ? "bg-cyan-500/20 text-cyan-300 border border-cyan-400 shadow-[0_0_18px_rgba(6,182,212,0.5)]"
                 : "text-slate-400 hover:text-cyan-300 hover:bg-white/5"
             }`}
-            title="Dashboard Overview"
+            title="Dashboard & Toggle Sidebar"
+            aria-label="Toggle sidebar"
           >
             <LayoutGrid size={20} />
           </button>
@@ -90,6 +99,7 @@ export default function SlimRail({
                 : "text-slate-400 hover:text-cyan-300 hover:bg-white/5"
             }`}
             title="Browse All Notes"
+            aria-label="Browse all notes"
           >
             <Layers size={20} />
           </button>
@@ -106,6 +116,7 @@ export default function SlimRail({
                 : "text-slate-400 hover:text-cyan-300 hover:bg-white/5"
             }`}
             title="Create New Note"
+            aria-label="Create new note"
           >
             <PenTool size={19} />
           </button>
@@ -119,6 +130,7 @@ export default function SlimRail({
                 : "text-slate-400 hover:text-cyan-300 hover:bg-white/5"
             }`}
             title="Timeline & Calendar"
+            aria-label="Open calendar"
           >
             <Calendar size={19} />
           </button>
@@ -128,6 +140,7 @@ export default function SlimRail({
             to="/profile"
             className="w-11 h-11 rounded-xl flex items-center justify-center text-slate-400 hover:text-cyan-300 hover:bg-white/5 transition-all cursor-pointer"
             title="Account & Settings"
+            aria-label="Account and Settings"
           >
             <Settings size={19} />
           </Link>

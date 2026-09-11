@@ -73,7 +73,15 @@ function App() {
                   path="/dashboard"
                   element={
                     <ProtectedRoute>
-                      <Dashboard />
+                      <Dashboard initialTab="overview" />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/calendar"
+                  element={
+                    <ProtectedRoute>
+                      <Dashboard initialTab="calendar" />
                     </ProtectedRoute>
                   }
                 />

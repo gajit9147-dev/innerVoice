@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import {
   Plus,
-  Square,
+  BookMarked,
   Check,
   X,
   Folder,
@@ -61,6 +61,7 @@ export default function NotebookSidebar({
   const [isAddingNotebook, setIsAddingNotebook] = useState(false);
   const [newNotebookName, setNewNotebookName] = useState("");
   const [deleteMode, setDeleteMode] = useState(false);
+  const [notebookToDelete, setNotebookToDelete] = useState(null);
 
   const tags = ["Life", "Work", "Dreams"];
 
@@ -79,15 +80,12 @@ export default function NotebookSidebar({
 
   const handleDeleteClick = (e, nbName) => {
     e.stopPropagation();
-    if (window.confirm(`Are you sure you want to delete "${nbName}" notebook?`)) {
-      if (onDeleteNotebook) {
-        onDeleteNotebook(nbName);
-      }
-    }
+    setNotebookToDelete(nbName);
   };
 
   return (
-    <aside className="w-full max-w-xs sm:w-64 h-full flex flex-col justify-between py-5 px-3.5 sm:px-4 bg-[#080f19]/95 border-r border-white/5 backdrop-blur-2xl shrink-0 select-none overflow-y-auto">
+    <>
+      <aside className="w-full max-w-xs sm:w-64 h-full flex flex-col justify-between py-5 px-3.5 sm:px-4 bg-[#080f19]/95 border-r border-white/5 backdrop-blur-2xl shrink-0 select-none overflow-y-auto">
       <div className="space-y-6">
         {/* Brand / Logo with Animated Cyan Soundwave */}
         <div className="flex items-center justify-between px-1 py-1">
@@ -184,66 +182,91 @@ export default function NotebookSidebar({
           </div>
 
           <div className="space-y-1.5 pt-1">
-            {notebooks.map((nb) => {
-              const isSelected = selectedNotebook === nb.name;
-              const count = notesCountByNotebook[nb.name] || 0;
-              return (
-                <div
-                  key={nb.id || nb.name}
-                  onClick={() => {
-                    onSelectNotebook(nb.name);
-                    if (onSelectFolder) onSelectFolder(null);
-                  }}
-                  className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-sm font-medium transition-all text-left cursor-pointer group ${
-                    isSelected
-                      ? "pill-active-glow"
-                      : "text-slate-300 hover:text-white hover:bg-white/5 border border-transparent"
-                  }`}
+            {notebooks.length === 0 ? (
+              <div className="px-3 py-4 text-center rounded-xl bg-white/[0.02] border border-white/5 text-xs text-slate-400 space-y-2">
+                <p>No notebooks yet</p>
+                <button
+                  type="button"
+                  onClick={() => setIsAddingNotebook(true)}
+                  className="inline-flex items-center gap-1 text-cyan-400 hover:text-cyan-300 transition cursor-pointer"
                 >
-                  <div className="flex items-center gap-2.5 truncate flex-1 min-w-0">
-                    <Square
-                      size={15}
-                      className={
-                        isSelected
-                          ? "text-cyan-400 shrink-0"
-                          : "text-slate-500 group-hover:text-slate-300 shrink-0"
+                  <Plus size={13} />
+                  <span>Add Notebook</span>
+                </button>
+              </div>
+            ) : (
+              notebooks.map((nb) => {
+                const isSelected = selectedNotebook === nb.name;
+                const count = notesCountByNotebook[nb.name] || 0;
+                return (
+                  <div
+                    key={nb.id || nb.name}
+                    role="button"
+                    tabIndex={0}
+                    onClick={() => {
+                      onSelectNotebook(nb.name);
+                      if (onSelectFolder) onSelectFolder(null);
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
+                        onSelectNotebook(nb.name);
+                        if (onSelectFolder) onSelectFolder(null);
                       }
-                    />
-                    <span className="truncate">{nb.name}</span>
-                  </div>
-
-                  <div className="flex items-center gap-1.5 shrink-0">
-                    {count > 0 && (
-                      <span
-                        className={`text-xs px-1.5 py-0.5 rounded-md ${
+                    }}
+                    className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-sm font-medium transition-all text-left cursor-pointer group select-none ${
+                      isSelected
+                        ? "pill-active-glow"
+                        : "text-slate-300 hover:text-white hover:bg-white/5 border border-transparent hover:border-white/5"
+                    }`}
+                    aria-label={`Notebook ${nb.name}, ${count} notes`}
+                  >
+                    <div className="flex items-center gap-2.5 truncate flex-1 min-w-0">
+                      <BookMarked
+                        size={16}
+                        className={
                           isSelected
-                            ? "bg-cyan-500/30 text-cyan-200"
-                            : "text-slate-500 group-hover:text-slate-400"
-                        }`}
-                      >
-                        {count}
-                      </span>
-                    )}
+                            ? "text-cyan-400 shrink-0 group-hover:scale-105 transition-transform"
+                            : "text-slate-400 group-hover:text-cyan-300 shrink-0 transition-colors"
+                        }
+                      />
+                      <span className="truncate">{nb.name}</span>
+                    </div>
 
-                    {/* Delete Option Icon on Hover or in Delete Mode */}
-                    {(deleteMode || nb.name !== "My Journal") && (
-                      <button
-                        type="button"
-                        onClick={(e) => handleDeleteClick(e, nb.name)}
-                        className={`p-1 rounded-md transition cursor-pointer ${
-                          deleteMode
-                            ? "text-rose-400 hover:bg-rose-500/20"
-                            : "opacity-0 group-hover:opacity-100 text-slate-500 hover:text-rose-400 hover:bg-white/10"
-                        }`}
-                        title={`Delete "${nb.name}" notebook`}
-                      >
-                        <Trash2 size={13} />
-                      </button>
-                    )}
+                    <div className="flex items-center gap-1.5 shrink-0">
+                      {count > 0 && (
+                        <span
+                          className={`text-xs px-1.5 py-0.5 rounded-md font-mono ${
+                            isSelected
+                              ? "bg-cyan-500/30 text-cyan-200"
+                              : "text-slate-500 group-hover:text-slate-400"
+                          }`}
+                        >
+                          {count}
+                        </span>
+                      )}
+
+                      {/* Delete Option Icon on Hover or in Delete Mode */}
+                      {(deleteMode || nb.name !== "My Journal") && (
+                        <button
+                          type="button"
+                          onClick={(e) => handleDeleteClick(e, nb.name)}
+                          className={`p-1 rounded-md transition cursor-pointer ${
+                            deleteMode
+                              ? "text-rose-400 hover:bg-rose-500/20"
+                              : "opacity-0 group-hover:opacity-100 text-slate-500 hover:text-rose-400 hover:bg-white/10"
+                          }`}
+                          title={`Delete "${nb.name}" notebook`}
+                          aria-label={`Delete "${nb.name}" notebook`}
+                        >
+                          <Trash2 size={13} />
+                        </button>
+                      )}
+                    </div>
                   </div>
-                </div>
-              );
-            })}
+                );
+              })
+            )}
 
             {/* Inline New Notebook Input with explicit Add and Discard/Delete options */}
             {isAddingNotebook ? (
@@ -295,14 +318,13 @@ export default function NotebookSidebar({
                   type="button"
                   onClick={() => {
                     if (selectedNotebook && selectedNotebook !== "My Journal") {
-                      if (window.confirm(`Delete active notebook "${selectedNotebook}"?`)) {
-                        onDeleteNotebook && onDeleteNotebook(selectedNotebook);
-                      }
+                      setNotebookToDelete(selectedNotebook);
                     } else {
                       setDeleteMode((prev) => !prev);
                     }
                   }}
                   className="flex items-center justify-center gap-1.5 px-2.5 py-2 rounded-xl text-xs font-medium text-slate-300 hover:text-rose-300 hover:border-rose-500/40 border border-white/10 hover:bg-white/5 transition-all cursor-pointer"
+                  aria-label="Delete notebook"
                 >
                   <Trash2 size={13} className="text-rose-400" />
                   <span>Delete</span>
@@ -553,5 +575,49 @@ export default function NotebookSidebar({
         </div>
       </div>
     </aside>
+
+    {/* Confirmation Dialog for Notebook Deletion */}
+    {notebookToDelete && (
+      <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/75 backdrop-blur-md p-4 animate-in fade-in duration-200">
+        <div className="w-full max-w-sm rounded-2xl bg-[#0b1320] border border-rose-500/30 p-5 sm:p-6 shadow-2xl space-y-4">
+          <div className="flex items-center gap-3 text-rose-400">
+            <div className="p-2.5 rounded-xl bg-rose-500/10 border border-rose-500/20">
+              <Trash2 size={20} />
+            </div>
+            <div>
+              <h3 className="text-base font-bold text-white">Delete Notebook</h3>
+              <p className="text-xs text-slate-400">Confirmation required</p>
+            </div>
+          </div>
+
+          <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">
+            Are you sure you want to delete <strong className="text-white font-semibold">"{notebookToDelete}"</strong>? Notes in this notebook will remain safely accessible in All Notes.
+          </p>
+
+          <div className="flex items-center gap-3 pt-2">
+            <button
+              type="button"
+              onClick={() => setNotebookToDelete(null)}
+              className="flex-1 py-2.5 rounded-xl bg-slate-800/80 hover:bg-slate-700 text-slate-300 text-xs font-semibold border border-white/10 transition cursor-pointer"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                if (onDeleteNotebook) {
+                  onDeleteNotebook(notebookToDelete);
+                }
+                setNotebookToDelete(null);
+              }}
+              className="flex-1 py-2.5 rounded-xl bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 text-xs font-semibold border border-rose-500/40 transition shadow-[0_0_15px_rgba(244,63,94,0.3)] cursor-pointer"
+            >
+              Delete
+            </button>
+          </div>
+        </div>
+      </div>
+    )}
+    </>
   );
 }
