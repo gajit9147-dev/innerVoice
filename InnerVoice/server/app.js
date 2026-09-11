@@ -25,6 +25,9 @@ const explicitOrigins = [
   "http://localhost:3000",
   "http://127.0.0.1:3000",
   "https://innervoice-bt6.pages.dev",
+  "https://innervoice4u.in",
+  "https://www.innervoice4u.in",
+  "https://api.innervoice4u.in",
 ];
 
 if (process.env.CORS_ORIGIN) {
@@ -43,7 +46,8 @@ app.use(
       if (
         explicitOrigins.includes(origin) ||
         /\.pages\.dev$/.test(origin) ||
-        /\.vercel\.app$/.test(origin)
+        /\.vercel\.app$/.test(origin) ||
+        /(^|\.)innervoice4u\.in$/.test(origin)
       ) {
         return callback(null, true);
       }

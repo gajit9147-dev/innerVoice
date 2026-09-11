@@ -1,8 +1,7 @@
 import axios from "axios";
 
 const getBaseURL = () => {
-  const envUrl = import.meta.env.VITE_API_URL;
-  if (!envUrl) return "/api";
+  const envUrl = import.meta.env.VITE_API_URL || "https://api.innervoice4u.in";
   const clean = envUrl.trim().replace(/\/+$/, "");
   return clean.endsWith("/api") ? clean : `${clean}/api`;
 };
