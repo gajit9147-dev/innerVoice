@@ -49,6 +49,17 @@ router.post("/link-account", linkAccount);
 router.get("/me", authMiddleware, getCurrentUser);
 router.post("/logout", logout);
 
+// Database Migration Trigger
+router.get("/run-migration", async (req, res) => {
+  try {
+    const { runAuthMigration } = await import("../migrations/auth_migration.js");
+    await runAuthMigration();
+    return res.json({ success: true, message: "Auth database migration completed successfully!" });
+  } catch (err) {
+    return res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 // =========================
 // PROFILE ROUTES
 // =========================
