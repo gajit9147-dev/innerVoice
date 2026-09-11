@@ -50,21 +50,30 @@ function Sidebar({ onClose }) {
   };
 
   return (
-    <aside className="w-64 h-screen bg-white dark:bg-slate-800 shadow-lg border-r border-gray-100 dark:border-slate-700 flex flex-col transition-colors duration-300">
+    <aside className="w-64 h-screen bg-[#080f19]/95 backdrop-blur-2xl shadow-2xl border-r border-white/5 flex flex-col transition-colors duration-300">
       
       {/* Logo */}
-      <div className="p-6 border-b border-gray-100 dark:border-slate-700 transition-colors flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-bold text-blue-600 dark:text-blue-500">
-            📝 InnerVoice
-          </h1>
-          <p className="text-gray-500 dark:text-gray-400 text-sm mt-1">
-            Express your thoughts
-          </p>
+      <div className="p-6 border-b border-white/5 transition-colors flex justify-between items-center">
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-1 h-7">
+            <span className="w-1 h-3.5 bg-cyan-400 rounded-full animate-pulse shadow-[0_0_8px_rgba(6,182,212,0.8)]"></span>
+            <span className="w-1 h-6 bg-cyan-300 rounded-full shadow-[0_0_10px_rgba(6,182,212,0.9)]"></span>
+            <span className="w-1 h-4 bg-teal-400 rounded-full animate-pulse shadow-[0_0_8px_rgba(20,184,166,0.8)]"></span>
+            <span className="w-1 h-7 bg-cyan-400 rounded-full shadow-[0_0_10px_rgba(6,182,212,0.9)]"></span>
+            <span className="w-1 h-3 bg-cyan-500 rounded-full animate-pulse shadow-[0_0_8px_rgba(6,182,212,0.8)]"></span>
+          </div>
+          <div>
+            <h1 className="text-xl font-bold tracking-tight text-white">
+              InnerVoice
+            </h1>
+            <p className="text-slate-400 text-xs">
+              Express your thoughts
+            </p>
+          </div>
         </div>
         {onClose && (
-          <button onClick={onClose} className="lg:hidden p-2 text-gray-500 hover:bg-gray-100 dark:hover:bg-slate-700 rounded-xl transition">
-            <X size={24} />
+          <button onClick={onClose} className="lg:hidden p-2 text-slate-400 hover:bg-white/5 rounded-xl transition">
+            <X size={22} />
           </button>
         )}
       </div>
@@ -82,10 +91,10 @@ function Sidebar({ onClose }) {
               key={item.name}
               to={item.path}
               onClick={onClose}
-              className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
+              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${
                 isCurrent 
-                  ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 font-medium' 
-                  : 'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-700 hover:text-blue-600 dark:hover:text-blue-400'
+                  ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-400/80 shadow-[0_0_12px_rgba(6,182,212,0.25)] font-medium' 
+                  : 'text-slate-400 hover:bg-white/5 hover:text-cyan-300 border border-transparent'
               }`}
             >
               {item.icon}
@@ -113,10 +122,10 @@ function Sidebar({ onClose }) {
       </nav>
 
       {/* User */}
-      <div className="border-t border-gray-100 dark:border-slate-700 p-4 transition-colors">
+      <div className="border-t border-white/5 p-4 transition-colors">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3 overflow-hidden">
-            <div className="w-10 h-10 shrink-0 rounded-full overflow-hidden bg-gradient-to-r from-blue-600 to-indigo-600 text-white flex items-center justify-center text-sm font-bold shadow-md">
+            <div className="w-10 h-10 shrink-0 rounded-full overflow-hidden bg-gradient-to-tr from-cyan-600 to-blue-600 text-white flex items-center justify-center text-sm font-bold shadow-md">
               {user.profile_image ? (
                 <img
                   src={user.profile_image}
@@ -128,17 +137,17 @@ function Sidebar({ onClose }) {
               )}
             </div>
             <div className="overflow-hidden">
-              <h3 className="font-semibold text-gray-800 dark:text-gray-100 text-sm truncate">
+              <h3 className="font-semibold text-slate-100 text-sm truncate">
                 {user.full_name}
               </h3>
-              <p className="text-gray-500 dark:text-gray-400 text-xs truncate">
+              <p className="text-slate-400 text-xs truncate">
                 {user.email}
               </p>
             </div>
           </div>
           <button 
             onClick={handleLogout}
-            className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg transition-colors ml-2"
+            className="p-2 text-slate-400 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors ml-2 cursor-pointer"
             title="Logout"
           >
             <LogOut size={18} />

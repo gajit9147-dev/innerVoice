@@ -1,20 +1,28 @@
 import { useState, useEffect } from "react";
-import { Bell, Moon, Sun, Calendar, Menu } from "lucide-react";
+import { Search, Settings, Sun, Moon, Menu } from "lucide-react";
 import { useTheme } from "../../context/ThemeContext";
 import { Link } from "react-router-dom";
 import { getProfileInfo } from "../../api/profile";
 
-function Header({ onMenuClick }) {
+export default function Header({
+  onMenuClick,
+  searchQuery = "",
+  setSearchQuery,
+  placeholder = "Search",
+}) {
   const { theme, toggleTheme } = useTheme();
 
   const readUser = () => {
-    const userStr = localStorage.getItem("user");
-    return userStr ? JSON.parse(userStr) : { full_name: "Guest" };
+    try {
+      const userStr = localStorage.getItem("user");
+      return userStr ? JSON.parse(userStr) : { full_name: "Ajeet" };
+    } catch {
+      return { full_name: "Ajeet" };
+    }
   };
 
   const [user, setUser] = useState(readUser);
 
-  // Sync profile details on mount to ensure localStorage is always up-to-date
   useEffect(() => {
     const syncProfile = async () => {
       const token = localStorage.getItem("token");
@@ -22,7 +30,7 @@ function Header({ onMenuClick }) {
 
       try {
         const res = await getProfileInfo();
-        const profile = res.data.profile;
+        const profile = res?.data?.profile;
         if (profile) {
           const savedUser = JSON.parse(localStorage.getItem("user") || "{}");
           const updatedUser = {
@@ -32,112 +40,90 @@ function Header({ onMenuClick }) {
             profile_image: profile.profile_image,
           };
           localStorage.setItem("user", JSON.stringify(updatedUser));
-          setUser(updatedUser); // Update local state immediately
-          window.dispatchEvent(new Event("storage")); // Trigger sync in Sidebar
+          setUser(updatedUser);
         }
       } catch (err) {
-        console.error("Failed to sync user profile in Header:", err);
+        // Silently catch profile sync
       }
     };
     syncProfile();
   }, []);
 
-  // Re-read user from localStorage whenever profile updates (AvatarUpload dispatches "storage")
   useEffect(() => {
     const handleStorage = () => setUser(readUser());
     window.addEventListener("storage", handleStorage);
     return () => window.removeEventListener("storage", handleStorage);
   }, []);
 
-  const initials = user.full_name ? user.full_name.substring(0, 2).toUpperCase() : "GU";
-
-  // Generate greeting based on time of day
-  const hour = new Date().getHours();
-  let greeting = "Good evening";
-  if (hour < 12) greeting = "Good morning";
-  else if (hour < 18) greeting = "Good afternoon";
-
-  // Format today's date
-  const dateStr = new Date().toLocaleDateString("en-US", {
-    weekday: "long",
-    month: "long",
-    day: "numeric",
-    year: "numeric"
-  });
+  const initials = user.full_name
+    ? user.full_name.substring(0, 2).toUpperCase()
+    : "AJ";
 
   return (
-    <header className="bg-white dark:bg-slate-800 shadow-sm rounded-2xl px-5 py-4 lg:px-6 lg:py-5 flex items-center justify-between border border-gray-100 dark:border-slate-700 transition-colors">
-      
-      {/* Left side: Greeting and Date */}
-      <div className="flex items-center gap-3 lg:gap-0">
-        <button 
-          onClick={onMenuClick}
-          className="lg:hidden p-2 -ml-2 rounded-xl text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors"
-        >
-          <Menu size={24} />
-        </button>
-        <div>
-          <h1 className="text-xl lg:text-2xl font-bold text-gray-800 dark:text-white">
-            👋 {greeting}, {user.full_name.split(" ")[0]}!
-          </h1>
-          <div className="flex items-center gap-2 text-gray-500 dark:text-gray-400 text-xs lg:text-sm mt-1 font-medium">
-            <Calendar size={14} className="text-blue-500 dark:text-blue-400" />
-            <span>{dateStr}</span>
-          </div>
+    <header className="flex items-center justify-between gap-4 py-3 px-2 w-full select-none">
+      {/* Mobile Menu Button (hidden on desktop) */}
+      <button
+        onClick={onMenuClick}
+        className="lg:hidden p-2 text-slate-400 hover:text-cyan-400 hover:bg-white/5 rounded-xl transition cursor-pointer"
+        title="Open Menu"
+      >
+        <Menu size={22} />
+      </button>
+
+      {/* Center / Left: Search Bar (pill input matching screenshot) */}
+      <div className="flex-1 max-w-2xl relative">
+        <div className="relative flex items-center w-full">
+          <Search
+            size={18}
+            className="absolute left-4 text-slate-400 pointer-events-none"
+          />
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery && setSearchQuery(e.target.value)}
+            placeholder={placeholder}
+            className="w-full bg-[#0c1624]/70 hover:bg-[#0c1624]/90 focus:bg-[#0e1a2b] border border-white/10 focus:border-cyan-500/50 rounded-2xl pl-11 pr-4 py-2.5 text-sm text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-cyan-500/50 transition-all shadow-inner"
+          />
         </div>
       </div>
 
-      {/* Right side: Actions and Profile */}
-      <div className="flex items-center gap-2 lg:gap-4">
-        
-        {/* Dark Mode Toggle */}
-        <button 
+      {/* Right: Settings Cog & Profile Avatar */}
+      <div className="flex items-center gap-3">
+        {/* Dark / Light toggle */}
+        <button
           onClick={toggleTheme}
-          className="p-2.5 rounded-xl text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors"
-          title={theme === 'dark' ? "Switch to Light Mode" : "Switch to Dark Mode"}
+          className="p-2.5 rounded-xl text-slate-400 hover:text-cyan-300 hover:bg-white/5 transition cursor-pointer"
+          title={theme === "dark" ? "Switch to Light Mode" : "Switch to Dark Mode"}
         >
-          {theme === "dark" ? <Sun size={20} /> : <Moon size={20} />}
+          {theme === "dark" ? <Sun size={19} /> : <Moon size={19} />}
         </button>
 
-        {/* Notifications */}
-        <button className="p-2.5 rounded-xl text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors relative hidden sm:block">
-          <Bell size={20} />
-          <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border-2 border-white dark:border-slate-800 transition-colors"></span>
-        </button>
-
-        <div className="w-px h-8 bg-gray-200 dark:bg-slate-700 hidden sm:block mx-2 transition-colors"></div>
-
-        {/* User Profile */}
-        <Link 
+        {/* Settings button */}
+        <Link
           to="/profile"
-          className="flex items-center gap-3 hover:bg-gray-50 dark:hover:bg-slate-700/50 p-1.5 pr-3 rounded-2xl transition-colors cursor-pointer"
+          className="p-2.5 rounded-xl text-slate-400 hover:text-cyan-300 hover:bg-white/5 transition cursor-pointer"
+          title="Settings"
         >
-          {/* Avatar: show profile image if set, otherwise initials */}
-          <div className="w-10 h-10 lg:w-11 lg:h-11 rounded-full overflow-hidden bg-gradient-to-r from-blue-600 to-indigo-600 text-white flex items-center justify-center text-sm lg:text-base font-bold shadow-sm flex-shrink-0">
-            {user.profile_image ? (
-              <img
-                src={user.profile_image}
-                alt="Profile"
-                className="w-full h-full object-cover"
-              />
-            ) : (
-              initials
-            )}
-          </div>
-          <div className="hidden sm:block">
-            <h3 className="font-semibold text-gray-800 dark:text-white text-sm truncate max-w-[120px]">
-              {user.full_name}
-            </h3>
-            <p className="text-gray-500 dark:text-gray-400 text-xs mt-0.5">
-              Free Plan
-            </p>
-          </div>
+          <Settings size={19} />
         </Link>
 
+        {/* User Profile Avatar */}
+        <Link
+          to="/profile"
+          className="w-10 h-10 rounded-full overflow-hidden border border-white/20 hover:border-cyan-400 transition-all shadow-md flex items-center justify-center bg-gradient-to-tr from-cyan-600 to-blue-600 text-xs font-bold text-white cursor-pointer ml-1"
+          title={user.full_name}
+        >
+          {user.profile_image ? (
+            <img
+              src={user.profile_image}
+              alt="Avatar"
+              className="w-full h-full object-cover"
+            />
+          ) : (
+            initials
+          )}
+        </Link>
       </div>
     </header>
   );
 }
-
-export default Header;
-

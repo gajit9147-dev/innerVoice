@@ -3,10 +3,10 @@ import Sidebar from "./Sidebar";
 import Header from "./Header";
 
 function Layout({ children }) {
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
   return (
-    <div className="min-h-screen bg-slate-100 dark:bg-slate-900 flex transition-colors duration-300 text-gray-900 dark:text-gray-100">
+    <div className="min-h-screen bg-[#060b11] ambient-bg flex transition-colors duration-300 text-slate-100">
       
       {/* Mobile Sidebar Overlay */}
       {isSidebarOpen && (

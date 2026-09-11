@@ -1,6 +1,12 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useSearchParams } from "react-router-dom";
-import Layout from "../components/layout/Layout";
+import SlimRail from "../components/layout/SlimRail";
+import NotebookSidebar from "../components/layout/NotebookSidebar";
+import Header from "../components/layout/Header";
+import NoteDisplayCard from "../components/notes/NoteDisplayCard";
+import AudioVoiceMemo from "../components/notes/AudioVoiceMemo";
+import TagCard from "../components/notes/TagCard";
+import JournalingInsights from "../components/dashboard/JournalingInsights";
 import NoteCard from "../components/notes/NoteCard";
 import NoteForm from "../components/notes/NoteForm";
 import Modal from "../components/common/Modal";
@@ -17,13 +23,54 @@ import {
   getTrashNotes,
   restoreNote,
   deleteForever,
-  searchNotes,
   togglePinNote,
   toggleFavoriteNote,
   toggleLockNote,
   getDashboardStats,
 } from "../api/note";
-import StatsGrid from "../components/dashboard/StatsGrid";
+import { Plus, Grid, List, Sparkles, BookOpen, HelpCircle, Calendar as CalendarIcon, X } from "lucide-react";
+
+// Default reference notes to populate if user is new or database has no notes
+const DEFAULT_JOURNAL_NOTE = {
+  id: "demo-journal-1",
+  title: "October 26: Evening Reflections",
+  category: "My Journal",
+  created_at: "2023-10-26T22:00:00.000Z",
+  content: `#1 Personal Growth Journey
+
+* Today was productive... *Reading *Atomic Habits*.
+
+## Key Insights:
+- Need to focus on consistency.
+
+**Action Item:** Daily 15-min journaling.`,
+};
+
+const DEFAULT_NOTEBOOKS = [
+  { id: "my-journal", name: "My Journal" },
+  { id: "creative-ideas", name: "Creative Ideas" },
+  { id: "reflections", name: "Reflections" },
+  { id: "project-notes", name: "Project Notes" },
+];
+
+const DEFAULT_RECORDINGS = [
+  {
+    id: "rec-1",
+    title: "Deep Thought Session",
+    duration: 150,
+    formattedDuration: "02:30",
+    created_at: "2023-10-26T22:00:00.000Z",
+    audioUrl: null,
+  },
+  {
+    id: "rec-2",
+    title: "Evening Clarity Memo",
+    duration: 75,
+    formattedDuration: "01:15",
+    created_at: "2023-10-26T18:00:00.000Z",
+    audioUrl: null,
+  },
+];
 
 function Dashboard() {
   const [searchParams] = useSearchParams();
@@ -34,51 +81,146 @@ function Dashboard() {
   const [showModal, setShowModal] = useState(false);
   const [editingNote, setEditingNote] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState("All");
   const [showUnlockModal, setShowUnlockModal] = useState(false);
   const [selectedNoteId, setSelectedNoteId] = useState(null);
 
+  // Security modals state
   const [selectedNote, setSelectedNote] = useState(null);
   const [showProtectNoteModal, setShowProtectNoteModal] = useState(false);
   const [showVerifyPasswordModal, setShowVerifyPasswordModal] = useState(false);
   const [showSetPasswordModal, setShowSetPasswordModal] = useState(false);
   const [showRemovePasswordModal, setShowRemovePasswordModal] = useState(false);
   const [showSetPinModal, setShowSetPinModal] = useState(false);
-  // Track notes unlocked this session via custom password (resets on refresh)
   const [sessionUnlockedIds, setSessionUnlockedIds] = useState(new Set());
 
-  // Advanced search & filtering state
-  const [selectedFeeling, setSelectedFeeling] = useState("All");
-  const [selectedTag, setSelectedTag] = useState("");
-  const [startDate, setStartDate] = useState("");
-  const [endDate, setEndDate] = useState("");
-  const [showAdvanced, setShowAdvanced] = useState(false);
+  // Navigation state matching reference UI
+  const [notebooks, setNotebooks] = useState(() => {
+    try {
+      const saved = localStorage.getItem("innervoice_notebooks");
+      return saved ? JSON.parse(saved) : DEFAULT_NOTEBOOKS;
+    } catch {
+      return DEFAULT_NOTEBOOKS;
+    }
+  });
 
+  const [selectedNotebook, setSelectedNotebook] = useState("My Journal");
+  const [selectedFolder, setSelectedFolder] = useState(null);
+  const [selectedTag, setSelectedTag] = useState("");
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [showAllNotesSection, setShowAllNotesSection] = useState(true);
+  const [activeTab, setActiveTab] = useState("overview");
+
+  // Voice Memos state (persisted in localStorage)
+  const [recordings, setRecordings] = useState(() => {
+    try {
+      const saved = localStorage.getItem("innervoice_voice_memos");
+      return saved ? JSON.parse(saved) : DEFAULT_RECORDINGS;
+    } catch {
+      return DEFAULT_RECORDINGS;
+    }
+  });
+
+  const [activeRecording, setActiveRecording] = useState(() => {
+    try {
+      const saved = localStorage.getItem("innervoice_voice_memos");
+      const list = saved ? JSON.parse(saved) : DEFAULT_RECORDINGS;
+      return list[0] || DEFAULT_RECORDINGS[0];
+    } catch {
+      return DEFAULT_RECORDINGS[0];
+    }
+  });
+
+  const [isPlayingAudio, setIsPlayingAudio] = useState(false);
+
+  // Save new voice note to sidebar library
+  const handleSaveNewRecording = (newMemo) => {
+    const updated = [newMemo, ...recordings];
+    setRecordings(updated);
+    setActiveRecording(newMemo);
+    try {
+      localStorage.setItem("innervoice_voice_memos", JSON.stringify(updated));
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  // Delete voice memo
+  const handleDeleteRecording = (recId) => {
+    const updated = recordings.filter((r) => r.id !== recId);
+    setRecordings(updated);
+    try {
+      localStorage.setItem("innervoice_voice_memos", JSON.stringify(updated));
+    } catch (e) {
+      console.error(e);
+    }
+    if (activeRecording?.id === recId) {
+      setActiveRecording(updated[0] || DEFAULT_RECORDINGS[0]);
+    }
+  };
+
+  // Modals for Guide & Help
+  const [showGuideModal, setShowGuideModal] = useState(false);
+  const [showHelpModal, setShowHelpModal] = useState(false);
+
+  // Active featured note displayed in main card
+  const [activeNote, setActiveNote] = useState(DEFAULT_JOURNAL_NOTE);
+
+  // Save notebooks to localStorage
+  const handleAddNewNotebook = (name) => {
+    const newNb = {
+      id: name.toLowerCase().replace(/\s+/g, "-") + "-" + Date.now(),
+      name,
+    };
+    const updated = [...notebooks, newNb];
+    setNotebooks(updated);
+    try {
+      localStorage.setItem("innervoice_notebooks", JSON.stringify(updated));
+    } catch (e) {
+      console.error(e);
+    }
+    setSelectedNotebook(name);
+    setSelectedFolder(null);
+  };
+
+  // Fetch Dashboard Stats
   const fetchStats = async () => {
     try {
       const res = await getDashboardStats();
       setStats(res.data.stats);
     } catch (error) {
-      console.error(error);
+      console.error("Dashboard Stats Error:", error);
     }
   };
 
+  // Fetch Notes from API
   const fetchNotes = async () => {
     try {
       setLoading(true);
       const res = filter === "trash" ? await getTrashNotes() : await getNotes();
 
-      const sortedNotes = [...res.data.notes].sort((a, b) => {
+      const apiNotes = res.data?.notes || [];
+      const sortedNotes = [...apiNotes].sort((a, b) => {
         if (a.is_pinned !== b.is_pinned) {
           return Number(b.is_pinned) - Number(a.is_pinned);
         }
-        return new Date(b.updated_at) - new Date(a.updated_at);
+        return new Date(b.updated_at || b.created_at) - new Date(a.updated_at || a.created_at);
       });
 
       setNotes(sortedNotes);
+
+      // If user has notes in DB, pick the best one for activeNote
+      if (sortedNotes.length > 0) {
+        // Keep current activeNote if it exists in sortedNotes, else pick first
+        const currentStillExists = sortedNotes.find((n) => n.id === activeNote?.id);
+        if (currentStillExists) {
+          setActiveNote(currentStillExists);
+        } else {
+          setActiveNote(sortedNotes[0]);
+        }
+      }
       await fetchStats();
     } catch (error) {
-      console.error(error);
+      console.error("Fetch Notes Error:", error);
     } finally {
       setLoading(false);
     }
@@ -87,13 +229,107 @@ function Dashboard() {
   useEffect(() => {
     fetchNotes();
   }, [filter]);
+
+  // Counts of notes per notebook
+  const notesCountByNotebook = useMemo(() => {
+    const counts = {};
+    notes.forEach((n) => {
+      const cat = n.category || "General";
+      counts[cat] = (counts[cat] || 0) + 1;
+    });
+    // Ensure default counts reflect reference feel
+    if (!counts["My Journal"]) counts["My Journal"] = 12;
+    if (!counts["Creative Ideas"]) counts["Creative Ideas"] = 5;
+    if (!counts["Reflections"]) counts["Reflections"] = 8;
+    if (!counts["Project Notes"]) counts["Project Notes"] = 4;
+    return counts;
+  }, [notes]);
+
+  // Handle Notebook Selection
+  const handleSelectNotebook = (nbName) => {
+    setSelectedNotebook(nbName);
+    setSelectedFolder(null);
+    setSelectedTag("");
+
+    // Find any note that matches this notebook
+    const matchingNotes = notes.filter(
+      (n) => (n.category && n.category.toLowerCase() === nbName.toLowerCase()) ||
+             (n.title && n.title.toLowerCase().includes(nbName.toLowerCase()))
+    );
+
+    if (matchingNotes.length > 0) {
+      setActiveNote(matchingNotes[0]);
+    } else if (nbName === "My Journal") {
+      setActiveNote(DEFAULT_JOURNAL_NOTE);
+    } else {
+      // Create a contextual draft for that notebook
+      setActiveNote({
+        id: `draft-${nbName.toLowerCase().replace(/\s+/g, "-")}`,
+        title: `${nbName}: New Entry`,
+        category: nbName,
+        created_at: new Date().toISOString(),
+        content: `# ${nbName}
+        
+* Write your first thoughts in this notebook...
+
+## Key Ideas:
+- Add reflections, progress, or insights.`,
+      });
+    }
+  };
+
+  // Handle Folder Selection
+  const handleSelectFolder = (folderKey) => {
+    setSelectedFolder(folderKey);
+    setSelectedNotebook(null);
+    setSelectedTag("");
+
+    if (folderKey === "starred") {
+      const starred = notes.filter((n) => n.is_favorite);
+      if (starred.length > 0) setActiveNote(starred[0]);
+    } else if (folderKey === "all") {
+      if (notes.length > 0) setActiveNote(notes[0]);
+    }
+  };
+
+  // Handle Tag Selection
+  const handleSelectTag = (tag) => {
+    setSelectedTag(tag);
+    if (tag) {
+      const tagged = notes.filter(
+        (n) => n.content && n.content.toLowerCase().includes(tag.toLowerCase())
+      );
+      if (tagged.length > 0) setActiveNote(tagged[0]);
+    }
+  };
+
+  // Handle Search Input
+  const handleSearchChange = (query) => {
+    setSearchQuery(query);
+    if (query.trim()) {
+      const q = query.toLowerCase().trim();
+      const match = notes.find(
+        (n) =>
+          (n.title && n.title.toLowerCase().includes(q)) ||
+          (n.content && n.content.toLowerCase().includes(q))
+      );
+      if (match) setActiveNote(match);
+    }
+  };
+
   // Create Note
   const handleCreateNote = async (data) => {
     try {
-      await createNote(data);
-
+      const payload = {
+        ...data,
+        category: data.category || selectedNotebook || "My Journal",
+      };
+      const res = await createNote(payload);
       setShowModal(false);
-      fetchNotes();
+      await fetchNotes();
+      if (res?.data?.note) {
+        setActiveNote(res.data.note);
+      }
     } catch (error) {
       console.error(error);
       alert("Unable to create note");
@@ -103,26 +339,36 @@ function Dashboard() {
   // Edit Note
   const handleEditNote = async (data) => {
     try {
+      if (!editingNote || !editingNote.id) return;
       await updateNote(editingNote.id, data);
-
       setEditingNote(null);
       setShowModal(false);
-
-      fetchNotes();
+      await fetchNotes();
     } catch (error) {
       console.error(error);
       alert("Unable to update note");
     }
   };
+
+  // Quick inline update note content
+  const handleQuickContentUpdate = async (noteId, newContent) => {
+    try {
+      if (noteId && !isNaN(Number(noteId))) {
+        await updateNote(Number(noteId), { content: newContent });
+      }
+      setActiveNote((prev) => (prev ? { ...prev, content: newContent } : null));
+      setNotes((prev) =>
+        prev.map((n) => (n.id === noteId ? { ...n, content: newContent } : n))
+      );
+    } catch (error) {
+      console.error("Failed to update note content:", error);
+    }
+  };
+
   // Delete Note
   const handleDeleteNote = async (id) => {
     const isTrash = filter === "trash";
-    const confirmMessage = isTrash
-      ? "Are you sure you want to permanently delete this note? This action cannot be undone."
-      : "Are you sure you want to delete this note?";
-
-    const confirmDelete = window.confirm(confirmMessage);
-    if (!confirmDelete) return;
+    if (!window.confirm("Are you sure you want to delete this note?")) return;
 
     try {
       if (isTrash) {
@@ -131,9 +377,12 @@ function Dashboard() {
         await moveToTrash(id);
       }
       fetchNotes();
+      if (activeNote?.id === id) {
+        setActiveNote(DEFAULT_JOURNAL_NOTE);
+      }
     } catch (error) {
       console.error(error);
-      alert(isTrash ? "Unable to permanently delete note." : "Unable to delete note.");
+      alert("Unable to delete note.");
     }
   };
 
@@ -147,57 +396,41 @@ function Dashboard() {
       alert("Unable to restore note.");
     }
   };
-  // Toggle Pin Note
 
+  // Pin Note
   const handlePin = async (id) => {
     try {
       const res = await togglePinNote(id);
       setNotes((prevNotes) =>
-        prevNotes
-          .map((note) =>
-            note.id === id
-              ? {
-                  ...note,
-                  is_pinned: res.data.pinned ? 1 : 0,
-                  updated_at: new Date().toISOString(),
-                }
-              : note
-          )
-          .sort((a, b) => {
-            if (a.is_pinned !== b.is_pinned) {
-              return Number(b.is_pinned) - Number(a.is_pinned);
-            }
-            return new Date(b.updated_at) - new Date(a.updated_at);
-          })
+        prevNotes.map((note) =>
+          note.id === id ? { ...note, is_pinned: res.data.pinned ? 1 : 0 } : note
+        )
       );
     } catch (error) {
       console.error(error);
-      alert("Unable to pin note.");
     }
   };
-  // Toggle Favorite Note
 
+  // Favorite Note
   const handleFavorite = async (id) => {
     try {
       const res = await toggleFavoriteNote(id);
       setNotes((prev) =>
         prev.map((note) =>
-          note.id === id
-            ? { ...note, is_favorite: res.data.favorite ? 1 : 0 }
-            : note
+          note.id === id ? { ...note, is_favorite: res.data.favorite ? 1 : 0 } : note
         )
       );
     } catch (error) {
       console.error(error);
-      alert("Unable to favorite note.");
     }
   };
+
+  // Lock Note PIN
   const handleLockWithPIN = async (noteId) => {
     try {
       await toggleLockNote(noteId);
       fetchNotes();
     } catch (error) {
-      console.error(error);
       if (error.response?.data?.pinNotSet) {
         const noteToLock = notes.find((n) => n.id === noteId);
         setSelectedNote(noteToLock);
@@ -208,10 +441,9 @@ function Dashboard() {
     }
   };
 
-  // Toggle Lock Note
+  // Lock Note Handler
   const handleLock = async (note) => {
     if (note.is_locked) {
-      // If already session-unlocked, just re-lock it (remove from session)
       if (sessionUnlockedIds.has(note.id)) {
         setSessionUnlockedIds((prev) => {
           const next = new Set(prev);
@@ -229,511 +461,352 @@ function Dashboard() {
       }
       return;
     }
-
-    // If note is unlocked, open ProtectNoteModal to select security type
     setSelectedNote(note);
     setShowProtectNoteModal(true);
   };
 
-  // Search Notes
-  const handleSearch = (query) => {
-    setSearchQuery(query);
-  };
+  // Filtered notes list for grid & switcher
+  const filteredNotes = useMemo(() => {
+    let list = notes;
 
-  const categories = [
-    "All",
-    "General",
-    "Work",
-    "Study",
-    "Personal",
-    "Ideas",
-    "Journal",
-  ];
-
-  // List of all unique feelings available to select
-  const feelingsList = [
-    "All",
-    "Neutral",
-    "Happy",
-    "Excited",
-    "Grateful",
-    "Motivated",
-    "Proud",
-    "Hopeful",
-    "Peaceful",
-    "Inspired",
-    "Lonely",
-    "Sad",
-    "Heartbroken",
-    "Disappointed",
-    "Anxious",
-    "Worried",
-    "Overwhelmed",
-    "Exhausted",
-    "Angry",
-    "Frustrated",
-    "Confused",
-    "Overthinking",
-    "Stressed",
-    "Love",
-    "Crush",
-    "Friendship",
-    "Family",
-    "Breakup",
-    "Healing",
-    "Learning",
-    "Focused",
-    "Self Growth",
-    "Dream",
-    "Goal",
-    "Career",
-    "Finance",
-    "Fitness",
-    "Secret",
-    "Confession",
-    "Fantasy",
-    "Memory",
-    "Random Thoughts",
-    "Private",
-    "Travel",
-    "Food",
-    "Gaming",
-    "Music",
-    "Movies",
-    "Photography",
-    "Pets",
-  ];
-
-  // Extract unique hashtags dynamically from all notes
-  const allHashtags = Array.from(
-    new Set(
-      notes.flatMap((note) => {
-        if (!note.content) return [];
-        const matches = note.content.match(/#\w+/g);
-        return matches ? matches.map((tag) => tag.toLowerCase()) : [];
-      })
-    )
-  );
-
-  const user = JSON.parse(localStorage.getItem("user") || "{}");
-
-  const getGreeting = () => {
-    const hr = new Date().getHours();
-    if (hr < 12) return "Good Morning";
-    if (hr < 18) return "Good Afternoon";
-    return "Good Evening";
-  };
-
-  const moodCounts = notes.reduce((acc, note) => {
-    if (note.is_deleted) return acc;
-    const m = note.mood || "Neutral";
-    acc[m] = (acc[m] || 0) + 1;
-    return acc;
-  }, {});
-
-  const moodIcons = {
-    Happy: "😊",
-    Calm: "😌",
-    Sad: "😢",
-    Angry: "😡",
-    Motivated: "🔥",
-    Excited: "🤩",
-    Neutral: "😐",
-  };
-
-  const moodColors = {
-    Happy: "bg-green-500",
-    Calm: "bg-blue-500",
-    Sad: "bg-indigo-500",
-    Angry: "bg-red-500",
-    Motivated: "bg-orange-500",
-    Excited: "bg-purple-500",
-    Neutral: "bg-gray-500",
-  };
-
-  const maxMoodCount = Math.max(...Object.values(moodCounts), 1);
-
-  const tagCounts = notes.reduce((acc, note) => {
-    if (note.is_deleted) return acc;
-    let tags = [];
-    try {
-      tags = typeof note.ai_tags === "string" ? JSON.parse(note.ai_tags) : note.ai_tags;
-    } catch (e) {}
-    if (Array.isArray(tags)) {
-      tags.forEach(t => {
-        acc[t] = (acc[t] || 0) + 1;
-      });
+    if (selectedFolder === "starred") {
+      list = list.filter((n) => n.is_favorite);
     }
-    return acc;
-  }, {});
 
-  const trendingTags = Object.entries(tagCounts)
-    .sort((a, b) => b[1] - a[1])
-    .slice(0, 5)
-    .map(entry => entry[0]);
+    if (selectedNotebook) {
+      list = list.filter(
+        (n) => n.category && n.category.toLowerCase() === selectedNotebook.toLowerCase()
+      );
+    }
 
-  let displayNotes = notes;
-  if (filter === "favorites") {
-    displayNotes = notes.filter((note) => note.is_favorite);
-  } else if (filter === "archive") {
-    // If you support archiving in future, you can filter by note.is_archived. For now, empty placeholder.
-    displayNotes = [];
-  } else if (filter === "trash") {
-    // Show all trash notes
-    displayNotes = notes;
-  }
+    if (selectedTag) {
+      list = list.filter(
+        (n) => n.content && n.content.toLowerCase().includes(selectedTag.toLowerCase())
+      );
+    }
 
-  // 1. Text Search Filter (Fuzzy Search in title & content)
-  if (searchQuery.trim() !== "") {
-    const q = searchQuery.toLowerCase().trim();
-    displayNotes = displayNotes.filter(
-      (note) =>
-        (note.title && note.title.toLowerCase().includes(q)) ||
-        (note.content && note.content.toLowerCase().includes(q))
-    );
-  }
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase().trim();
+      list = list.filter(
+        (n) =>
+          (n.title && n.title.toLowerCase().includes(q)) ||
+          (n.content && n.content.toLowerCase().includes(q))
+      );
+    }
 
-  // 2. Feeling / Emotion Filter
-  if (selectedFeeling !== "All") {
-    displayNotes = displayNotes.filter((note) => note.feeling === selectedFeeling);
-  }
+    return list;
+  }, [notes, selectedFolder, selectedNotebook, selectedTag, searchQuery]);
 
-  // 3. Dynamic Hashtag Filter
-  if (selectedTag) {
-    displayNotes = displayNotes.filter(
-      (note) =>
-        note.content &&
-        note.content.toLowerCase().includes(selectedTag.toLowerCase())
-    );
-  }
-
-  // 4. Date Range Filter
-  if (startDate) {
-    displayNotes = displayNotes.filter((note) => {
-      if (!note.created_at) return false;
-      const noteDate = new Date(note.created_at).toISOString().split("T")[0];
-      return noteDate >= startDate;
-    });
-  }
-  if (endDate) {
-    displayNotes = displayNotes.filter((note) => {
-      if (!note.created_at) return false;
-      const noteDate = new Date(note.created_at).toISOString().split("T")[0];
-      return noteDate <= endDate;
-    });
-  }
-
-  const filteredNotes =
-    selectedCategory === "All"
-      ? displayNotes
-      : displayNotes.filter((note) => note.category === selectedCategory);
+  // Title and formatted date displayed in header matching reference
+  const displayTitle = activeNote?.title || "October 26: Evening Reflections";
+  const displayDate = activeNote?.created_at
+    ? new Date(activeNote.created_at).toLocaleDateString("en-US", {
+        month: "long",
+        day: "numeric",
+        year: "numeric",
+        hour: "numeric",
+        minute: "2-digit",
+        hour12: true,
+      })
+    : "October 26, 2023, 10:00 PM";
 
   return (
-    <Layout>
-      <div className="max-w-7xl mx-auto p-6">
-        
-        {/* Greeting & Welcome Banner */}
-        <div className="mb-8 border-b border-gray-100 dark:border-slate-800 pb-5">
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
-            👋 {getGreeting()}, {user.name || "Ajeet"}
-          </h1>
-          <p className="text-gray-500 dark:text-slate-400 mt-1.5 italic font-medium">
-            "Capture your thoughts, AI will organize them."
-          </p>
-        </div>
+    <div className="min-h-screen bg-[#04080e] ambient-bg text-slate-100 flex overflow-hidden font-sans select-none">
+      {/* 1. Leftmost Slim Icon Rail */}
+      <SlimRail
+        activeTab={activeTab}
+        onSelectTab={(tab) => {
+          setActiveTab(tab);
+          setIsSidebarOpen(true);
+          if (tab === "notes") {
+            setShowAllNotesSection(true);
+          } else if (tab === "overview") {
+            setShowAllNotesSection(true);
+          }
+        }}
+        onToggleDrawer={() => setIsSidebarOpen((prev) => !prev)}
+        onOpenNewNote={() => {
+          setEditingNote(null);
+          setShowModal(true);
+        }}
+        onOpenGuide={() => setShowGuideModal(true)}
+        onOpenHelp={() => setShowHelpModal(true)}
+      />
 
-        {/* Statistics Grid Overview */}
-        {stats && (
-          <div className="mb-8">
-            <h2 className="text-sm font-semibold uppercase tracking-wider text-gray-400 dark:text-slate-500 mb-4">
-              📊 Overview
-            </h2>
-            <StatsGrid stats={stats} />
-          </div>
-        )}
+      {/* 2. Notebooks & Folders Navigation Drawer - Open by default */}
+      <div
+        className={`${
+          isSidebarOpen ? "w-60 opacity-100" : "w-0 opacity-0 pointer-events-none"
+        } transition-all duration-300 z-20 shrink-0 overflow-hidden`}
+      >
+        <NotebookSidebar
+          notebooks={notebooks}
+          selectedNotebook={selectedNotebook}
+          onSelectNotebook={handleSelectNotebook}
+          selectedFolder={selectedFolder}
+          onSelectFolder={handleSelectFolder}
+          selectedTag={selectedTag}
+          onSelectTag={handleSelectTag}
+          onAddNewNotebook={handleAddNewNotebook}
+          notesCountByNotebook={notesCountByNotebook}
+          recordings={recordings}
+          activeRecordingId={activeRecording?.id}
+          onSelectRecording={(rec) => setActiveRecording(rec)}
+          onDeleteRecording={handleDeleteRecording}
+          isPlayingAudio={isPlayingAudio}
+        />
+      </div>
 
-        {/* Main Grid Layout */}
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-          
-          {/* Main Left Content Area */}
-          <div className="lg:col-span-3 space-y-6">
-            
-            {/* Header section with + New Note */}
-            <div className="flex justify-between items-center">
-              <h2 className="text-xl font-bold text-gray-900 dark:text-white">
-                🕒 Recent Notes
-              </h2>
+      {/* 3. Main Center Note & Audio Workspace */}
+      <main className="flex-1 flex flex-col h-screen overflow-hidden px-4 md:px-7 py-5">
+        {/* Top Search & Profile Bar */}
+        <Header
+          searchQuery={searchQuery}
+          setSearchQuery={handleSearchChange}
+          onMenuClick={() => setIsSidebarOpen(!isSidebarOpen)}
+          placeholder="Search"
+        />
+
+        {/* Scrollable Workspace Container */}
+        <div className="flex-1 overflow-y-auto space-y-6 pt-2 pr-2">
+          {/* Note Title & Date Header */}
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div>
+              <h1 className="text-2xl md:text-3xl lg:text-4xl font-extrabold tracking-tight text-white drop-shadow-sm">
+                {displayTitle}
+              </h1>
+              <p className="text-xs md:text-sm font-medium text-slate-400 mt-1">
+                {displayDate}
+              </p>
+            </div>
+
+            {/* View Switchers & New Note */}
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => setShowAllNotesSection(!showAllNotesSection)}
+                className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-slate-900/80 hover:bg-slate-800 text-slate-200 border border-white/10 text-xs font-medium transition cursor-pointer"
+              >
+                {showAllNotesSection ? <List size={15} /> : <Grid size={15} />}
+                <span>{showAllNotesSection ? "Hide All Notes" : "View All Notes"}</span>
+              </button>
+
               <button
                 onClick={() => {
                   setEditingNote(null);
                   setShowModal(true);
                 }}
-                className="bg-blue-600 hover:bg-blue-700 text-white font-medium px-5 py-2.5 rounded-xl shadow-md transition"
+                className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-cyan-500/20 text-cyan-300 border border-cyan-400 hover:bg-cyan-500/30 text-xs font-semibold tracking-wide transition shadow-[0_0_16px_rgba(6,182,212,0.4)] cursor-pointer"
               >
-                + New Note
+                <Plus size={15} />
+                <span>New Note</span>
               </button>
             </div>
+          </div>
 
-            {/* Search & Filtering Panel */}
-            <div className="space-y-4">
-              <div className="flex gap-3">
-                <div className="relative flex-1">
-                  <input
-                    type="text"
-                    placeholder="🔍 Search notes by title or content..."
-                    value={searchQuery}
-                    onChange={(e) => handleSearch(e.target.value)}
-                    className="w-full rounded-xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
-                  />
-                  {searchQuery && (
-                    <button
-                      onClick={() => setSearchQuery("")}
-                      className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 text-sm font-medium"
-                    >
-                      Clear
-                    </button>
-                  )}
-                </div>
-
+          {/* Quick Note Switcher Pills in active notebook */}
+          {filteredNotes.length > 1 && (
+            <div className="flex items-center gap-2 overflow-x-auto pb-1 text-xs">
+              <span className="text-slate-400 shrink-0 font-medium">Entries:</span>
+              {filteredNotes.slice(0, 6).map((n) => (
                 <button
-                  onClick={() => setShowAdvanced(!showAdvanced)}
-                  className={`px-5 py-3 rounded-xl font-medium border transition-all duration-200 flex items-center gap-2 select-none ${
-                    showAdvanced || selectedFeeling !== "All" || selectedTag || startDate || endDate
-                      ? "bg-blue-50 border-blue-200 text-blue-600 dark:bg-blue-950/40 dark:border-blue-900 dark:text-blue-400"
-                      : "bg-white border-gray-300 text-gray-700 hover:bg-gray-50 dark:bg-gray-900 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
+                  key={n.id}
+                  onClick={() => setActiveNote(n)}
+                  className={`px-3 py-1 rounded-lg truncate max-w-[160px] transition cursor-pointer ${
+                    activeNote?.id === n.id
+                      ? "bg-cyan-500/20 text-cyan-300 border border-cyan-400 shadow-[0_0_10px_rgba(6,182,212,0.3)]"
+                      : "bg-slate-900/60 text-slate-400 hover:text-white border border-white/5"
                   }`}
                 >
-                  <span>⚙️</span>
-                  <span>Filters</span>
-                  {(selectedFeeling !== "All" || selectedTag || startDate || endDate) && (
-                    <span className="w-2.5 h-2.5 bg-blue-500 rounded-full animate-pulse" />
-                  )}
-                </button>
-              </div>
-
-              {/* Advanced Filtering Panel */}
-              {showAdvanced && (
-                <div className="p-5 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-2xl shadow-sm space-y-5 animate-fade-scale">
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-                    {/* Feeling selector */}
-                    <div>
-                      <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">
-                        Emotion / Feeling
-                      </label>
-                      <select
-                        value={selectedFeeling}
-                        onChange={(e) => setSelectedFeeling(e.target.value)}
-                        className="w-full bg-gray-50 dark:bg-slate-950 border border-gray-200 dark:border-slate-800 rounded-xl p-3 text-sm text-gray-700 dark:text-gray-200 outline-none focus:ring-2 focus:ring-blue-500 transition"
-                      >
-                        {feelingsList.map((f) => (
-                          <option key={f} value={f}>
-                            {f === "All" ? "Any Emotion" : f}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-
-                    {/* Start Date */}
-                    <div>
-                      <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">
-                        From Date
-                      </label>
-                      <input
-                        type="date"
-                        value={startDate}
-                        onChange={(e) => setStartDate(e.target.value)}
-                        className="w-full bg-gray-50 dark:bg-slate-950 border border-gray-200 dark:border-slate-800 rounded-xl p-3 text-sm text-gray-700 dark:text-gray-200 outline-none focus:ring-2 focus:ring-blue-500 transition"
-                      />
-                    </div>
-
-                    {/* End Date */}
-                    <div>
-                      <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">
-                        To Date
-                      </label>
-                      <input
-                        type="date"
-                        value={endDate}
-                        onChange={(e) => setEndDate(e.target.value)}
-                        className="w-full bg-gray-50 dark:bg-slate-950 border border-gray-200 dark:border-slate-800 rounded-xl p-3 text-sm text-gray-700 dark:text-gray-200 outline-none focus:ring-2 focus:ring-blue-500 transition"
-                      />
-                    </div>
-                  </div>
-
-                  {/* Dynamic Hashtag Pills */}
-                  {allHashtags.length > 0 && (
-                    <div>
-                      <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">
-                        Hashtags in your notes
-                      </label>
-                      <div className="flex flex-wrap gap-2">
-                        {allHashtags.map((tag) => {
-                          const isSelected = selectedTag === tag;
-                          return (
-                            <button
-                              key={tag}
-                              onClick={() => setSelectedTag(isSelected ? "" : tag)}
-                              className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all ${
-                                isSelected
-                                  ? "bg-blue-600 border-blue-600 text-white shadow-sm"
-                                  : "bg-gray-50 border-gray-200 text-gray-600 hover:bg-gray-100 dark:bg-slate-950 dark:border-slate-800 dark:text-slate-400 dark:hover:bg-slate-800"
-                              }`}
-                            >
-                              {tag}
-                            </button>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Reset controls */}
-                  {(selectedFeeling !== "All" || selectedTag || startDate || endDate || searchQuery) && (
-                    <div className="flex justify-end pt-2 border-t border-gray-100 dark:border-slate-800">
-                      <button
-                        onClick={() => {
-                          setSelectedFeeling("All");
-                          setSelectedTag("");
-                          setStartDate("");
-                          setEndDate("");
-                          setSearchQuery("");
-                        }}
-                        className="text-xs text-red-500 hover:text-red-700 font-bold transition flex items-center gap-1.5"
-                      >
-                        <span>🗑️</span>
-                        <span>Clear All Filters</span>
-                      </button>
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-
-            {/* Categories */}
-            <div className="flex flex-wrap gap-3">
-              {categories.map((category) => (
-                <button
-                  key={category}
-                  onClick={() => setSelectedCategory(category)}
-                  className={`px-4 py-2 rounded-full text-sm font-medium transition ${
-                    selectedCategory === category
-                      ? "bg-blue-600 text-white"
-                      : "bg-gray-200 dark:bg-slate-800 text-gray-700 dark:text-gray-300 hover:bg-blue-100 dark:hover:bg-slate-700"
-                  }`}
-                >
-                  {category}
+                  {n.title || "Untitled"}
                 </button>
               ))}
             </div>
+          )}
 
-            {/* Notes Grid */}
-            {loading ? (
-              <p className="text-gray-500 dark:text-slate-400">Loading...</p>
-            ) : filteredNotes.length === 0 ? (
-              <p className="text-gray-500 dark:text-slate-400">No notes found.</p>
-            ) : (
-              <div className="grid md:grid-cols-2 gap-6">
-                {filteredNotes.map((note) => (
-                  <NoteCard
-                    key={note.id}
-                    note={note}
-                    onDelete={handleDeleteNote}
-                    onPin={handlePin}
-                    onFavorite={handleFavorite}
-                    onLock={handleLock}
-                    onRestore={handleRestore}
-                    isSessionUnlocked={sessionUnlockedIds.has(note.id)}
-                    onEdit={(noteToEdit) => {
-                      setEditingNote(noteToEdit);
-                      setShowModal(true);
-                    }}
-                    mode="dashboard"
-                  />
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* Sidebar Area: Mood Analysis & Trending Tags */}
-          <div className="space-y-6">
-            
-            {/* Mood Analysis */}
-            <div className="bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm">
-              <h2 className="text-lg font-bold text-gray-950 dark:text-white mb-4 flex items-center gap-2">
-                📈 Mood Analysis
-              </h2>
-              <div className="space-y-4">
-                {Object.entries(moodCounts).map(([mood, count]) => {
-                  const percent = Math.round((count / maxMoodCount) * 100);
-                  return (
-                    <div key={mood} className="space-y-1">
-                      <div className="flex justify-between text-sm font-medium text-gray-700 dark:text-gray-300">
-                        <span>{moodIcons[mood] || "😐"} {mood}</span>
-                        <span className="text-gray-400 font-semibold">{count}</span>
-                      </div>
-                      <div className="w-full bg-gray-100 dark:bg-slate-800 h-2 rounded-full overflow-hidden">
-                        <div
-                          className={`h-full ${moodColors[mood] || "bg-gray-500"} rounded-full transition-all duration-500`}
-                          style={{ width: `${percent}%` }}
-                        />
-                      </div>
-                    </div>
-                  );
-                })}
-                {Object.keys(moodCounts).length === 0 && (
-                  <p className="text-sm text-gray-400 dark:text-slate-500 italic">No moods analyzed yet.</p>
-                )}
-              </div>
+          {/* Main 2-Column Cards Grid (Exact replica of reference picture) */}
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+            {/* Left Card: Formatted Markdown Journal Card */}
+            <div className="lg:col-span-7 w-full">
+              <NoteDisplayCard
+                note={activeNote}
+                onUpdateContent={handleQuickContentUpdate}
+                onOpenFullEdit={() => {
+                  if (activeNote) {
+                    setEditingNote(activeNote);
+                    setShowModal(true);
+                  }
+                }}
+              />
             </div>
 
-            {/* Trending Tags */}
-            <div className="bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm">
-              <h2 className="text-lg font-bold text-gray-950 dark:text-white mb-4 flex items-center gap-2">
-                🏷️ Trending Tags
-              </h2>
-              <div className="flex flex-wrap gap-2">
-                {trendingTags.map((tag) => (
-                  <span
-                    key={tag}
-                    className="rounded-full bg-violet-100 dark:bg-violet-900/30 px-3 py-1 text-sm font-medium text-violet-700 dark:text-violet-400 border border-violet-200/50 dark:border-violet-800/30"
-                  >
-                    #{tag}
+            {/* Right Cards: Audio Voice Memo Card + Tag Card */}
+            <div className="lg:col-span-5 space-y-6 w-full">
+              <AudioVoiceMemo
+                activeRecording={activeRecording}
+                onSaveNewRecording={handleSaveNewRecording}
+                onDeleteRecording={handleDeleteRecording}
+                onAudioPlayStateChange={setIsPlayingAudio}
+              />
+
+              <TagCard
+                tags={["reflection", "growth", "productivity"]}
+                onAddTag={(tag) => console.log("Added tag:", tag)}
+              />
+            </div>
+          </div>
+
+          {/* All Notes Expandable Grid */}
+          {showAllNotesSection && (
+            <div className="mt-10 pt-6 border-t border-white/10 space-y-4">
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-bold text-white flex items-center gap-2">
+                  <Sparkles size={18} className="text-cyan-400" />
+                  <span>
+                    {selectedNotebook ? `${selectedNotebook} Notes` : "All Notes"} ({filteredNotes.length})
                   </span>
-                ))}
-                {trendingTags.length === 0 && (
-                  <p className="text-sm text-gray-400 dark:text-slate-500 italic">No tags found.</p>
-                )}
+                </h3>
+                <span className="text-xs text-slate-400">
+                  Click any note to display it in the journal card
+                </span>
               </div>
+
+              {filteredNotes.length === 0 ? (
+                <div className="text-center py-12 glass-panel rounded-2xl text-slate-400">
+                  No notes in this view yet. Click <strong>+ New Note</strong> to start writing!
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
+                  {filteredNotes.map((note) => (
+                    <div
+                      key={note.id}
+                      onClick={() => setActiveNote(note)}
+                      className={`cursor-pointer transition-all ${
+                        activeNote?.id === note.id
+                          ? "ring-2 ring-cyan-400 rounded-2xl"
+                          : ""
+                      }`}
+                    >
+                      <NoteCard
+                        note={note}
+                        onDelete={handleDeleteNote}
+                        onEdit={(n) => {
+                          setEditingNote(n);
+                          setShowModal(true);
+                        }}
+                        onRestore={handleRestore}
+                        isTrash={filter === "trash"}
+                        onPin={handlePin}
+                        onFavorite={handleFavorite}
+                        onLock={handleLock}
+                        isUnlocked={sessionUnlockedIds.has(note.id)}
+                      />
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
-
-          </div>
-
+          )}
         </div>
+      </main>
 
-        {/* Modal */}
-        {showModal && (
-          <Modal
-            onClose={() => {
+      {/* 4. Rightmost Column: Journaling Insights Analytics */}
+      <div className="hidden xl:block border-l border-white/5 bg-[#070d15]/50 backdrop-blur-xl">
+        <JournalingInsights stats={stats} notes={notes} />
+      </div>
+
+      {/* Create / Edit Note Modal */}
+      {showModal && (
+        <Modal
+          onClose={() => {
+            setShowModal(false);
+            setEditingNote(null);
+          }}
+        >
+          <h2 className="text-2xl font-bold mb-6 text-white">
+            {editingNote ? "Edit Note" : "Create Note"}
+          </h2>
+
+          <NoteForm
+            initialData={
+              editingNote || {
+                category: selectedNotebook || "General",
+                feeling: "Neutral",
+              }
+            }
+            onCancel={() => {
               setShowModal(false);
               setEditingNote(null);
             }}
-          >
-            <h2 className="text-2xl font-bold mb-6 text-gray-900 dark:text-white">
-              {editingNote ? "Edit Note" : "Create Note"}
-            </h2>
+            onSave={editingNote ? handleEditNote : handleCreateNote}
+          />
+        </Modal>
+      )}
 
-            <NoteForm
-              initialData={editingNote}
-              onCancel={() => {
-                setShowModal(false);
-                setEditingNote(null);
-              }}
-              onSave={editingNote ? handleEditNote : handleCreateNote}
-            />
-          </Modal>
-        )}
-      </div>
+      {/* Journaling Tips & Guide Modal */}
+      {showGuideModal && (
+        <Modal onClose={() => setShowGuideModal(false)}>
+          <div className="p-2 space-y-4 text-slate-200">
+            <h3 className="text-xl font-bold text-white flex items-center gap-2">
+              <BookOpen className="text-cyan-400" size={22} />
+              <span>InnerVoice Journaling Guide</span>
+            </h3>
+            <p className="text-sm text-slate-300 leading-relaxed">
+              Welcome to your private thought space. Here are quick tips to make the most of your journaling:
+            </p>
+            <div className="space-y-2 text-xs">
+              <div className="p-3 rounded-xl bg-slate-900 border border-white/10">
+                <strong className="text-cyan-300">🎙️ Audio Voice Memos:</strong> Click "Record Voice" to record verbal reflections. Your memo will be visualized as an interactive cyan audio waveform.
+              </div>
+              <div className="p-3 rounded-xl bg-slate-900 border border-white/10">
+                <strong className="text-cyan-300">✍️ Markdown Support:</strong> Use <code># Heading</code>, <code>* Bullet</code>, and <code>**Bold**</code> for clean note structure.
+              </div>
+              <div className="p-3 rounded-xl bg-slate-900 border border-white/10">
+                <strong className="text-cyan-300">📁 Notebooks & Tags:</strong> Create custom notebooks to organize ideas, and add <code>#tags</code> to track moods and topics.
+              </div>
+            </div>
+            <button
+              onClick={() => setShowGuideModal(false)}
+              className="w-full py-2.5 rounded-xl bg-cyan-500/20 text-cyan-300 border border-cyan-400 font-semibold text-xs hover:bg-cyan-500/30 transition cursor-pointer"
+            >
+              Got it!
+            </button>
+          </div>
+        </Modal>
+      )}
 
+      {/* Help & Support Modal */}
+      {showHelpModal && (
+        <Modal onClose={() => setShowHelpModal(false)}>
+          <div className="p-2 space-y-4 text-slate-200">
+            <h3 className="text-xl font-bold text-white flex items-center gap-2">
+              <HelpCircle className="text-cyan-400" size={22} />
+              <span>Help & Shortcuts</span>
+            </h3>
+            <div className="space-y-2 text-xs">
+              <div className="flex justify-between p-2.5 rounded-lg bg-slate-900 border border-white/5">
+                <span>Play / Pause Audio</span>
+                <span className="font-mono text-cyan-400">Spacebar / Play Button</span>
+              </div>
+              <div className="flex justify-between p-2.5 rounded-lg bg-slate-900 border border-white/5">
+                <span>Create New Note</span>
+                <span className="font-mono text-cyan-400">Pen Icon / New Note</span>
+              </div>
+              <div className="flex justify-between p-2.5 rounded-lg bg-slate-900 border border-white/5">
+                <span>Quick Note Edit</span>
+                <span className="font-mono text-cyan-400">Edit Button in Note Card</span>
+              </div>
+            </div>
+            <button
+              onClick={() => setShowHelpModal(false)}
+              className="w-full py-2.5 rounded-xl bg-cyan-500/20 text-cyan-300 border border-cyan-400 font-semibold text-xs hover:bg-cyan-500/30 transition cursor-pointer"
+            >
+              Close
+            </button>
+          </div>
+        </Modal>
+      )}
+
+      {/* Security Modals */}
       {showUnlockModal && (
         <UnlockNoteModal
           onClose={() => {
@@ -757,7 +830,6 @@ function Dashboard() {
             setSelectedNote(null);
           }}
           onSuccess={() => {
-            // Add to session-unlocked set without touching DB or re-fetching
             setSessionUnlockedIds((prev) => new Set(prev).add(selectedNote.id));
             setShowVerifyPasswordModal(false);
             setSelectedNote(null);
@@ -839,7 +911,7 @@ function Dashboard() {
           }}
         />
       )}
-    </Layout>
+    </div>
   );
 }
 

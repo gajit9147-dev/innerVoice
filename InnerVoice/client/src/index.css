@@ -10,18 +10,17 @@
    from GET /api/glass-theme on app load
    ============================================= */
 :root {
-  --glass-primary:   #c084fc;
-  --glass-secondary: #22d3ee;
-  --glass-accent:    #f472b6;
+  --glass-primary:   #06b6d4;
+  --glass-secondary: #14b8a6;
+  --glass-accent:    #38bdf8;
 
   /* Glass surface tokens */
-  --glass-bg:        rgba(255, 255, 255, 0.08);
-  --glass-border:    rgba(255, 255, 255, 0.18);
+  --glass-bg:        rgba(11, 19, 31, 0.75);
+  --glass-border:    rgba(255, 255, 255, 0.08);
   --glass-blur:      24px;
-  --glass-shadow:    0 8px 32px rgba(31, 38, 135, 0.25);
-  --glass-inset:     inset 0 1px 0 rgba(255,255,255,0.3), inset 0 -1px 0 rgba(0,0,0,0.08);
-  --iridescent-glow: 0 0 40px var(--glass-primary),
-                     0 0 80px var(--glass-secondary);
+  --glass-shadow:    0 12px 36px rgba(0, 0, 0, 0.55);
+  --glass-inset:     inset 0 1px 0 rgba(255,255,255,0.12), inset 0 -1px 0 rgba(0,0,0,0.3);
+  --iridescent-glow: 0 0 25px rgba(6, 182, 212, 0.35);
 
   /* Elastic liquid easing */
   --liquid-ease:    cubic-bezier(0.34, 1.56, 0.64, 1);
@@ -31,8 +30,98 @@
    BASE BODY
    ============================================= */
 body {
-  @apply bg-slate-100 dark:bg-slate-900 text-gray-900 dark:text-gray-100;
-  transition: background-color 0.3s ease, color 0.3s ease;
+  @apply bg-[#060b11] text-slate-100;
+  background-color: #060b11;
+  color: #f1f5f9;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+  overflow-x: hidden;
+}
+
+/* Custom dark ambient glow layout background matching reference screenshot */
+.ambient-bg {
+  background-color: #04080e;
+  background-image: 
+    radial-gradient(ellipse 60% 45% at 55% 40%, rgba(6, 182, 212, 0.18) 0%, transparent 60%),
+    radial-gradient(circle at 88% 60%, rgba(14, 165, 233, 0.12) 0%, transparent 45%),
+    radial-gradient(circle at 12% 70%, rgba(20, 184, 166, 0.14) 0%, transparent 45%),
+    radial-gradient(ellipse 80% 50% at 50% 95%, rgba(6, 182, 212, 0.08) 0%, transparent 55%);
+  background-attachment: fixed;
+}
+
+/* Premium Liquid Frosted Glass Card */
+.liquid-glass-card,
+.glass-panel {
+  background: linear-gradient(135deg, rgba(13, 23, 37, 0.72) 0%, rgba(7, 15, 26, 0.78) 100%);
+  backdrop-filter: blur(28px) saturate(180%);
+  -webkit-backdrop-filter: blur(28px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-top: 1px solid rgba(255, 255, 255, 0.18);
+  box-shadow: 0 20px 50px -10px rgba(0, 0, 0, 0.7), inset 0 1px 0 rgba(255, 255, 255, 0.14);
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.liquid-glass-card:hover {
+  border-color: rgba(34, 211, 238, 0.3);
+  box-shadow: 0 24px 60px -10px rgba(0, 0, 0, 0.8), 0 0 25px rgba(6, 182, 212, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.22);
+}
+
+/* Cyan Glowing Border Highlight (like My Journal pill and Audio card in screenshot) */
+.glass-glow-cyan,
+.pill-active-glow {
+  background: linear-gradient(135deg, rgba(8, 38, 58, 0.6) 0%, rgba(6, 26, 42, 0.5) 100%) !important;
+  border: 1px solid #22d3ee !important;
+  box-shadow: 0 0 22px rgba(6, 182, 212, 0.45), inset 0 0 14px rgba(6, 182, 212, 0.18) !important;
+  color: #a5f3fc !important;
+}
+
+.glass-glow-subtle {
+  border: 1px solid rgba(34, 211, 238, 0.4) !important;
+  box-shadow: 0 0 30px rgba(6, 182, 212, 0.18), inset 0 1px 0 rgba(255, 255, 255, 0.15) !important;
+}
+
+/* Custom glowing range slider thumb */
+input[type="range"] {
+  accent-color: #22d3ee;
+}
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 13px;
+  height: 13px;
+  border-radius: 50%;
+  background: #ffffff;
+  box-shadow: 0 0 10px #22d3ee, 0 0 4px #ffffff;
+  cursor: pointer;
+  transition: transform 0.1s ease;
+}
+input[type="range"]::-webkit-slider-thumb:hover {
+  transform: scale(1.2);
+}
+
+/* Waveform pulse animation */
+@keyframes wave-pulse {
+  0%, 100% { transform: scaleY(0.4); opacity: 0.8; }
+  50% { transform: scaleY(1); opacity: 1; filter: drop-shadow(0 0 6px #22d3ee); }
+}
+
+.wave-bar-active {
+  animation: wave-pulse 1.1s ease-in-out infinite;
+}
+
+/* Custom dark scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: rgba(10, 15, 25, 0.5);
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.12);
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(6, 182, 212, 0.4);
 }
 
 /* =============================================

@@ -15,18 +15,18 @@ import MeshBackground from "../components/glass/MeshBackground";
 // Default theme configuration containing configurations for both modes
 const DEFAULT_THEME = {
   dark: {
-    primary:   "#c084fc",
-    secondary: "#22d3ee",
-    accent:    "#f472b6",
-    glassBg:   "rgba(15, 23, 42, 0.45)",
+    primary:   "#06b6d4", // Electric cyan
+    secondary: "#14b8a6", // Vibrant teal
+    accent:    "#38bdf8", // Sky cyan
+    glassBg:   "rgba(11, 19, 31, 0.72)",
     glassBorder: "rgba(255, 255, 255, 0.08)",
-    glassInset: "inset 0 1px 0 rgba(255, 255, 255, 0.1), inset 0 -1px 0 rgba(0, 0, 0, 0.2)"
+    glassInset: "inset 0 1px 0 rgba(255, 255, 255, 0.12), inset 0 -1px 0 rgba(0, 0, 0, 0.3)"
   },
   light: {
-    primary:   "#d8b4fe",
-    secondary: "#a5f3fc",
-    accent:    "#fbcfe8",
-    glassBg:   "rgba(255, 255, 255, 0.4)",
+    primary:   "#0284c7",
+    secondary: "#0d9488",
+    accent:    "#06b6d4",
+    glassBg:   "rgba(255, 255, 255, 0.75)",
     glassBorder: "rgba(255, 255, 255, 0.4)",
     glassInset: "inset 0 1px 0 rgba(255, 255, 255, 0.5), inset 0 -1px 0 rgba(0, 0, 0, 0.03)"
   }
