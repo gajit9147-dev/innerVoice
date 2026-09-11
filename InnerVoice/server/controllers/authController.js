@@ -212,18 +212,18 @@ export const login = async (req, res) => {
 // =========================
 export const googleAuth = async (req, res) => {
   try {
-    const { id_token, credential, link_account, password } = req.body || {};
-    const tokenToVerify = id_token || credential;
+    const { id_token, credential, access_token, userinfo, link_account, password } = req.body || {};
+    const tokenToVerify = id_token || credential || access_token;
 
     if (!tokenToVerify) {
       return res.status(400).json({
         success: false,
-        message: "Missing Google ID token or credential.",
+        message: "Missing Google authentication token or credential.",
       });
     }
 
-    // Verify Google ID token cryptographically with Google Identity Services
-    const verifiedGoogleUser = await verifyGoogleIdToken(tokenToVerify);
+    // Verify Google token cryptographically with Google Identity Services
+    const verifiedGoogleUser = await verifyGoogleIdToken(tokenToVerify, userinfo);
     const { sub, email, name, picture, email_verified } = verifiedGoogleUser;
 
     // 1. Check if user exists by google_id

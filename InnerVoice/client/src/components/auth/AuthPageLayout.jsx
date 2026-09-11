@@ -227,15 +227,46 @@ export default function AuthPageLayout({ initialMode = "signup" }) {
                   });
                   const userInfo = await res.json();
                   if (userInfo.email) {
-                    await loginWithGoogle(tokenResp.access_token, {
+                    const data = await loginWithGoogle(tokenResp.access_token, {
                       access_token: tokenResp.access_token,
                       userinfo: userInfo,
                     });
+
+                    if (data?.requireLinking) {
+                      setLinkingModal({
+                        isOpen: true,
+                        provider: "google",
+                        email: data.email,
+                        password: "",
+                        oauthId: "",
+                        idToken: tokenResp.access_token,
+                        loading: false,
+                        error: "",
+                      });
+                      setLoading(false);
+                      return;
+                    }
+
+                    setSuccessMsg("Signed in with Google! Redirecting...");
                     const destination = location.state?.from?.pathname || "/dashboard";
-                    navigate(destination, { replace: true });
+                    setTimeout(() => navigate(destination, { replace: true }), 500);
                   }
                 } catch (e) {
-                  setError(e.message || "Google sign-in failed.");
+                  const resData = e.response?.data;
+                  if (resData?.requireLinking) {
+                    setLinkingModal({
+                      isOpen: true,
+                      provider: "google",
+                      email: resData.email,
+                      password: "",
+                      oauthId: "",
+                      idToken: tokenResp.access_token,
+                      loading: false,
+                      error: "",
+                    });
+                  } else {
+                    setError(resData?.message || e.message || "Google sign-in failed.");
+                  }
                 } finally {
                   setLoading(false);
                 }
