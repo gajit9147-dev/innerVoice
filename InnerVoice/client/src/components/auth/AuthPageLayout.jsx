@@ -120,10 +120,12 @@ export default function AuthPageLayout({ initialMode = "signup" }) {
     setError("");
     setSuccessMsg("");
 
-    const googleClientId =
+    const rawClientId =
       import.meta.env.VITE_GOOGLE_CLIENT_ID ||
       localStorage.getItem("innervoice_google_client_id") ||
-      "";
+      "104942402554-buppqtd0bio5um986ibvq2sq669raf85.apps.googleusercontent.com";
+
+    const googleClientId = rawClientId ? rawClientId.trim() : "";
 
     if (!googleClientId || googleClientId.includes("your-google-client-id")) {
       setConfigModal({

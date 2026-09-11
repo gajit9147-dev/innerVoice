@@ -9,12 +9,10 @@ import logger from "../utils/logger.js";
 let oauth2Client = null;
 
 const getOAuthClient = () => {
-  const clientId = process.env.GOOGLE_CLIENT_ID;
-  if (!clientId) {
-    throw new Error(
-      "GOOGLE_CLIENT_ID is not configured on the server. Please set GOOGLE_CLIENT_ID in server/.env"
-    );
-  }
+  const rawId =
+    process.env.GOOGLE_CLIENT_ID ||
+    "104942402554-buppqtd0bio5um986ibvq2sq669raf85.apps.googleusercontent.com";
+  const clientId = rawId.trim();
 
   if (!oauth2Client) {
     oauth2Client = new OAuth2Client(clientId);
