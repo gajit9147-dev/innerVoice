@@ -106,7 +106,12 @@ function Dashboard() {
   const [selectedNotebook, setSelectedNotebook] = useState("My Journal");
   const [selectedFolder, setSelectedFolder] = useState(null);
   const [selectedTag, setSelectedTag] = useState("");
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(() => {
+    if (typeof window !== "undefined") {
+      return window.innerWidth >= 1024;
+    }
+    return true;
+  });
   const [showAllNotesSection, setShowAllNotesSection] = useState(true);
   const [activeTab, setActiveTab] = useState("overview");
 
@@ -635,26 +640,46 @@ function Dashboard() {
         onOpenHelp={() => setShowHelpModal(true)}
       />
 
-      {/* 2. Notebooks & Folders Navigation Drawer - Open by default */}
+      {/* Mobile Backdrop when drawer is open */}
+      {isSidebarOpen && (
+        <div
+          onClick={() => setIsSidebarOpen(false)}
+          className="lg:hidden fixed inset-0 z-30 bg-black/60 backdrop-blur-sm transition-opacity"
+        />
+      )}
+
+      {/* 2. Notebooks & Folders Navigation Drawer */}
       <div
-        className={`${
-          isSidebarOpen ? "w-60 opacity-100" : "w-0 opacity-0 pointer-events-none"
-        } transition-all duration-300 z-20 shrink-0 overflow-hidden`}
+        className={`fixed lg:static top-0 bottom-0 left-16 z-40 bg-[#080f19] lg:bg-transparent ${
+          isSidebarOpen ? "w-64 opacity-100 shadow-2xl lg:shadow-none" : "w-0 opacity-0 pointer-events-none"
+        } transition-all duration-300 shrink-0 overflow-hidden h-screen`}
       >
         <NotebookSidebar
           notebooks={notebooks}
           selectedNotebook={selectedNotebook}
-          onSelectNotebook={handleSelectNotebook}
+          onSelectNotebook={(name) => {
+            handleSelectNotebook(name);
+            if (window.innerWidth < 1024) setIsSidebarOpen(false);
+          }}
           selectedFolder={selectedFolder}
-          onSelectFolder={handleSelectFolder}
+          onSelectFolder={(folder) => {
+            handleSelectFolder(folder);
+            if (window.innerWidth < 1024) setIsSidebarOpen(false);
+          }}
           selectedTag={selectedTag}
-          onSelectTag={handleSelectTag}
+          onSelectTag={(tag) => {
+            handleSelectTag(tag);
+            if (window.innerWidth < 1024) setIsSidebarOpen(false);
+          }}
           onAddNewNotebook={handleAddNewNotebook}
           onDeleteNotebook={handleDeleteNotebook}
           notesCountByNotebook={notesCountByNotebook}
           recordings={recordings}
           activeRecordingId={activeRecording?.id}
-          onSelectRecording={(rec) => setActiveRecording(rec)}
+          onSelectRecording={(rec) => {
+            setActiveRecording(rec);
+            if (window.innerWidth < 1024) setIsSidebarOpen(false);
+          }}
           onDeleteRecording={handleDeleteRecording}
           isPlayingAudio={isPlayingAudio}
         />

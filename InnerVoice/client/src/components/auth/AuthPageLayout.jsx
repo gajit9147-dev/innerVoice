@@ -497,19 +497,19 @@ export default function AuthPageLayout({ initialMode = "signup" }) {
   };
 
   return (
-    <div className="min-h-screen w-full relative flex items-center justify-center p-4 md:p-8 bg-[#040614] overflow-hidden select-none font-sans">
+    <div className="min-h-screen w-full relative flex items-center justify-center p-3 sm:p-6 md:p-8 bg-[#040614] overflow-x-hidden overflow-y-auto select-none font-sans py-8">
       {/* Ambient 3D Neon Background Effects */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden">
-        <div className="absolute top-1/4 left-1/3 w-[500px] h-[500px] bg-fuchsia-600/20 rounded-full blur-[140px]" />
-        <div className="absolute bottom-1/4 right-1/4 w-[600px] h-[600px] bg-blue-600/20 rounded-full blur-[160px]" />
-        <div className="absolute top-10 right-1/3 w-[400px] h-[400px] bg-cyan-500/15 rounded-full blur-[120px]" />
+        <div className="absolute top-1/4 left-1/3 w-[300px] sm:w-[500px] h-[300px] sm:h-[500px] bg-fuchsia-600/20 rounded-full blur-[140px]" />
+        <div className="absolute bottom-1/4 right-1/4 w-[350px] sm:w-[600px] h-[350px] sm:h-[600px] bg-blue-600/20 rounded-full blur-[160px]" />
+        <div className="absolute top-10 right-1/3 w-[250px] sm:w-[400px] h-[250px] sm:h-[400px] bg-cyan-500/15 rounded-full blur-[120px]" />
 
         {/* Top-Center Floating Magenta Orb */}
-        <div className="absolute top-[8%] left-[48%] -translate-x-1/2 w-24 h-24 rounded-full bg-gradient-to-br from-pink-400 via-fuchsia-500 to-purple-800 shadow-[0_0_50px_rgba(236,72,153,0.8)] opacity-90 animate-pulse" />
+        <div className="absolute top-[8%] left-[48%] -translate-x-1/2 w-16 h-16 sm:w-24 sm:h-24 rounded-full bg-gradient-to-br from-pink-400 via-fuchsia-500 to-purple-800 shadow-[0_0_50px_rgba(236,72,153,0.8)] opacity-90 animate-pulse" />
 
         {/* 3D Torus Decor Ring */}
         <div
-          className="absolute -bottom-16 -left-16 w-80 h-80 md:w-96 md:h-96 rounded-full pointer-events-none"
+          className="absolute -bottom-16 -left-16 w-64 h-64 sm:w-80 sm:h-80 md:w-96 md:h-96 rounded-full pointer-events-none opacity-60 sm:opacity-100"
           style={{
             background: "radial-gradient(circle at 35% 35%, #ec4899 0%, #a855f7 40%, #1d4ed8 75%, #050b28 100%)",
             boxShadow: "0 0 90px 20px rgba(217,70,239,0.4), inset 0 0 60px rgba(6,182,212,0.6)",
@@ -517,12 +517,12 @@ export default function AuthPageLayout({ initialMode = "signup" }) {
             border: "18px solid rgba(236, 72, 153, 0.4)",
           }}
         >
-          <div className="absolute inset-16 md:inset-20 rounded-full bg-[#040614] shadow-[inset_0_0_40px_rgba(236,72,153,0.7)]" />
+          <div className="absolute inset-14 sm:inset-16 md:inset-20 rounded-full bg-[#040614] shadow-[inset_0_0_40px_rgba(236,72,153,0.7)]" />
         </div>
 
         {/* Right 3D Ribbon */}
         <div
-          className="absolute -top-10 -right-20 w-[420px] h-[750px] rounded-[220px] pointer-events-none opacity-85"
+          className="absolute -top-10 -right-20 w-[280px] sm:w-[420px] h-[550px] sm:h-[750px] rounded-[220px] pointer-events-none opacity-50 sm:opacity-85"
           style={{
             background: "linear-gradient(145deg, #f43f5e 0%, #ec4899 25%, #8b5cf6 50%, #3b82f6 80%, #06b6d4 100%)",
             boxShadow: "0 0 100px 30px rgba(236,72,153,0.35), inset 0 0 50px rgba(255,255,255,0.4)",
@@ -534,18 +534,30 @@ export default function AuthPageLayout({ initialMode = "signup" }) {
       </div>
 
       {/* Main Glass Card Container */}
-      <div className="relative z-10 w-full max-w-[960px] rounded-[36px] md:rounded-[42px] p-6 sm:p-10 md:p-12 bg-white/[0.04] backdrop-blur-[45px] saturate-[190%] border border-white/[0.18] shadow-[0_35px_90px_-15px_rgba(0,0,0,0.85),inset_0_1px_1px_0_rgba(255,255,255,0.3)] transition-all">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
+      <div className="relative z-10 w-full max-w-[960px] rounded-3xl sm:rounded-[36px] md:rounded-[42px] p-5 sm:p-8 md:p-10 lg:p-12 bg-white/[0.04] backdrop-blur-[45px] saturate-[190%] border border-white/[0.18] shadow-[0_35px_90px_-15px_rgba(0,0,0,0.85),inset_0_1px_1px_0_rgba(255,255,255,0.3)] transition-all my-auto">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 sm:gap-8 lg:gap-12 items-center">
           {/* LEFT SIDE: AUTH FORM */}
-          <div className="lg:col-span-7 space-y-5">
-            {/* Title Header */}
-            <div>
-              <h1 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight leading-tight">
-                {isSignup ? "Join the" : "Welcome"}
-                <br />
-                <span className="text-white">{isSignup ? "Future" : "Back"}</span>
-              </h1>
-              <div className="h-[3.5px] w-20 mt-3 rounded-full bg-gradient-to-r from-pink-500 via-fuchsia-500 to-cyan-400 shadow-[0_0_12px_rgba(236,72,153,0.8)]" />
+          <div className="lg:col-span-7 space-y-4 sm:space-y-5">
+            {/* Title Header with Mobile Quick Switch */}
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <h1 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-white tracking-tight leading-tight">
+                  {isSignup ? "Join the" : "Welcome"}
+                  <br />
+                  <span className="text-white">{isSignup ? "Future" : "Back"}</span>
+                </h1>
+                <div className="h-[3.5px] w-16 sm:w-20 mt-2.5 rounded-full bg-gradient-to-r from-pink-500 via-fuchsia-500 to-cyan-400 shadow-[0_0_12px_rgba(236,72,153,0.8)]" />
+              </div>
+
+              {/* Quick Mode Switcher for Mobile */}
+              <button
+                type="button"
+                onClick={() => handleToggleMode(isSignup ? "login" : "signup")}
+                className="lg:hidden flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/[0.08] hover:bg-white/[0.15] border border-white/15 text-[11px] font-semibold text-slate-200 transition shrink-0"
+              >
+                <span>{isSignup ? "Log In" : "Sign Up"}</span>
+                <ArrowRight size={12} className="text-cyan-400" />
+              </button>
             </div>
 
             {/* Error / Success Toast Banner */}
@@ -570,7 +582,7 @@ export default function AuthPageLayout({ initialMode = "signup" }) {
                 id="btn-google-auth"
                 disabled={loading}
                 onClick={handleGoogleClick}
-                className="w-full py-2.5 px-4 rounded-xl bg-white/[0.07] hover:bg-white/[0.14] border border-white/15 hover:border-cyan-400/40 text-white text-xs font-semibold tracking-wide transition flex items-center justify-center gap-3 cursor-pointer disabled:opacity-50"
+                className="w-full py-3 sm:py-2.5 min-h-[44px] px-4 rounded-xl bg-white/[0.07] hover:bg-white/[0.14] border border-white/15 hover:border-cyan-400/40 text-white text-xs font-semibold tracking-wide transition flex items-center justify-center gap-3 cursor-pointer disabled:opacity-50 active:scale-[0.99]"
               >
                 <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24">
                   <path
@@ -599,7 +611,7 @@ export default function AuthPageLayout({ initialMode = "signup" }) {
                 id="btn-apple-auth"
                 disabled={loading}
                 onClick={handleAppleClick}
-                className="w-full py-2.5 px-4 rounded-xl bg-white/[0.07] hover:bg-white/[0.14] border border-white/15 hover:border-white/30 text-white text-xs font-semibold tracking-wide transition flex items-center justify-center gap-3 cursor-pointer disabled:opacity-50"
+                className="w-full py-3 sm:py-2.5 min-h-[44px] px-4 rounded-xl bg-white/[0.07] hover:bg-white/[0.14] border border-white/15 hover:border-white/30 text-white text-xs font-semibold tracking-wide transition flex items-center justify-center gap-3 cursor-pointer disabled:opacity-50 active:scale-[0.99]"
               >
                 <svg className="w-4 h-4 shrink-0 fill-current" viewBox="0 0 24 24">
                   <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M15.97 6.37c.62-.75 1.04-1.8 0.92-2.85-.9.04-1.98.6-2.61 1.35-.55.63-1.03 1.68-.9 2.7 1 .08 2.02-.51 2.59-1.2" />
@@ -618,7 +630,7 @@ export default function AuthPageLayout({ initialMode = "signup" }) {
             </div>
 
             {/* Email/Password Form */}
-            <form onSubmit={handleSubmit} className="space-y-3.5">
+            <form onSubmit={handleSubmit} className="space-y-3.5 sm:space-y-4">
               {/* Full Name Input (Signup only) */}
               {isSignup && (
                 <div className="relative group">
@@ -633,7 +645,7 @@ export default function AuthPageLayout({ initialMode = "signup" }) {
                     onChange={handleChange}
                     placeholder="e.g. Ajeet Kumar"
                     required={isSignup}
-                    className="w-full bg-slate-900/60 border border-white/15 focus:border-cyan-400 rounded-xl px-3.5 py-2.5 text-white text-xs outline-none transition"
+                    className="w-full bg-slate-900/60 border border-white/15 focus:border-cyan-400 rounded-xl px-3.5 py-3 sm:py-2.5 text-sm sm:text-xs text-white outline-none transition"
                   />
                 </div>
               )}
@@ -651,7 +663,7 @@ export default function AuthPageLayout({ initialMode = "signup" }) {
                   onChange={handleChange}
                   placeholder="name@domain.com"
                   required
-                  className="w-full bg-slate-900/60 border border-white/15 focus:border-cyan-400 rounded-xl px-3.5 py-2.5 text-white text-xs outline-none transition"
+                  className="w-full bg-slate-900/60 border border-white/15 focus:border-cyan-400 rounded-xl px-3.5 py-3 sm:py-2.5 text-sm sm:text-xs text-white outline-none transition"
                 />
               </div>
 
@@ -669,15 +681,15 @@ export default function AuthPageLayout({ initialMode = "signup" }) {
                     onChange={handleChange}
                     placeholder={isSignup ? "Minimum 8 characters (letters & numbers)" : "Your account password"}
                     required
-                    className="w-full bg-slate-900/60 border border-white/15 focus:border-cyan-400 rounded-xl px-3.5 py-2.5 pr-10 text-white text-xs outline-none font-mono transition"
+                    className="w-full bg-slate-900/60 border border-white/15 focus:border-cyan-400 rounded-xl px-3.5 py-3 sm:py-2.5 pr-11 text-sm sm:text-xs text-white outline-none font-mono transition"
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 text-slate-400 hover:text-white transition cursor-pointer"
+                    className="absolute right-2.5 p-1.5 text-slate-400 hover:text-white transition cursor-pointer"
                     title={showPassword ? "Hide password" : "Show password"}
                   >
-                    {showPassword ? <EyeOff size={15} /> : <Eye size={15} />}
+                    {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                   </button>
                 </div>
               </div>
@@ -697,15 +709,15 @@ export default function AuthPageLayout({ initialMode = "signup" }) {
                       onChange={handleChange}
                       placeholder="Re-enter your password"
                       required={isSignup}
-                      className="w-full bg-slate-900/60 border border-white/15 focus:border-cyan-400 rounded-xl px-3.5 py-2.5 pr-10 text-white text-xs outline-none font-mono transition"
+                      className="w-full bg-slate-900/60 border border-white/15 focus:border-cyan-400 rounded-xl px-3.5 py-3 sm:py-2.5 pr-11 text-sm sm:text-xs text-white outline-none font-mono transition"
                     />
                     <button
                       type="button"
                       onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                      className="absolute right-3 text-slate-400 hover:text-white transition cursor-pointer"
+                      className="absolute right-2.5 p-1.5 text-slate-400 hover:text-white transition cursor-pointer"
                       title={showConfirmPassword ? "Hide password" : "Show password"}
                     >
-                      {showConfirmPassword ? <EyeOff size={15} /> : <Eye size={15} />}
+                      {showConfirmPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                     </button>
                   </div>
                 </div>
@@ -732,7 +744,7 @@ export default function AuthPageLayout({ initialMode = "signup" }) {
                   type="submit"
                   id="btn-auth-submit"
                   disabled={loading}
-                  className="w-full py-3 px-6 rounded-xl font-bold text-white text-xs tracking-wider transition-all duration-300 shadow-[0_0_24px_rgba(236,72,153,0.45)] hover:shadow-[0_0_35px_rgba(6,182,212,0.6)] hover:scale-[1.01] active:scale-[0.99] disabled:opacity-60 flex items-center justify-center gap-2 cursor-pointer uppercase"
+                  className="w-full py-3.5 sm:py-3 min-h-[46px] px-6 rounded-xl font-bold text-white text-xs tracking-wider transition-all duration-300 shadow-[0_0_24px_rgba(236,72,153,0.45)] hover:shadow-[0_0_35px_rgba(6,182,212,0.6)] hover:scale-[1.01] active:scale-[0.99] disabled:opacity-60 flex items-center justify-center gap-2 cursor-pointer uppercase"
                   style={{
                     background: "linear-gradient(90deg, #f43f5e 0%, #ec4899 30%, #a855f7 65%, #06b6d4 100%)",
                   }}
@@ -749,24 +761,24 @@ export default function AuthPageLayout({ initialMode = "signup" }) {
               </div>
 
               {/* Agreement / Remember Me */}
-              <div className="flex items-center justify-between pt-1 text-xs text-slate-400">
+              <div className="flex flex-wrap items-center justify-between gap-2 pt-1 text-xs text-slate-400">
                 {isSignup ? (
-                  <label className="flex items-center gap-2 cursor-pointer hover:text-slate-300">
+                  <label className="flex items-center gap-2 cursor-pointer hover:text-slate-300 py-1">
                     <input
                       type="checkbox"
                       checked={agreeTerms}
                       onChange={(e) => setAgreeTerms(e.target.checked)}
-                      className="accent-pink-500 rounded cursor-pointer"
+                      className="accent-pink-500 rounded cursor-pointer w-4 h-4"
                     />
                     <span>I agree to Terms & Privacy</span>
                   </label>
                 ) : (
-                  <label className="flex items-center gap-2 cursor-pointer hover:text-slate-300">
+                  <label className="flex items-center gap-2 cursor-pointer hover:text-slate-300 py-1">
                     <input
                       type="checkbox"
                       checked={rememberMe}
                       onChange={(e) => setRememberMe(e.target.checked)}
-                      className="accent-cyan-400 rounded cursor-pointer"
+                      className="accent-cyan-400 rounded cursor-pointer w-4 h-4"
                     />
                     <span>Remember me</span>
                   </label>
@@ -775,7 +787,7 @@ export default function AuthPageLayout({ initialMode = "signup" }) {
                 <button
                   type="button"
                   onClick={() => handleToggleMode(isSignup ? "login" : "signup")}
-                  className="text-cyan-400 hover:text-cyan-300 transition hover:underline cursor-pointer"
+                  className="text-cyan-400 hover:text-cyan-300 transition hover:underline cursor-pointer py-1"
                 >
                   {isSignup ? "Already registered?" : "Need an account?"}
                 </button>
@@ -784,9 +796,9 @@ export default function AuthPageLayout({ initialMode = "signup" }) {
           </div>
 
           {/* RIGHT SIDE: SHOWCASE CARD */}
-          <div className="lg:col-span-5 flex flex-col justify-between h-full min-h-[360px] space-y-8 pt-4 lg:pt-0">
-            {/* Top Right Mode Toggle Badge */}
-            <div className="flex justify-end">
+          <div className="lg:col-span-5 flex flex-col justify-between h-full min-h-[220px] lg:min-h-[360px] space-y-5 lg:space-y-8 pt-4 lg:pt-0 border-t border-white/10 lg:border-t-0">
+            {/* Top Right Mode Toggle Badge (Desktop only) */}
+            <div className="hidden lg:flex justify-end">
               <button
                 type="button"
                 onClick={() => handleToggleMode(isSignup ? "login" : "signup")}
@@ -802,7 +814,7 @@ export default function AuthPageLayout({ initialMode = "signup" }) {
             </div>
 
             {/* Frosted Quote Card */}
-            <div className="p-6 rounded-2xl bg-white/[0.03] border border-white/10 backdrop-blur-xl shadow-[inset_0_1px_1px_rgba(255,255,255,0.2)] text-slate-200 space-y-4">
+            <div className="p-4 sm:p-6 rounded-2xl bg-white/[0.03] border border-white/10 backdrop-blur-xl shadow-[inset_0_1px_1px_rgba(255,255,255,0.2)] text-slate-200 space-y-3 sm:space-y-4">
               <p className="text-xs sm:text-sm italic leading-relaxed text-slate-300">
                 “ The clearer the mind, the deeper we venture. InnerVoice is your private space to reflect, unburden, and capture the thoughts that matter most. ”
               </p>
@@ -812,7 +824,8 @@ export default function AuthPageLayout({ initialMode = "signup" }) {
             </div>
 
             {/* Bottom Security Badge */}
-            <div className="flex justify-end">
+            <div className="flex items-center justify-between sm:justify-end gap-3">
+              <span className="text-[11px] text-slate-500 sm:hidden">InnerVoice App</span>
               <div className="flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/[0.04] border border-cyan-500/30 text-xs text-slate-300 backdrop-blur-md shadow-[0_0_15px_rgba(6,182,212,0.15)]">
                 <div className="w-4 h-4 rounded-full bg-gradient-to-tr from-cyan-400 to-purple-500 flex items-center justify-center">
                   <Shield size={10} className="text-white" />
