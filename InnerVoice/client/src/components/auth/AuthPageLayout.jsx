@@ -120,12 +120,12 @@ export default function AuthPageLayout({ initialMode = "signup" }) {
     setError("");
     setSuccessMsg("");
 
+    const DEFAULT_GOOGLE_CLIENT_ID = "104942402554-buppqtd0bio5um986ibvq2sq669raf85.apps.googleusercontent.com";
     const rawClientId =
       import.meta.env.VITE_GOOGLE_CLIENT_ID ||
-      localStorage.getItem("innervoice_google_client_id") ||
-      "104942402554-buppqtd0bio5um986ibvq2sq669raf85.apps.googleusercontent.com";
+      DEFAULT_GOOGLE_CLIENT_ID;
 
-    const googleClientId = rawClientId ? rawClientId.trim() : "";
+    const googleClientId = (rawClientId || DEFAULT_GOOGLE_CLIENT_ID).trim();
 
     if (!googleClientId || googleClientId.includes("your-google-client-id")) {
       setConfigModal({
