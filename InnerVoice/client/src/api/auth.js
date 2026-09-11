@@ -5,6 +5,7 @@ export const verifySignupOTP = (data) =>
   API.post("/auth/verify-signup-otp", data);
 
 export const loginUser = (userData) => API.post("/auth/login", userData);
+export const socialLoginUser = (data) => API.post("/auth/social-login", data);
 export const setVaultPin = (pin) =>
   API.put("/auth/set-vault-pin", { pin });
 

@@ -531,3 +531,88 @@ export const verifyVaultPin = async (req, res) => {
     });
   }
 };
+
+// =========================
+// SOCIAL LOGIN / SIGNUP (Google, Apple, GitHub)
+// POST /api/auth/social-login
+// =========================
+export const socialLogin = async (req, res) => {
+  try {
+    const { provider, email, full_name, avatar_url } = req.body;
+
+    if (!email || !provider) {
+      return res.status(400).json({
+        success: false,
+        message: "Email and provider are required.",
+      });
+    }
+
+    const cleanEmail = email.trim().toLowerCase();
+    const displayName =
+      (full_name && full_name.trim()) ||
+      cleanEmail.split("@")[0].replace(/[._-]/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+
+    // Check if user already exists
+    const [rows] = await pool.query("SELECT * FROM users WHERE email = ?", [cleanEmail]);
+
+    let user;
+
+    if (rows.length > 0) {
+      user = rows[0];
+      // Update avatar if provided and not yet set
+      if (!user.profile_image && avatar_url) {
+        await pool.query("UPDATE users SET profile_image = ? WHERE id = ?", [avatar_url, user.id]);
+        user.profile_image = avatar_url;
+      }
+      logger.info(`Existing user logged in via ${provider}: ${cleanEmail}`);
+    } else {
+      // Auto-create account for social signup
+      const randomPassword = await bcrypt.hash(
+        Math.random().toString(36) + Date.now().toString(),
+        10
+      );
+
+      const [insertRes] = await pool.query(
+        `INSERT INTO users (full_name, email, password, profile_image) VALUES (?, ?, ?, ?)`,
+        [displayName, cleanEmail, randomPassword, avatar_url || null]
+      );
+
+      const [newRows] = await pool.query("SELECT * FROM users WHERE id = ?", [insertRes.insertId]);
+      user = newRows[0];
+      logger.info(`New user registered via ${provider}: ${cleanEmail}`);
+    }
+
+    // Generate JWT token valid for 7 days
+    const token = jwt.sign(
+      {
+        id: user.id,
+        email: user.email,
+        role: user.role,
+      },
+      process.env.JWT_SECRET,
+      {
+        expiresIn: "7d",
+      }
+    );
+
+    return res.status(200).json({
+      success: true,
+      message: `Successfully authenticated with ${provider.charAt(0).toUpperCase() + provider.slice(1)}!`,
+      token,
+      user: {
+        id: user.id,
+        full_name: user.full_name,
+        email: user.email,
+        role: user.role,
+        profile_image: user.profile_image,
+      },
+    });
+  } catch (error) {
+    logger.error("Social Login Error: " + (error.stack || error.message));
+    return res.status(500).json({
+      success: false,
+      message: error.message || "Social login failed. Please try again.",
+    });
+  }
+};
+

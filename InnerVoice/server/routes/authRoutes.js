@@ -6,6 +6,7 @@ import {
   signup,
   verifySignupOTP,
   login,
+  socialLogin,
   uploadProfileImage,
   getProfile,
   updateProfile,
@@ -20,6 +21,7 @@ const router = express.Router();
 // =========================
 router.post("/signup", signup);
 router.post("/verify-signup-otp", verifySignupOTP);
+router.post("/social-login", socialLogin);
 /**
  * @swagger
  * /api/auth/login:
