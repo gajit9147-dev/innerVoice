@@ -221,7 +221,26 @@ export const updateNote = async (req, res) => {
       }
     }
 
-    const queryParams = [title, content, category || "General", feeling || "Neutral"];
+    // Check if note exists and fetch existing values for safe partial update
+    const [existingRows] = await pool.query(
+      "SELECT * FROM notes WHERE id = ? AND user_id = ?",
+      [id, userId]
+    );
+
+    if (existingRows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "Note not found",
+      });
+    }
+
+    const existing = existingRows[0];
+    const newTitle = title !== undefined && title !== null && title !== "" ? title : existing.title;
+    const newContent = content !== undefined && content !== null ? content : existing.content;
+    const newCategory = category !== undefined && category !== null && category !== "" ? category : existing.category;
+    const newFeeling = feeling !== undefined && feeling !== null && feeling !== "" ? feeling : existing.feeling;
+
+    const queryParams = [newTitle, newContent, newCategory, newFeeling];
     let sql = `UPDATE notes SET title = ?, content = ?, category = ?, feeling = ?`;
 
     if (isLocked !== null) {
@@ -233,13 +252,6 @@ export const updateNote = async (req, res) => {
     queryParams.push(id, userId);
 
     const [result] = await pool.query(sql, queryParams);
-
-    if (result.affectedRows === 0) {
-      return res.status(404).json({
-        success: false,
-        message: "Note not found",
-      });
-    }
 
     let updatedNote;
 

@@ -8,6 +8,8 @@ export default function NoteDisplayCard({
 }) {
   const [isEditing, setIsEditing] = useState(false);
   const [content, setContent] = useState("");
+  const [title, setTitle] = useState("");
+  const [justSaved, setJustSaved] = useState(false);
 
   const defaultContent = `#1 Personal Growth Journey
 
@@ -19,17 +21,22 @@ export default function NoteDisplayCard({
 **Action Item:** Daily 15-min journaling.`;
 
   useEffect(() => {
-    if (note && note.content) {
-      setContent(note.content);
+    if (note) {
+      setContent(note.content || defaultContent);
+      setTitle(note.title || "October 26: Evening Reflections");
     } else {
       setContent(defaultContent);
+      setTitle("October 26: Evening Reflections");
     }
   }, [note]);
 
   const handleSave = () => {
     setIsEditing(false);
+    setJustSaved(true);
+    setTimeout(() => setJustSaved(false), 2500);
+
     if (onUpdateContent && note) {
-      onUpdateContent(note.id, content);
+      onUpdateContent(note.id, content, title);
     }
   };
 
@@ -121,9 +128,16 @@ export default function NoteDisplayCard({
       {/* Card Header & Controls */}
       <div className="relative z-10">
         <div className="flex items-center justify-between mb-4 pb-3 border-b border-white/5">
-          <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-cyan-400">
-            <Sparkles size={14} />
-            <span>Journal Entry</span>
+          <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-cyan-400">
+              <Sparkles size={14} />
+              <span>Journal Entry</span>
+            </div>
+            {justSaved && (
+              <span className="flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-[11px] font-medium animate-pulse">
+                <Check size={11} /> Saved
+              </span>
+            )}
           </div>
 
           <div className="flex items-center gap-2">
@@ -139,7 +153,7 @@ export default function NoteDisplayCard({
               <button
                 onClick={() => setIsEditing(true)}
                 className="flex items-center gap-1.5 px-3 py-1 rounded-xl bg-white/5 text-slate-300 hover:text-cyan-300 hover:bg-white/10 text-xs font-medium transition cursor-pointer"
-                title="Quick edit content"
+                title="Quick edit note"
               >
                 <Edit3 size={13} />
                 <span>Edit</span>
@@ -160,13 +174,32 @@ export default function NoteDisplayCard({
 
         {/* Content Body */}
         {isEditing ? (
-          <textarea
-            value={content}
-            onChange={(e) => setContent(e.target.value)}
-            rows={12}
-            className="w-full bg-[#070e17]/80 border border-cyan-500/30 rounded-2xl p-4 text-slate-100 font-mono text-sm leading-relaxed focus:outline-none focus:ring-1 focus:ring-cyan-400 resize-none"
-            placeholder="Write your thoughts..."
-          />
+          <div className="space-y-3">
+            <div>
+              <label className="text-[11px] font-medium uppercase tracking-wider text-slate-400 block mb-1">
+                Note Title
+              </label>
+              <input
+                type="text"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                className="w-full bg-[#070e17]/80 border border-cyan-500/30 rounded-xl px-3.5 py-2 text-white font-semibold text-sm focus:outline-none focus:ring-1 focus:ring-cyan-400"
+                placeholder="Entry title..."
+              />
+            </div>
+            <div>
+              <label className="text-[11px] font-medium uppercase tracking-wider text-slate-400 block mb-1">
+                Markdown Content
+              </label>
+              <textarea
+                value={content}
+                onChange={(e) => setContent(e.target.value)}
+                rows={11}
+                className="w-full bg-[#070e17]/80 border border-cyan-500/30 rounded-2xl p-4 text-slate-100 font-mono text-sm leading-relaxed focus:outline-none focus:ring-1 focus:ring-cyan-400 resize-none"
+                placeholder="Write your thoughts..."
+              />
+            </div>
+          </div>
         ) : (
           <div className="py-2 pr-1 font-sans select-text">
             {renderStyledContent(content)}

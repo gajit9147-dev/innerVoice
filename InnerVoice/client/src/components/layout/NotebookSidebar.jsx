@@ -29,6 +29,7 @@ export default function NotebookSidebar({
   selectedTag,
   onSelectTag,
   onAddNewNotebook,
+  onDeleteNotebook,
   notesCountByNotebook = {},
   // Voice Memos Props
   recordings = [],
@@ -43,6 +44,7 @@ export default function NotebookSidebar({
   const [recordingsOpen, setRecordingsOpen] = useState(true);
   const [isAddingNotebook, setIsAddingNotebook] = useState(false);
   const [newNotebookName, setNewNotebookName] = useState("");
+  const [deleteMode, setDeleteMode] = useState(false);
 
   const tags = ["Life", "Work", "Dreams"];
 
@@ -56,6 +58,15 @@ export default function NotebookSidebar({
       onSelectNotebook(trimmed);
       setNewNotebookName("");
       setIsAddingNotebook(false);
+    }
+  };
+
+  const handleDeleteClick = (e, nbName) => {
+    e.stopPropagation();
+    if (window.confirm(`Are you sure you want to delete "${nbName}" notebook?`)) {
+      if (onDeleteNotebook) {
+        onDeleteNotebook(nbName);
+      }
     }
   };
 
@@ -80,13 +91,28 @@ export default function NotebookSidebar({
         <div className="space-y-2">
           <div className="flex items-center justify-between px-2 text-xs font-semibold uppercase tracking-wider text-slate-400">
             <span>Notebooks</span>
-            <button
-              onClick={() => setIsAddingNotebook(true)}
-              className="p-1 text-slate-400 hover:text-cyan-300 hover:bg-white/5 rounded transition cursor-pointer"
-              title="Add New Notebook"
-            >
-              <Plus size={15} />
-            </button>
+            <div className="flex items-center gap-1">
+              {/* Option 1: Add Notebook */}
+              <button
+                onClick={() => setIsAddingNotebook(true)}
+                className="p-1 text-slate-400 hover:text-cyan-300 hover:bg-white/5 rounded transition cursor-pointer"
+                title="Add New Notebook"
+              >
+                <Plus size={15} />
+              </button>
+              {/* Option 2: Delete Notebook */}
+              <button
+                onClick={() => setDeleteMode((prev) => !prev)}
+                className={`p-1 rounded transition cursor-pointer ${
+                  deleteMode
+                    ? "text-rose-400 bg-rose-500/10"
+                    : "text-slate-400 hover:text-rose-400 hover:bg-white/5"
+                }`}
+                title={deleteMode ? "Exit Delete Mode" : "Delete Notebooks"}
+              >
+                <Trash2 size={13} />
+              </button>
+            </div>
           </div>
 
           <div className="space-y-1.5 pt-1">
@@ -94,7 +120,7 @@ export default function NotebookSidebar({
               const isSelected = selectedNotebook === nb.name;
               const count = notesCountByNotebook[nb.name] || 0;
               return (
-                <button
+                <div
                   key={nb.id || nb.name}
                   onClick={() => {
                     onSelectNotebook(nb.name);
@@ -106,37 +132,56 @@ export default function NotebookSidebar({
                       : "text-slate-300 hover:text-white hover:bg-white/5 border border-transparent"
                   }`}
                 >
-                  <div className="flex items-center gap-2.5 truncate">
+                  <div className="flex items-center gap-2.5 truncate flex-1 min-w-0">
                     <Square
                       size={15}
                       className={
                         isSelected
-                          ? "text-cyan-400"
-                          : "text-slate-500 group-hover:text-slate-300"
+                          ? "text-cyan-400 shrink-0"
+                          : "text-slate-500 group-hover:text-slate-300 shrink-0"
                       }
                     />
                     <span className="truncate">{nb.name}</span>
                   </div>
-                  {count > 0 && (
-                    <span
-                      className={`text-xs px-1.5 py-0.5 rounded-md ${
-                        isSelected
-                          ? "bg-cyan-500/30 text-cyan-200"
-                          : "text-slate-500 group-hover:text-slate-400"
-                      }`}
-                    >
-                      {count}
-                    </span>
-                  )}
-                </button>
+
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    {count > 0 && (
+                      <span
+                        className={`text-xs px-1.5 py-0.5 rounded-md ${
+                          isSelected
+                            ? "bg-cyan-500/30 text-cyan-200"
+                            : "text-slate-500 group-hover:text-slate-400"
+                        }`}
+                      >
+                        {count}
+                      </span>
+                    )}
+
+                    {/* Delete Option Icon on Hover or in Delete Mode */}
+                    {(deleteMode || nb.name !== "My Journal") && (
+                      <button
+                        type="button"
+                        onClick={(e) => handleDeleteClick(e, nb.name)}
+                        className={`p-1 rounded-md transition cursor-pointer ${
+                          deleteMode
+                            ? "text-rose-400 hover:bg-rose-500/20"
+                            : "opacity-0 group-hover:opacity-100 text-slate-500 hover:text-rose-400 hover:bg-white/10"
+                        }`}
+                        title={`Delete "${nb.name}" notebook`}
+                      >
+                        <Trash2 size={13} />
+                      </button>
+                    )}
+                  </div>
+                </div>
               );
             })}
 
-            {/* Inline New Notebook Input */}
+            {/* Inline New Notebook Input with explicit Add and Discard/Delete options */}
             {isAddingNotebook ? (
               <form
                 onSubmit={handleCreateSubmit}
-                className="flex items-center gap-1.5 px-2 py-1.5 rounded-xl bg-slate-900 border border-cyan-400/60"
+                className="space-y-2 p-2.5 rounded-xl bg-slate-900/90 border border-cyan-400/60 shadow-lg"
               >
                 <input
                   type="text"
@@ -144,35 +189,57 @@ export default function NotebookSidebar({
                   value={newNotebookName}
                   onChange={(e) => setNewNotebookName(e.target.value)}
                   autoFocus
-                  className="w-full bg-transparent text-xs text-white placeholder-slate-500 focus:outline-none px-1"
+                  className="w-full bg-transparent text-xs text-white placeholder-slate-500 focus:outline-none px-1.5 py-1 border-b border-white/10"
                 />
+                <div className="flex items-center gap-2 pt-1">
+                  <button
+                    type="submit"
+                    className="flex-1 flex items-center justify-center gap-1 py-1.5 rounded-lg bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-300 border border-cyan-400/50 text-xs font-semibold transition cursor-pointer"
+                  >
+                    <Check size={13} />
+                    <span>Add</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsAddingNotebook(false);
+                      setNewNotebookName("");
+                    }}
+                    className="flex-1 flex items-center justify-center gap-1 py-1.5 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 border border-rose-500/30 text-xs font-semibold transition cursor-pointer"
+                  >
+                    <X size={13} />
+                    <span>Cancel</span>
+                  </button>
+                </div>
+              </form>
+            ) : (
+              /* Two Explicit Options in Notebook Management: Add Notebook & Delete Notebook */
+              <div className="grid grid-cols-2 gap-2 pt-2">
                 <button
-                  type="submit"
-                  className="text-cyan-400 hover:text-cyan-300 p-1 cursor-pointer"
-                  title="Save"
+                  type="button"
+                  onClick={() => setIsAddingNotebook(true)}
+                  className="flex items-center justify-center gap-1.5 px-2.5 py-2 rounded-xl text-xs font-medium text-slate-200 hover:text-cyan-300 hover:border-cyan-500/40 border border-white/10 hover:bg-white/5 transition-all cursor-pointer"
                 >
-                  <Check size={14} />
+                  <Plus size={14} className="text-cyan-400" />
+                  <span>Add</span>
                 </button>
                 <button
                   type="button"
                   onClick={() => {
-                    setIsAddingNotebook(false);
-                    setNewNotebookName("");
+                    if (selectedNotebook && selectedNotebook !== "My Journal") {
+                      if (window.confirm(`Delete active notebook "${selectedNotebook}"?`)) {
+                        onDeleteNotebook && onDeleteNotebook(selectedNotebook);
+                      }
+                    } else {
+                      setDeleteMode((prev) => !prev);
+                    }
                   }}
-                  className="text-slate-400 hover:text-slate-200 p-1 cursor-pointer"
-                  title="Cancel"
+                  className="flex items-center justify-center gap-1.5 px-2.5 py-2 rounded-xl text-xs font-medium text-slate-300 hover:text-rose-300 hover:border-rose-500/40 border border-white/10 hover:bg-white/5 transition-all cursor-pointer"
                 >
-                  <X size={14} />
+                  <Trash2 size={13} className="text-rose-400" />
+                  <span>Delete</span>
                 </button>
-              </form>
-            ) : (
-              <button
-                onClick={() => setIsAddingNotebook(true)}
-                className="w-full flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl text-sm font-medium text-slate-300 hover:text-cyan-300 hover:border-cyan-500/40 border border-white/10 hover:bg-white/5 transition-all mt-2 cursor-pointer"
-              >
-                <Plus size={16} />
-                <span>New Notebook</span>
-              </button>
+              </div>
             )}
           </div>
         </div>

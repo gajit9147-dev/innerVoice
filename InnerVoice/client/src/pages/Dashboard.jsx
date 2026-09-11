@@ -182,6 +182,22 @@ function Dashboard() {
     setSelectedFolder(null);
   };
 
+  // Delete notebook from list & storage
+  const handleDeleteNotebook = (nbName) => {
+    const updated = notebooks.filter((nb) => nb.name !== nbName);
+    setNotebooks(updated);
+    try {
+      localStorage.setItem("innervoice_notebooks", JSON.stringify(updated));
+    } catch (e) {
+      console.error(e);
+    }
+    if (selectedNotebook === nbName) {
+      const fallback = updated[0]?.name || "My Journal";
+      setSelectedNotebook(fallback);
+      handleSelectNotebook(fallback);
+    }
+  };
+
   // Fetch Dashboard Stats
   const fetchStats = async () => {
     try {
@@ -208,14 +224,30 @@ function Dashboard() {
 
       setNotes(sortedNotes);
 
-      // If user has notes in DB, pick the best one for activeNote
+      // If user has notes in DB, pick the saved or active one so refreshing does not reset it
       if (sortedNotes.length > 0) {
-        // Keep current activeNote if it exists in sortedNotes, else pick first
+        const savedActiveId = localStorage.getItem("innervoice_active_note_id");
+        const foundSaved = savedActiveId
+          ? sortedNotes.find((n) => String(n.id) === String(savedActiveId))
+          : null;
         const currentStillExists = sortedNotes.find((n) => n.id === activeNote?.id);
-        if (currentStillExists) {
+
+        if (foundSaved) {
+          setActiveNote(foundSaved);
+        } else if (currentStillExists) {
           setActiveNote(currentStillExists);
         } else {
           setActiveNote(sortedNotes[0]);
+        }
+      } else {
+        // Fallback to locally saved note draft if DB is empty
+        const cachedNote = localStorage.getItem("innervoice_custom_active_note");
+        if (cachedNote) {
+          try {
+            setActiveNote(JSON.parse(cachedNote));
+          } catch (e) {
+            console.error(e);
+          }
         }
       }
       await fetchStats();
@@ -245,6 +277,15 @@ function Dashboard() {
     return counts;
   }, [notes]);
 
+  // Helper to set active note and remember selection across refreshes
+  const handleSelectActiveNote = (n) => {
+    setActiveNote(n);
+    if (n && n.id) {
+      localStorage.setItem("innervoice_active_note_id", String(n.id));
+      localStorage.setItem("innervoice_custom_active_note", JSON.stringify(n));
+    }
+  };
+
   // Handle Notebook Selection
   const handleSelectNotebook = (nbName) => {
     setSelectedNotebook(nbName);
@@ -258,12 +299,12 @@ function Dashboard() {
     );
 
     if (matchingNotes.length > 0) {
-      setActiveNote(matchingNotes[0]);
+      handleSelectActiveNote(matchingNotes[0]);
     } else if (nbName === "My Journal") {
-      setActiveNote(DEFAULT_JOURNAL_NOTE);
+      handleSelectActiveNote(DEFAULT_JOURNAL_NOTE);
     } else {
       // Create a contextual draft for that notebook
-      setActiveNote({
+      handleSelectActiveNote({
         id: `draft-${nbName.toLowerCase().replace(/\s+/g, "-")}`,
         title: `${nbName}: New Entry`,
         category: nbName,
@@ -329,6 +370,8 @@ function Dashboard() {
       await fetchNotes();
       if (res?.data?.note) {
         setActiveNote(res.data.note);
+        localStorage.setItem("innervoice_active_note_id", String(res.data.note.id));
+        localStorage.setItem("innervoice_custom_active_note", JSON.stringify(res.data.note));
       }
     } catch (error) {
       console.error(error);
@@ -339,8 +382,25 @@ function Dashboard() {
   // Edit Note
   const handleEditNote = async (data) => {
     try {
-      if (!editingNote || !editingNote.id) return;
-      await updateNote(editingNote.id, data);
+      if (!editingNote) return;
+      let savedNote = null;
+
+      if (editingNote.id && !isNaN(Number(editingNote.id))) {
+        const res = await updateNote(editingNote.id, data);
+        savedNote = res.data?.note || { ...editingNote, ...data };
+      } else {
+        const res = await createNote({
+          ...data,
+          category: data.category || selectedNotebook || "My Journal",
+        });
+        savedNote = res.data?.note;
+      }
+
+      if (savedNote) {
+        setActiveNote(savedNote);
+        localStorage.setItem("innervoice_active_note_id", String(savedNote.id));
+        localStorage.setItem("innervoice_custom_active_note", JSON.stringify(savedNote));
+      }
       setEditingNote(null);
       setShowModal(false);
       await fetchNotes();
@@ -351,17 +411,59 @@ function Dashboard() {
   };
 
   // Quick inline update note content
-  const handleQuickContentUpdate = async (noteId, newContent) => {
+  const handleQuickContentUpdate = async (noteId, newContent, newTitle) => {
+    const titleToSave = newTitle || activeNote?.title || "My Journal Entry";
+    const categoryToSave = activeNote?.category || selectedNotebook || "My Journal";
+    const feelingToSave = activeNote?.feeling || "Neutral";
+
     try {
       if (noteId && !isNaN(Number(noteId))) {
-        await updateNote(Number(noteId), { content: newContent });
+        const res = await updateNote(Number(noteId), {
+          title: titleToSave,
+          content: newContent,
+          category: categoryToSave,
+          feeling: feelingToSave,
+        });
+
+        const updated = res.data?.note || {
+          ...(activeNote || {}),
+          id: Number(noteId),
+          title: titleToSave,
+          content: newContent,
+          category: categoryToSave,
+          feeling: feelingToSave,
+          updated_at: new Date().toISOString(),
+        };
+
+        setActiveNote(updated);
+        localStorage.setItem("innervoice_active_note_id", String(noteId));
+        localStorage.setItem("innervoice_custom_active_note", JSON.stringify(updated));
+      } else {
+        // If it was a demo/draft note, save it into the database permanently!
+        const res = await createNote({
+          title: titleToSave,
+          content: newContent,
+          category: categoryToSave,
+          feeling: feelingToSave,
+        });
+
+        if (res?.data?.note) {
+          setActiveNote(res.data.note);
+          localStorage.setItem("innervoice_active_note_id", String(res.data.note.id));
+          localStorage.setItem("innervoice_custom_active_note", JSON.stringify(res.data.note));
+        }
       }
-      setActiveNote((prev) => (prev ? { ...prev, content: newContent } : null));
-      setNotes((prev) =>
-        prev.map((n) => (n.id === noteId ? { ...n, content: newContent } : n))
-      );
+      await fetchNotes();
     } catch (error) {
       console.error("Failed to update note content:", error);
+      const fallback = {
+        ...(activeNote || DEFAULT_JOURNAL_NOTE),
+        title: titleToSave,
+        content: newContent,
+        updated_at: new Date().toISOString(),
+      };
+      setActiveNote(fallback);
+      localStorage.setItem("innervoice_custom_active_note", JSON.stringify(fallback));
     }
   };
 
@@ -548,6 +650,7 @@ function Dashboard() {
           selectedTag={selectedTag}
           onSelectTag={handleSelectTag}
           onAddNewNotebook={handleAddNewNotebook}
+          onDeleteNotebook={handleDeleteNotebook}
           notesCountByNotebook={notesCountByNotebook}
           recordings={recordings}
           activeRecordingId={activeRecording?.id}
@@ -610,7 +713,7 @@ function Dashboard() {
               {filteredNotes.slice(0, 6).map((n) => (
                 <button
                   key={n.id}
-                  onClick={() => setActiveNote(n)}
+                  onClick={() => handleSelectActiveNote(n)}
                   className={`px-3 py-1 rounded-lg truncate max-w-[160px] transition cursor-pointer ${
                     activeNote?.id === n.id
                       ? "bg-cyan-500/20 text-cyan-300 border border-cyan-400 shadow-[0_0_10px_rgba(6,182,212,0.3)]"
@@ -679,7 +782,7 @@ function Dashboard() {
                   {filteredNotes.map((note) => (
                     <div
                       key={note.id}
-                      onClick={() => setActiveNote(note)}
+                      onClick={() => handleSelectActiveNote(note)}
                       className={`cursor-pointer transition-all ${
                         activeNote?.id === note.id
                           ? "ring-2 ring-cyan-400 rounded-2xl"
