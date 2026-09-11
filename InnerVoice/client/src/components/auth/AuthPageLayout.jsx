@@ -307,8 +307,19 @@ export default function AuthPageLayout({ initialMode = "signup" }) {
     }
 
     if (!window.AppleID?.auth) {
-      setError("Apple Sign-In SDK is loading. Please check your internet connection.");
-      return;
+      setAuthActionText("Loading Apple SDK...");
+      const loaded = await new Promise((resolve) => {
+        const s = document.createElement("script");
+        s.src = "https://appleid.cdn-apple.com/appleid/auth/auth.js";
+        s.async = true;
+        s.onload = () => resolve(true);
+        s.onerror = () => resolve(false);
+        document.head.appendChild(s);
+      });
+      if (!loaded || !window.AppleID?.auth) {
+        setError("Apple Sign-In SDK is loading or unavailable. Please check your internet connection.");
+        return;
+      }
     }
 
     setLoading(true);

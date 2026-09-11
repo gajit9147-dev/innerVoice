@@ -325,6 +325,12 @@ function Dashboard({ initialTab = "overview" }) {
     setAiResult(randomPrompt);
   };
 
+  // Open modal to create a new note
+  const handleNewNote = () => {
+    setEditingNote(null);
+    setShowModal(true);
+  };
+
   // Save notebooks to localStorage
   const handleAddNewNotebook = (name) => {
     const newNb = {
