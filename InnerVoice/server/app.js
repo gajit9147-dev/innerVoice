@@ -10,6 +10,7 @@ import authRoutes from "./routes/authRoutes.js";
 import profileRoutes from "./routes/profileRoutes.js";
 import adminRoutes from "./routes/adminRoutes.js";
 import aiRoutes from "./routes/aiRoutes.js";
+import voiceMemoRoutes from "./routes/voiceMemoRoutes.js";
 import { notFound, errorHandler } from "./middleware/errorMiddleware.js";
 import liquidLogger from "./middleware/liquidLogger.js";
 import logger from "./utils/logger.js";
@@ -84,6 +85,7 @@ app.use("/api/notes", noteRoutes);
 app.use("/api/ai", aiRoutes);
 app.use("/api/profile", profileRoutes);
 app.use("/api/admin", adminRoutes);
+app.use("/api/voice-memos", voiceMemoRoutes);
 
 // Test Route
 app.get("/", (req, res) => {
@@ -144,6 +146,27 @@ try {
       created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
       PRIMARY KEY (id),
       INDEX idx_email_purpose (email, purpose)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+  `);
+
+  // Ensure voice_memos table exists
+  await connection.query(`
+    CREATE TABLE IF NOT EXISTS voice_memos (
+      id INT NOT NULL AUTO_INCREMENT,
+      user_id INT NOT NULL,
+      title VARCHAR(255) NOT NULL,
+      file_url TEXT NOT NULL,
+      storage_key VARCHAR(255) NOT NULL,
+      mime_type VARCHAR(100) NOT NULL DEFAULT 'audio/webm',
+      file_size INT NOT NULL DEFAULT 0,
+      duration_seconds INT NOT NULL DEFAULT 0,
+      notebook VARCHAR(100) DEFAULT NULL,
+      created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+      PRIMARY KEY (id),
+      INDEX idx_user_id (user_id),
+      INDEX idx_created_at (created_at),
+      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
   `);
 

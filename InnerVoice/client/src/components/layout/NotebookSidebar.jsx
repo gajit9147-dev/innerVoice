@@ -422,7 +422,10 @@ export default function NotebookSidebar({
 
                       <div className="flex items-center gap-1.5 shrink-0">
                         <span className="text-[10px] font-mono text-slate-500 group-hover:text-slate-400">
-                          {rec.formattedDuration || "01:30"}
+                          {rec.formattedDuration ||
+                            (rec.duration_seconds !== undefined
+                              ? `${String(Math.floor(rec.duration_seconds / 60)).padStart(2, "0")}:${String(rec.duration_seconds % 60).padStart(2, "0")}`
+                              : "00:00")}
                         </span>
                         {onDeleteRecording && (
                           <button

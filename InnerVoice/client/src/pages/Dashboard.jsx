@@ -30,6 +30,7 @@ import {
   toggleLockNote,
   getDashboardStats,
 } from "../api/note";
+import { getVoiceMemos, deleteVoiceMemo } from "../api/voiceMemo";
 import API from "../api/axios";
 import {
   Plus,
@@ -184,68 +185,49 @@ function Dashboard({ initialTab = "overview" }) {
 
   const isDashboardActive = isDashboardOverview || (!selectedNotebook && !selectedFolder && !selectedTag);
 
-  // Voice Memos state (persisted in localStorage, scoped by user id)
-  const voiceMemosKey = user?.id ? `innervoice_voice_memos_${user.id}` : "innervoice_voice_memos";
-
-  const [recordings, setRecordings] = useState(() => {
-    try {
-      const key = user?.id ? `innervoice_voice_memos_${user.id}` : "innervoice_voice_memos";
-      const saved = localStorage.getItem(key);
-      return saved ? JSON.parse(saved) : DEFAULT_RECORDINGS;
-    } catch {
-      return DEFAULT_RECORDINGS;
-    }
-  });
-
-  const [activeRecording, setActiveRecording] = useState(() => {
-    try {
-      const key = user?.id ? `innervoice_voice_memos_${user.id}` : "innervoice_voice_memos";
-      const saved = localStorage.getItem(key);
-      const list = saved ? JSON.parse(saved) : DEFAULT_RECORDINGS;
-      return list[0] || DEFAULT_RECORDINGS[0];
-    } catch {
-      return DEFAULT_RECORDINGS[0];
-    }
-  });
+  // Voice Memos state synchronized with MySQL / Cloudinary backend
+  const [recordings, setRecordings] = useState([]);
+  const [activeRecording, setActiveRecording] = useState(null);
+  const [isPlayingAudio, setIsPlayingAudio] = useState(false);
 
   useEffect(() => {
-    if (!user?.id) return;
-    try {
-      const key = `innervoice_voice_memos_${user.id}`;
-      const saved = localStorage.getItem(key);
-      const list = saved ? JSON.parse(saved) : DEFAULT_RECORDINGS;
-      setRecordings(list);
-      setActiveRecording(list[0] || DEFAULT_RECORDINGS[0]);
-    } catch (e) {
-      console.error(e);
-    }
+    const fetchVoiceMemos = async () => {
+      try {
+        const res = await getVoiceMemos();
+        const memos = res.data?.memos || [];
+        setRecordings(memos);
+        if (memos.length > 0) {
+          setActiveRecording(memos[0]);
+        } else {
+          setActiveRecording(null);
+        }
+      } catch (err) {
+        console.warn("Could not load voice memos from server:", err);
+      }
+    };
+    fetchVoiceMemos();
   }, [user?.id]);
-
-  const [isPlayingAudio, setIsPlayingAudio] = useState(false);
 
   // Save new voice note to sidebar library
   const handleSaveNewRecording = (newMemo) => {
-    const updated = [newMemo, ...recordings];
-    setRecordings(updated);
+    setRecordings((prev) => [newMemo, ...prev]);
     setActiveRecording(newMemo);
-    try {
-      localStorage.setItem(voiceMemosKey, JSON.stringify(updated));
-    } catch (e) {
-      console.error(e);
-    }
   };
 
-  // Delete voice memo
-  const handleDeleteRecording = (recId) => {
-    const updated = recordings.filter((r) => r.id !== recId);
-    setRecordings(updated);
+  // Delete voice memo from backend and local state
+  const handleDeleteRecording = async (recId) => {
     try {
-      localStorage.setItem(voiceMemosKey, JSON.stringify(updated));
-    } catch (e) {
-      console.error(e);
-    }
-    if (activeRecording?.id === recId) {
-      setActiveRecording(updated[0] || DEFAULT_RECORDINGS[0]);
+      await deleteVoiceMemo(recId);
+      setRecordings((prev) => {
+        const updated = prev.filter((r) => r.id !== recId);
+        if (activeRecording?.id === recId) {
+          setActiveRecording(updated[0] || null);
+        }
+        return updated;
+      });
+    } catch (err) {
+      console.error("Failed to delete voice memo:", err);
+      alert("Failed to delete voice memo. Please try again.");
     }
   };
 
@@ -1021,6 +1003,7 @@ function Dashboard({ initialTab = "overview" }) {
                       onSaveNewRecording={handleSaveNewRecording}
                       onDeleteRecording={handleDeleteRecording}
                       onAudioPlayStateChange={setIsPlayingAudio}
+                      currentNotebook={selectedNotebook}
                     />
 
                     <TagCard
