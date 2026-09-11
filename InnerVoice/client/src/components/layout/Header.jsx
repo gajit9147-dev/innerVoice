@@ -398,30 +398,30 @@ export default function Header({
             <Search size={18} />
           </button>
 
-          {/* AI Assist Action Button */}
+          {/* AI Assist Action Button (Tablet & Desktop, hidden on mobile to avoid overcrowding) */}
           <button
             type="button"
             onClick={onAIAssist}
             aria-label="Open AI assistant"
             title="✨ AI Assist — Journaling Copilot"
-            className="group relative flex items-center gap-1.5 px-2.5 sm:px-3.5 py-1.5 sm:py-2 rounded-xl bg-gradient-to-r from-purple-900/30 via-cyan-950/40 to-slate-900/60 hover:from-purple-900/50 hover:via-cyan-900/50 hover:to-slate-800/80 border border-purple-500/30 hover:border-cyan-400/60 shadow-[0_0_12px_rgba(168,85,247,0.15)] hover:shadow-[0_0_20px_rgba(6,182,212,0.3)] transition-all duration-200 cursor-pointer text-xs font-semibold active:scale-95"
+            className="hidden sm:flex group relative items-center gap-1.5 px-2.5 sm:px-3.5 py-1.5 sm:py-2 rounded-xl bg-gradient-to-r from-purple-900/30 via-cyan-950/40 to-slate-900/60 hover:from-purple-900/50 hover:via-cyan-900/50 hover:to-slate-800/80 border border-purple-500/30 hover:border-cyan-400/60 shadow-[0_0_12px_rgba(168,85,247,0.15)] hover:shadow-[0_0_20px_rgba(6,182,212,0.3)] transition-all duration-200 cursor-pointer text-xs font-semibold active:scale-95"
           >
             <Sparkles
               size={15}
               className="text-purple-300 group-hover:text-cyan-300 transition-transform duration-200 group-hover:rotate-12 group-hover:scale-110 shrink-0"
             />
-            <span className="hidden sm:inline bg-gradient-to-r from-purple-200 to-cyan-200 bg-clip-text text-transparent">
+            <span className="bg-gradient-to-r from-purple-200 to-cyan-200 bg-clip-text text-transparent">
               AI Assist
             </span>
           </button>
 
-          {/* Theme Toggle Button */}
+          {/* Theme Toggle Button (Tablet & Desktop, available inside Profile dropdown on mobile) */}
           <button
             type="button"
             onClick={toggleTheme}
             aria-label="Toggle theme"
             title="Toggle theme"
-            className="p-2 rounded-xl text-slate-400 hover:text-cyan-300 hover:bg-white/5 active:scale-95 transition cursor-pointer min-w-[38px] min-h-[38px] flex items-center justify-center"
+            className="hidden sm:flex p-2 rounded-xl text-slate-400 hover:text-cyan-300 hover:bg-white/5 active:scale-95 transition cursor-pointer min-w-[38px] min-h-[38px] items-center justify-center"
           >
             {theme === "dark" ? <Sun size={18} /> : <Moon size={18} />}
           </button>
