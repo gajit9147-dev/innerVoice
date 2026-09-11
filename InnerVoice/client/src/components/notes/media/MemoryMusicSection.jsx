@@ -39,6 +39,7 @@ import {
   cacheMediaItemOffline,
   removeMediaItemOffline,
   isMediaOfflineCached,
+  getOfflineMediaBlob,
 } from "../../../utils/offlineStorage";
 
 export default function MemoryMusicSection({
@@ -167,6 +168,55 @@ export default function MemoryMusicSection({
     } catch (err) {
       console.error("Delete track error:", err);
       alert("Failed to delete music track.");
+    }
+  };
+
+  // Download track directly to device
+  const handleDownloadTrack = async (track, e) => {
+    if (e) e.stopPropagation();
+    try {
+      const offlineItem = await getOfflineMediaBlob(track.id);
+      let downloadUrl = "";
+      let isBlob = false;
+
+      if (offlineItem && offlineItem.blob) {
+        downloadUrl = URL.createObjectURL(offlineItem.blob);
+        isBlob = true;
+      } else if (track.file_url) {
+        if (track.file_url.includes("/upload/")) {
+          downloadUrl = track.file_url.replace("/upload/", "/upload/fl_attachment/");
+        } else {
+          const res = await fetch(track.file_url);
+          const blob = await res.blob();
+          downloadUrl = URL.createObjectURL(blob);
+          isBlob = true;
+        }
+      }
+
+      if (!downloadUrl) return;
+
+      const a = document.createElement("a");
+      a.href = downloadUrl;
+      const cleanTitle = (track.title || "memory-track").replace(/[^a-zA-Z0-9_-]/g, "_");
+      const ext = track.mime_type?.includes("ogg")
+        ? "ogg"
+        : track.mime_type?.includes("wav")
+        ? "wav"
+        : track.mime_type?.includes("webm")
+        ? "webm"
+        : "mp3";
+      a.download = `${cleanTitle}.${ext}`;
+      a.target = "_blank";
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+
+      if (isBlob) {
+        setTimeout(() => URL.revokeObjectURL(downloadUrl), 5000);
+      }
+    } catch (err) {
+      console.error("Download failed:", err);
+      if (track.file_url) window.open(track.file_url, "_blank");
     }
   };
 
@@ -471,6 +521,16 @@ export default function MemoryMusicSection({
                       size={13}
                       className={track.is_favorite ? "fill-pink-500 text-pink-500" : ""}
                     />
+                  </button>
+
+                  {/* Download to Device */}
+                  <button
+                    onClick={(e) => handleDownloadTrack(track, e)}
+                    className="p-1.5 text-slate-400 hover:text-cyan-300 transition cursor-pointer"
+                    title="Download audio file to device"
+                    aria-label="Download music track"
+                  >
+                    <Download size={13} />
                   </button>
 
                   <button
