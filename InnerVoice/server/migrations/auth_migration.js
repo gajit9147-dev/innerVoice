@@ -12,11 +12,20 @@ export const runAuthMigration = async () => {
   try {
     logger.info("🔄 Running safe auth database migration...");
 
-    // 1. Make password column nullable so OAuth users can register without a dummy password
-    await connection.query(`
-      ALTER TABLE users MODIFY COLUMN password VARCHAR(255) NULL;
+    // 1. Make password column nullable only if not already nullable (avoids table locks on startup)
+    const [pwdCols] = await connection.query(`
+      SELECT IS_NULLABLE 
+      FROM INFORMATION_SCHEMA.COLUMNS 
+      WHERE TABLE_SCHEMA = DATABASE() 
+        AND TABLE_NAME = 'users' 
+        AND COLUMN_NAME = 'password'
     `);
-    logger.info("✅ Column 'password' made NULLABLE");
+    if (pwdCols.length > 0 && pwdCols[0].IS_NULLABLE === "NO") {
+      await connection.query(`
+        ALTER TABLE users MODIFY COLUMN password VARCHAR(255) NULL;
+      `);
+      logger.info("✅ Column 'password' made NULLABLE");
+    }
 
     // Helper to check if a column exists
     const columnExists = async (colName) => {

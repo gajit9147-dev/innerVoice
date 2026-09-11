@@ -30,8 +30,26 @@ const pool = mysql.createPool({
   database: env.DB_NAME,
   port: env.DB_PORT || 3306,
   waitForConnections: true,
-  connectionLimit: 10,
+  connectionLimit: 25,
+  maxIdle: 10,
+  idleTimeout: 60000,
+  queueLimit: 0,
+  enableKeepAlive: true,
+  keepAliveInitialDelay: 0,
+  connectTimeout: 10000,
   dateStrings: true,
 });
+
+// Periodic heartbeat ping to keep pool connections hot and prevent idle socket drops by cloud hosts
+const heartbeatTimer = setInterval(async () => {
+  try {
+    await pool.query("SELECT 1");
+  } catch {
+    // Ignore heartbeat errors
+  }
+}, 30000);
+if (heartbeatTimer.unref) {
+  heartbeatTimer.unref();
+}
 
 export default pool;

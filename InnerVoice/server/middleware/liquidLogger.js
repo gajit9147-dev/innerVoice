@@ -50,7 +50,8 @@ const liquidLogger = (req, res, next) => {
   // After response is sent, log the full line
   res.on("finish", () => {
     const duration = Date.now() - startTime;
-    const method   = METHOD_COLORS[req.method] || chalk.white(req.method);
+    const colorFn  = METHOD_COLORS[req.method] || chalk.white;
+    const method   = colorFn(req.method);
     const status   = statusColor(res.statusCode);
     const url      = chalk.white(req.originalUrl);
     const ms       = chalk.hex("#94a3b8")(`${duration}ms`);

@@ -1,1 +1,0 @@
-export { sendOTPEmail } from "../../utils/emailService.js";

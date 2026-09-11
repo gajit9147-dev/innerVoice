@@ -1,16 +1,7 @@
 import pool from "../config/db.js";
 import bcrypt from "bcryptjs";
-import fs from "fs";
 import { analyzeNoteById } from "../services/noteAIService.js";
 import asyncHandler from "../utils/asyncHandler.js";
-
-const logDebug = (msg) => {
-  try {
-    fs.appendFileSync("c:/Users/ajeet/Desktop/Proj1/InnerVoice/server/debug.log", `[${new Date().toISOString()}] ${msg}\n`);
-  } catch (err) {
-    console.error("Failed to write to debug.log", err);
-  }
-};
 
 // Create Note
 export const createNote = asyncHandler(async (req, res) => {

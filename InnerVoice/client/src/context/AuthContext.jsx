@@ -25,8 +25,19 @@ export function AuthProvider({ children }) {
     }
   });
 
-  // Loading is true initially while session is restored from backend
-  const [loading, setLoading] = useState(true);
+  // Instantaneous initial hydration: never block UI on login/signup when unauthenticated,
+  // and render immediately with cached user if already present
+  const [loading, setLoading] = useState(() => {
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) return false;
+      const cached = localStorage.getItem("user");
+      if (cached) return false;
+      return true;
+    } catch {
+      return false;
+    }
+  });
 
   // Synchronize session token and user profile
   const setSession = (token, userData) => {

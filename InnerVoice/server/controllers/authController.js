@@ -107,10 +107,21 @@ export const register = async (req, res) => {
       [displayName, cleanEmail, hashedPassword]
     );
 
-    const [newUsers] = await pool.query("SELECT * FROM users WHERE id = ?", [
-      insertResult.insertId,
-    ]);
-    const newUser = newUsers[0];
+    const newUser = {
+      id: insertResult.insertId,
+      full_name: displayName,
+      email: cleanEmail,
+      auth_provider: "local",
+      role: "user",
+      avatar_url: null,
+      profile_image: null,
+      email_verified: 0,
+      username: null,
+      phone: null,
+      bio: null,
+      created_at: new Date().toISOString(),
+      password: hashedPassword,
+    };
 
     logger.info(`New local user registered: ${cleanEmail} (ID: ${newUser.id})`);
 

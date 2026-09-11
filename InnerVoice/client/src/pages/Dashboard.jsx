@@ -356,13 +356,29 @@ function Dashboard({ initialTab = "overview" }) {
     }
   };
 
-  // Fetch Notes from API
+  // Fetch Notes and Stats concurrently from API
   const fetchNotes = async () => {
     try {
       setLoading(true);
-      const res = filter === "trash" ? await getTrashNotes() : await getNotes();
+      const notesPromise = filter === "trash" ? getTrashNotes() : getNotes();
+      const statsPromise = getDashboardStats();
 
-      const apiNotes = res.data?.notes || [];
+      const [notesRes, statsRes] = await Promise.all([
+        notesPromise.catch((err) => {
+          console.error("Fetch Notes Error:", err);
+          return { data: { notes: [] } };
+        }),
+        statsPromise.catch((err) => {
+          console.error("Fetch Stats Error:", err);
+          return { data: { stats: null } };
+        }),
+      ]);
+
+      if (statsRes?.data?.stats) {
+        setStats(statsRes.data.stats);
+      }
+
+      const apiNotes = notesRes.data?.notes || [];
       const sortedNotes = [...apiNotes].sort((a, b) => {
         if (a.is_pinned !== b.is_pinned) {
           return Number(b.is_pinned) - Number(a.is_pinned);
@@ -398,7 +414,6 @@ function Dashboard({ initialTab = "overview" }) {
           }
         }
       }
-      await fetchStats();
     } catch (error) {
       console.error("Fetch Notes Error:", error);
     } finally {

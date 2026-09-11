@@ -181,7 +181,7 @@ export default function AuthPageLayout({ initialMode = "signup" }) {
 
             setSuccessMsg("Signed in with Google! Redirecting...");
             const destination = location.state?.from?.pathname || "/dashboard";
-            setTimeout(() => navigate(destination, { replace: true }), 500);
+            navigate(destination, { replace: true });
           } catch (err) {
             const resData = err.response?.data;
             if (resData?.requireLinking) {
@@ -249,7 +249,7 @@ export default function AuthPageLayout({ initialMode = "signup" }) {
 
                     setSuccessMsg("Signed in with Google! Redirecting...");
                     const destination = location.state?.from?.pathname || "/dashboard";
-                    setTimeout(() => navigate(destination, { replace: true }), 500);
+                    navigate(destination, { replace: true });
                   }
                 } catch (e) {
                   const resData = e.response?.data;
@@ -369,7 +369,7 @@ export default function AuthPageLayout({ initialMode = "signup" }) {
 
       setSuccessMsg("Signed in with Apple! Redirecting...");
       const destination = location.state?.from?.pathname || "/dashboard";
-      setTimeout(() => navigate(destination, { replace: true }), 500);
+      navigate(destination, { replace: true });
     } catch (err) {
       if (err?.error !== "popup_closed_by_user") {
         const resData = err.response?.data;
@@ -430,7 +430,7 @@ export default function AuthPageLayout({ initialMode = "signup" }) {
 
         setSuccessMsg(res?.message || "Account created successfully! Redirecting...");
         const destination = location.state?.from?.pathname || "/dashboard";
-        setTimeout(() => navigate(destination, { replace: true }), 600);
+        navigate(destination, { replace: true });
       } else {
         await login(formData.email, formData.password);
         setSuccessMsg("Login successful! Redirecting...");
