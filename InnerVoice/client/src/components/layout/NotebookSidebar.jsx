@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import {
   Plus,
   Square,
@@ -14,6 +15,10 @@ import {
   Trash2,
   Volume2,
   LayoutDashboard,
+  Settings,
+  BookOpen,
+  HelpCircle,
+  LogOut,
 } from "lucide-react";
 
 export default function NotebookSidebar({
@@ -44,6 +49,11 @@ export default function NotebookSidebar({
   onDeleteRecording,
   onTriggerRecord,
   isPlayingAudio = false,
+  // Responsive drawer controls
+  onClose,
+  onOpenGuide,
+  onOpenHelp,
+  onLogout,
 }) {
   const [foldersOpen, setFoldersOpen] = useState(true);
   const [tagsOpen, setTagsOpen] = useState(true);
@@ -77,20 +87,38 @@ export default function NotebookSidebar({
   };
 
   return (
-    <aside className="w-60 h-screen flex flex-col justify-between py-6 px-4 bg-[#080f19]/95 border-r border-white/5 backdrop-blur-2xl shrink-0 select-none overflow-y-auto">
+    <aside className="w-full max-w-xs sm:w-64 h-full flex flex-col justify-between py-5 px-3.5 sm:px-4 bg-[#080f19]/95 border-r border-white/5 backdrop-blur-2xl shrink-0 select-none overflow-y-auto">
       <div className="space-y-6">
         {/* Brand / Logo with Animated Cyan Soundwave */}
-        <div className="flex items-center gap-3 px-2 py-1 cursor-pointer">
-          <div className="flex items-center gap-1 h-7">
-            <span className="w-1 h-3.5 bg-cyan-400 rounded-full animate-pulse shadow-[0_0_8px_rgba(6,182,212,0.9)]"></span>
-            <span className="w-1 h-6 bg-cyan-300 rounded-full shadow-[0_0_12px_rgba(6,182,212,1)]"></span>
-            <span className="w-1 h-4 bg-teal-400 rounded-full animate-pulse shadow-[0_0_8px_rgba(20,184,166,0.9)]"></span>
-            <span className="w-1 h-7 bg-cyan-400 rounded-full shadow-[0_0_12px_rgba(6,182,212,1)]"></span>
-            <span className="w-1 h-3 bg-cyan-500 rounded-full animate-pulse shadow-[0_0_8px_rgba(6,182,212,0.9)]"></span>
+        <div className="flex items-center justify-between px-1 py-1">
+          <div
+            onClick={() => {
+              if (onSelectDashboard) onSelectDashboard();
+            }}
+            className="flex items-center gap-3 cursor-pointer"
+          >
+            <div className="flex items-center gap-1 h-7">
+              <span className="w-1 h-3.5 bg-cyan-400 rounded-full animate-pulse shadow-[0_0_8px_rgba(6,182,212,0.9)]"></span>
+              <span className="w-1 h-6 bg-cyan-300 rounded-full shadow-[0_0_12px_rgba(6,182,212,1)]"></span>
+              <span className="w-1 h-4 bg-teal-400 rounded-full animate-pulse shadow-[0_0_8px_rgba(20,184,166,0.9)]"></span>
+              <span className="w-1 h-7 bg-cyan-400 rounded-full shadow-[0_0_12px_rgba(6,182,212,1)]"></span>
+              <span className="w-1 h-3 bg-cyan-500 rounded-full animate-pulse shadow-[0_0_8px_rgba(6,182,212,0.9)]"></span>
+            </div>
+            <span className="text-xl font-bold tracking-tight text-white font-sans">
+              InnerVoice
+            </span>
           </div>
-          <span className="text-xl font-bold tracking-tight text-white font-sans">
-            InnerVoice
-          </span>
+
+          {onClose && (
+            <button
+              type="button"
+              onClick={onClose}
+              className="lg:hidden p-1.5 text-slate-400 hover:text-white hover:bg-white/10 rounded-xl transition cursor-pointer"
+              aria-label="Close sidebar"
+            >
+              <X size={20} />
+            </button>
+          )}
         </div>
 
         {/* Main Dashboard Navigation Item */}
@@ -467,6 +495,60 @@ export default function NotebookSidebar({
                 );
               })}
             </div>
+          )}
+        </div>
+
+        {/* Mobile Quick Actions (Settings, Guide, Help, Logout) */}
+        <div className="lg:hidden space-y-1 pt-3 mt-4 border-t border-white/10 pb-2">
+          <Link
+            to="/profile"
+            onClick={onClose}
+            className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-xs font-medium text-slate-300 hover:text-white hover:bg-white/5 transition"
+          >
+            <Settings size={15} className="text-slate-400" />
+            <span>Profile & Settings</span>
+          </Link>
+
+          {onOpenGuide && (
+            <button
+              type="button"
+              onClick={() => {
+                onOpenGuide();
+                if (onClose) onClose();
+              }}
+              className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-xs font-medium text-slate-300 hover:text-white hover:bg-white/5 transition cursor-pointer text-left"
+            >
+              <BookOpen size={15} className="text-slate-400" />
+              <span>Journaling Guide</span>
+            </button>
+          )}
+
+          {onOpenHelp && (
+            <button
+              type="button"
+              onClick={() => {
+                onOpenHelp();
+                if (onClose) onClose();
+              }}
+              className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-xs font-medium text-slate-300 hover:text-white hover:bg-white/5 transition cursor-pointer text-left"
+            >
+              <HelpCircle size={15} className="text-slate-400" />
+              <span>Help & Support</span>
+            </button>
+          )}
+
+          {onLogout && (
+            <button
+              type="button"
+              onClick={() => {
+                onLogout();
+                if (onClose) onClose();
+              }}
+              className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-xs font-medium text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 transition cursor-pointer text-left"
+            >
+              <LogOut size={15} />
+              <span>Log Out</span>
+            </button>
           )}
         </div>
       </div>

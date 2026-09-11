@@ -52,10 +52,10 @@ export default function NoteDisplayCard({
         return (
           <h2
             key={idx}
-            className="text-xl md:text-2xl font-bold text-sky-400 tracking-tight mb-4 flex items-center gap-2"
+            className="text-lg sm:text-xl md:text-2xl font-bold text-sky-400 tracking-tight mb-3 sm:mb-4 flex flex-wrap items-center gap-2 break-words"
           >
             <span>#1</span>
-            <span>{text}</span>
+            <span className="break-all sm:break-words">{text}</span>
           </h2>
         );
       }
@@ -66,7 +66,7 @@ export default function NoteDisplayCard({
         return (
           <h3
             key={idx}
-            className="text-lg md:text-xl font-bold text-sky-400/90 tracking-tight mt-6 mb-2"
+            className="text-base sm:text-lg md:text-xl font-bold text-sky-400/90 tracking-tight mt-5 mb-2 break-words"
           >
             ## {text}
           </h3>
@@ -75,11 +75,10 @@ export default function NoteDisplayCard({
 
       // Action Item (like **Action Item:** Daily 15-min journaling.)
       if (trimmed.startsWith("**Action Item:**") || trimmed.includes("Action Item")) {
-        const parts = trimmed.split(/(\*\*Action Item:\*\*)/);
         return (
           <div
             key={idx}
-            className="mt-6 p-3.5 rounded-2xl bg-cyan-950/20 border border-cyan-500/20 text-slate-200 text-sm md:text-base leading-relaxed"
+            className="mt-5 p-3 sm:p-3.5 rounded-2xl bg-cyan-950/20 border border-cyan-500/20 text-slate-200 text-xs sm:text-sm md:text-base leading-relaxed break-words"
           >
             <span className="font-bold text-white">**Action Item:**</span>
             <span className="ml-1 text-slate-200">
@@ -95,24 +94,24 @@ export default function NoteDisplayCard({
         return (
           <div
             key={idx}
-            className="flex items-start gap-2.5 my-2 text-slate-300 text-sm md:text-base leading-relaxed pl-1"
+            className="flex items-start gap-2.5 my-2 text-slate-300 text-xs sm:text-sm md:text-base leading-relaxed pl-1 break-words"
           >
-            <span className="text-cyan-400 mt-1.5">•</span>
-            <span>{text}</span>
+            <span className="text-cyan-400 mt-1 shrink-0">•</span>
+            <span className="break-words min-w-0">{text}</span>
           </div>
         );
       }
 
       // Empty line
       if (!trimmed) {
-        return <div key={idx} className="h-3" />;
+        return <div key={idx} className="h-2 sm:h-3" />;
       }
 
       // Regular text
       return (
         <p
           key={idx}
-          className="text-slate-300 text-sm md:text-base leading-relaxed my-1.5"
+          className="text-slate-300 text-xs sm:text-sm md:text-base leading-relaxed my-1.5 break-words"
         >
           {line}
         </p>
@@ -121,15 +120,15 @@ export default function NoteDisplayCard({
   };
 
   return (
-    <div className="glass-panel rounded-3xl p-7 relative overflow-hidden text-white transition-all shadow-[0_20px_50px_rgba(0,0,0,0.55)] min-h-[380px] flex flex-col justify-between">
+    <div className="glass-panel rounded-2xl sm:rounded-3xl p-4 sm:p-6 md:p-7 relative overflow-hidden text-white transition-all shadow-[0_20px_50px_rgba(0,0,0,0.55)] min-h-[340px] sm:min-h-[380px] flex flex-col justify-between min-w-0">
       {/* Top subtle glow */}
       <div className="absolute top-0 left-0 w-64 h-64 bg-cyan-500/5 rounded-full blur-3xl pointer-events-none"></div>
 
       {/* Card Header & Controls */}
-      <div className="relative z-10">
-        <div className="flex items-center justify-between mb-4 pb-3 border-b border-white/5">
+      <div className="relative z-10 min-w-0">
+        <div className="flex flex-wrap items-center justify-between gap-2 mb-3 sm:mb-4 pb-2.5 sm:pb-3 border-b border-white/5">
           <div className="flex items-center gap-2">
-            <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-cyan-400">
+            <div className="flex items-center gap-1.5 text-[11px] sm:text-xs font-semibold uppercase tracking-wider text-cyan-400">
               <Sparkles size={14} />
               <span>Journal Entry</span>
             </div>

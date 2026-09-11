@@ -286,7 +286,7 @@ export default function AudioVoiceMemo({
   const progressPercent = Math.min(100, (currentTime / (duration || 1)) * 100);
 
   return (
-    <div className="liquid-glass-card rounded-3xl p-6 relative overflow-hidden text-white transition-all shadow-[0_20px_50px_rgba(0,0,0,0.6)]">
+    <div className="liquid-glass-card rounded-2xl sm:rounded-3xl p-4 sm:p-6 relative overflow-hidden text-white transition-all shadow-[0_20px_50px_rgba(0,0,0,0.6)] min-w-0">
       {/* Background soft ambient cyan glow */}
       <div className="absolute -top-16 -right-16 w-48 h-48 bg-cyan-500/15 rounded-full blur-3xl pointer-events-none"></div>
 
@@ -306,33 +306,36 @@ export default function AudioVoiceMemo({
       )}
 
       {/* Header: Title and Options Menu */}
-      <div className="flex items-center justify-between mb-4 relative z-10">
-        <div className="flex items-center gap-2.5">
-          <h3 className="font-semibold text-lg text-white tracking-wide flex items-center gap-2">
-            <span>Audio Voice Memo</span>
-            {isPlaying && <Radio size={15} className="text-cyan-400 animate-pulse" />}
+      <div className="flex items-center justify-between mb-3 sm:mb-4 relative z-10 gap-2 min-w-0">
+        <div className="flex items-center gap-2 min-w-0 truncate">
+          <h3 className="font-semibold text-base sm:text-lg text-white tracking-wide flex items-center gap-2 truncate">
+            <span className="truncate">Audio Voice Memo</span>
+            {isPlaying && <Radio size={14} className="text-cyan-400 animate-pulse shrink-0" />}
           </h3>
 
           {isRecording && (
-            <span className="flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold bg-red-500/20 text-red-400 border border-red-500/40 animate-pulse">
+            <span className="flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold bg-red-500/20 text-red-400 border border-red-500/40 animate-pulse shrink-0">
               <span className="w-2 h-2 rounded-full bg-red-500"></span>
               REC {formatTime(recordTime)}
             </span>
           )}
         </div>
 
-        <div className="relative">
+        <div className="relative shrink-0">
           <button
+            type="button"
             onClick={() => setShowMenu(!showMenu)}
-            className="p-1.5 text-slate-400 hover:text-cyan-300 hover:bg-white/5 rounded-xl transition cursor-pointer"
+            aria-label="Voice memo options"
+            className="p-1.5 sm:p-2 text-slate-400 hover:text-cyan-300 hover:bg-white/5 rounded-xl transition cursor-pointer min-w-[36px] min-h-[36px] flex items-center justify-center"
             title="Options"
           >
             <MoreHorizontal size={18} />
           </button>
 
           {showMenu && (
-            <div className="absolute right-0 top-8 w-52 bg-[#0b1523] border border-white/10 rounded-xl shadow-2xl p-1.5 z-50 backdrop-blur-xl text-xs space-y-1">
+            <div className="absolute right-0 top-9 w-52 bg-[#0b1523] border border-white/10 rounded-xl shadow-2xl p-1.5 z-50 backdrop-blur-xl text-xs space-y-1">
               <button
+                type="button"
                 onClick={() => {
                   setShowMenu(false);
                   if (isRecording) stopRecording();
@@ -345,6 +348,7 @@ export default function AudioVoiceMemo({
               </button>
 
               <button
+                type="button"
                 onClick={() => {
                   const newT = prompt("Edit Memo Title:", title);
                   if (newT) setTitle(newT);
@@ -368,6 +372,7 @@ export default function AudioVoiceMemo({
 
               {activeRecording && onDeleteRecording && (
                 <button
+                  type="button"
                   onClick={() => {
                     setShowMenu(false);
                     if (window.confirm(`Delete "${activeRecording.title}"?`)) {
@@ -385,9 +390,9 @@ export default function AudioVoiceMemo({
         </div>
       </div>
 
-      {/* Waveform Visualizer */}
+      {/* Waveform Visualizer (fluid scaling) */}
       <div
-        className="h-28 flex items-center justify-between gap-[3px] my-3 px-2 py-2 rounded-2xl bg-[#070e17]/50 border border-white/5 cursor-pointer select-none"
+        className="h-24 sm:h-28 flex items-center justify-between gap-[1.5px] sm:gap-[3px] my-3 px-1.5 sm:px-2 py-2 rounded-xl sm:rounded-2xl bg-[#070e17]/50 border border-white/5 cursor-pointer select-none overflow-hidden"
         onClick={(e) => {
           const rect = e.currentTarget.getBoundingClientRect();
           const clickX = e.clientX - rect.left;
@@ -401,13 +406,13 @@ export default function AudioVoiceMemo({
         {waveProfile.map((heightFactor, i) => {
           const barProgress = (i / BAR_COUNT) * 100;
           const isPassed = barProgress <= progressPercent;
-          const barHeight = Math.max(8, Math.floor(heightFactor * 78));
+          const barHeight = Math.max(6, Math.floor(heightFactor * 72));
 
           return (
             <div
               key={i}
               style={{ height: `${barHeight}px` }}
-              className={`w-1 rounded-full transition-all duration-150 ${
+              className={`w-0.5 sm:w-1 flex-1 max-w-[4px] min-w-0 rounded-full transition-all duration-150 ${
                 isPassed
                   ? "bg-gradient-to-t from-cyan-500 to-teal-300 shadow-[0_0_8px_rgba(6,182,212,0.8)]"
                   : "bg-slate-700/60 hover:bg-slate-600"
@@ -426,26 +431,29 @@ export default function AudioVoiceMemo({
             max={duration || 100}
             value={currentTime}
             onChange={handleSeek}
+            aria-label="Audio playback seeker"
             className="w-full h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-cyan-400 focus:outline-none"
           />
         </div>
 
-        <div className="flex justify-between text-xs font-mono text-slate-400">
+        <div className="flex justify-between text-[11px] sm:text-xs font-mono text-slate-400">
           <span>{formatTime(currentTime)}</span>
           <span>{formatTime(duration)}</span>
         </div>
       </div>
 
       {/* Playback Controls */}
-      <div className="flex items-center justify-center gap-6 mt-4 pt-1">
+      <div className="flex items-center justify-center gap-3 sm:gap-6 mt-3 sm:mt-4 pt-1">
         {/* Shuffle / Speed Toggle */}
         <button
+          type="button"
           onClick={() => {
             const speeds = [1, 1.25, 1.5, 2];
             const nextIdx = (speeds.indexOf(playbackSpeed) + 1) % speeds.length;
             setPlaybackSpeed(speeds[nextIdx]);
           }}
-          className="text-slate-400 hover:text-cyan-300 transition cursor-pointer text-xs font-mono px-1.5 py-0.5 rounded border border-transparent hover:border-cyan-500/30"
+          aria-label={`Playback speed: ${playbackSpeed}x`}
+          className="text-slate-400 hover:text-cyan-300 transition cursor-pointer text-xs font-mono px-2 py-1 rounded border border-transparent hover:border-cyan-500/30 min-w-[36px] min-h-[36px] flex items-center justify-center"
           title={`Speed: ${playbackSpeed}x`}
         >
           {playbackSpeed === 1 ? <Shuffle size={16} /> : `${playbackSpeed}x`}
@@ -453,17 +461,21 @@ export default function AudioVoiceMemo({
 
         {/* Skip Back 10s */}
         <button
+          type="button"
           onClick={() => skipTime(-10)}
-          className="text-slate-400 hover:text-cyan-300 transition cursor-pointer p-1 rounded-lg hover:bg-white/5"
+          aria-label="Rewind 10 seconds"
+          className="text-slate-400 hover:text-cyan-300 transition cursor-pointer p-2 rounded-xl hover:bg-white/5 min-w-[36px] min-h-[36px] flex items-center justify-center"
           title="Rewind 10 seconds"
         >
           <RotateCcw size={18} />
         </button>
 
-        {/* Main Play / Pause Circle (Glowing cyan pill in center matching screenshot) */}
+        {/* Main Play / Pause Circle */}
         <button
+          type="button"
           onClick={togglePlay}
-          className="w-12 h-12 rounded-full flex items-center justify-center bg-cyan-500/20 text-cyan-300 border border-cyan-400 shadow-[0_0_20px_rgba(6,182,212,0.5)] hover:scale-105 active:scale-95 transition-all cursor-pointer"
+          aria-label={isPlaying ? "Pause audio" : "Play audio"}
+          className="w-11 h-11 sm:w-12 sm:h-12 rounded-full flex items-center justify-center bg-cyan-500/20 text-cyan-300 border border-cyan-400 shadow-[0_0_20px_rgba(6,182,212,0.5)] hover:scale-105 active:scale-95 transition-all cursor-pointer shrink-0"
           title={isPlaying ? "Pause" : "Play"}
         >
           {isPlaying ? <Pause size={20} /> : <Play size={20} className="ml-0.5" />}
@@ -471,8 +483,10 @@ export default function AudioVoiceMemo({
 
         {/* Skip Forward 10s */}
         <button
+          type="button"
           onClick={() => skipTime(10)}
-          className="text-slate-400 hover:text-cyan-300 transition cursor-pointer p-1 rounded-lg hover:bg-white/5"
+          aria-label="Forward 10 seconds"
+          className="text-slate-400 hover:text-cyan-300 transition cursor-pointer p-2 rounded-xl hover:bg-white/5 min-w-[36px] min-h-[36px] flex items-center justify-center"
           title="Forward 10 seconds"
         >
           <RotateCw size={18} />
@@ -480,8 +494,10 @@ export default function AudioVoiceMemo({
 
         {/* Loop / Repeat */}
         <button
+          type="button"
           onClick={() => setIsLooping(!isLooping)}
-          className={`transition cursor-pointer p-1 rounded-lg ${
+          aria-label={isLooping ? "Disable looping" : "Enable looping"}
+          className={`transition cursor-pointer p-2 rounded-xl min-w-[36px] min-h-[36px] flex items-center justify-center ${
             isLooping
               ? "text-cyan-300 shadow-[0_0_8px_rgba(6,182,212,0.6)]"
               : "text-slate-400 hover:text-cyan-300 hover:bg-white/5"
@@ -502,7 +518,7 @@ export default function AudioVoiceMemo({
             <span className="text-[11px] text-slate-400">Save to access in sidebar</span>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
             <input
               type="text"
               value={pendingSaveMemo.title}
@@ -510,29 +526,35 @@ export default function AudioVoiceMemo({
                 setPendingSaveMemo({ ...pendingSaveMemo, title: e.target.value })
               }
               placeholder="Recording Title..."
-              className="flex-1 bg-slate-900 border border-cyan-500/30 rounded-xl px-3 py-1.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-cyan-400"
+              aria-label="Recording Title"
+              className="flex-1 bg-slate-900 border border-cyan-500/30 rounded-xl px-3 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-cyan-400"
             />
-            <button
-              onClick={handleConfirmSave}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-cyan-500 text-slate-950 font-bold text-xs hover:bg-cyan-400 transition cursor-pointer shadow-[0_0_12px_rgba(6,182,212,0.4)]"
-            >
-              <Save size={13} />
-              <span>Save</span>
-            </button>
-            <button
-              onClick={handleDiscardPending}
-              className="p-1.5 text-slate-400 hover:text-red-400 hover:bg-white/5 rounded-xl transition cursor-pointer"
-              title="Discard recording"
-            >
-              <Trash2 size={15} />
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={handleConfirmSave}
+                className="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl bg-cyan-500 text-slate-950 font-bold text-xs hover:bg-cyan-400 transition cursor-pointer shadow-[0_0_12px_rgba(6,182,212,0.4)] min-h-[36px]"
+              >
+                <Save size={13} />
+                <span>Save</span>
+              </button>
+              <button
+                type="button"
+                onClick={handleDiscardPending}
+                aria-label="Discard recording"
+                className="p-2 text-slate-400 hover:text-red-400 hover:bg-white/5 rounded-xl transition cursor-pointer min-w-[36px] min-h-[36px] flex items-center justify-center"
+                title="Discard recording"
+              >
+                <Trash2 size={15} />
+              </button>
+            </div>
           </div>
         </div>
       )}
 
       {/* Voice Recording Quick Button & Memo Title */}
-      <div className="mt-5 pt-3 border-t border-white/5 flex items-center justify-between text-xs text-slate-300">
-        <div className="flex items-center gap-2 truncate pr-2">
+      <div className="mt-4 sm:mt-5 pt-3 border-t border-white/5 flex items-center justify-between text-xs text-slate-300 gap-2">
+        <div className="flex items-center gap-2 truncate pr-2 min-w-0">
           <span className="text-slate-400">Memo Title:</span>
           <span className="font-medium text-slate-200 truncate">{title}</span>
         </div>
