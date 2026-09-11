@@ -240,16 +240,31 @@ export default function AudioVoiceMemo({
   // Save new recording to permanent library
   const handleConfirmSave = () => {
     if (pendingSaveMemo && onSaveNewRecording) {
-      onSaveNewRecording({
+      const memoPayload = {
         id: `rec-${Date.now()}`,
         title: pendingSaveMemo.title || title,
         duration: pendingSaveMemo.duration,
         formattedDuration: formatTime(pendingSaveMemo.duration),
         audioUrl: pendingSaveMemo.url,
-        audioBlob: pendingSaveMemo.blob,
         created_at: new Date().toISOString(),
-      });
-      setPendingSaveMemo(null);
+      };
+
+      if (pendingSaveMemo.blob) {
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          memoPayload.audioUrl = reader.result;
+          onSaveNewRecording(memoPayload);
+          setPendingSaveMemo(null);
+        };
+        reader.onerror = () => {
+          onSaveNewRecording(memoPayload);
+          setPendingSaveMemo(null);
+        };
+        reader.readAsDataURL(pendingSaveMemo.blob);
+      } else {
+        onSaveNewRecording(memoPayload);
+        setPendingSaveMemo(null);
+      }
     }
   };
 

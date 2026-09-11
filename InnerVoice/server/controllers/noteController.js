@@ -146,9 +146,9 @@ export const searchNotes = async (req, res) => {
        FROM notes
        WHERE user_id = ?
          AND is_deleted = 0
-         AND (title LIKE ? OR content LIKE ?)
+         AND (title LIKE ? OR content LIKE ? OR category LIKE ? OR feeling LIKE ?)
        ORDER BY updated_at DESC`,
-      [userId, search, search]
+      [userId, search, search, search, search]
     );
 
     res.status(200).json({

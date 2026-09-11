@@ -24,13 +24,13 @@ export const searchNotes = (query) =>
 
 // Toggle Pin note
 export const togglePinNote = (id) =>
-  API.put(`/notes/pin/${id}`);
+  API.patch(`/notes/${id}/pin`);
 // Toggle Favorite note
 export const toggleFavoriteNote = (id) =>
-  API.put(`/notes/favorite/${id}`);
+  API.patch(`/notes/${id}/favorite`);
 
 export const toggleLockNote = (id) =>
-  API.put(`/notes/lock/${id}`);
+  API.patch(`/notes/${id}/lock`);
 
 export const setNotePassword = (id, data) =>
   API.post(`/notes/${id}/set-password`, data);

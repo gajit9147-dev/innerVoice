@@ -13,6 +13,7 @@ import {
   Pause,
   Trash2,
   Volume2,
+  LayoutDashboard,
 } from "lucide-react";
 
 export default function NotebookSidebar({
@@ -31,6 +32,11 @@ export default function NotebookSidebar({
   onAddNewNotebook,
   onDeleteNotebook,
   notesCountByNotebook = {},
+  // Dashboard & Counts Props
+  onSelectDashboard,
+  isDashboardActive = false,
+  totalNotesCount = 0,
+  starredNotesCount = 0,
   // Voice Memos Props
   recordings = [],
   activeRecordingId,
@@ -85,6 +91,40 @@ export default function NotebookSidebar({
           <span className="text-xl font-bold tracking-tight text-white font-sans">
             InnerVoice
           </span>
+        </div>
+
+        {/* Main Dashboard Navigation Item */}
+        <div>
+          <button
+            type="button"
+            onClick={() => {
+              if (onSelectDashboard) onSelectDashboard();
+            }}
+            className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-sm font-medium transition-all text-left cursor-pointer group ${
+              isDashboardActive
+                ? "pill-active-glow"
+                : "text-slate-300 hover:text-white hover:bg-white/5 border border-transparent"
+            }`}
+          >
+            <div className="flex items-center gap-2.5">
+              <LayoutDashboard
+                size={16}
+                className={isDashboardActive ? "text-cyan-400" : "text-slate-400 group-hover:text-cyan-300"}
+              />
+              <span>Dashboard</span>
+            </div>
+            {totalNotesCount > 0 && (
+              <span
+                className={`text-xs px-1.5 py-0.5 rounded-md ${
+                  isDashboardActive
+                    ? "bg-cyan-500/30 text-cyan-200"
+                    : "text-slate-500 group-hover:text-slate-400"
+                }`}
+              >
+                {totalNotesCount}
+              </span>
+            )}
+          </button>
         </div>
 
         {/* Notebooks Section */}
@@ -348,14 +388,25 @@ export default function NotebookSidebar({
                   onSelectFolder("all");
                   if (onSelectNotebook) onSelectNotebook(null);
                 }}
-                className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-sm font-medium transition-all text-left cursor-pointer ${
+                className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-sm font-medium transition-all text-left cursor-pointer ${
                   selectedFolder === "all"
                     ? "pill-active-glow"
                     : "text-slate-300 hover:text-white hover:bg-white/5 border border-transparent"
                 }`}
               >
-                <Folder size={16} className="text-slate-400" />
-                <span>All Notes</span>
+                <div className="flex items-center gap-2.5">
+                  <Folder size={16} className="text-slate-400" />
+                  <span>All Notes</span>
+                </div>
+                {totalNotesCount > 0 && (
+                  <span className={`text-xs px-1.5 py-0.5 rounded-md ${
+                    selectedFolder === "all"
+                      ? "bg-cyan-500/30 text-cyan-200"
+                      : "text-slate-500 hover:text-slate-400"
+                  }`}>
+                    {totalNotesCount}
+                  </span>
+                )}
               </button>
 
               <button
@@ -363,14 +414,25 @@ export default function NotebookSidebar({
                   onSelectFolder("starred");
                   if (onSelectNotebook) onSelectNotebook(null);
                 }}
-                className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-sm font-medium transition-all text-left cursor-pointer ${
+                className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-sm font-medium transition-all text-left cursor-pointer ${
                   selectedFolder === "starred"
                     ? "pill-active-glow"
                     : "text-slate-300 hover:text-white hover:bg-white/5 border border-transparent"
                 }`}
               >
-                <Star size={16} className="text-yellow-400" />
-                <span>Starred</span>
+                <div className="flex items-center gap-2.5">
+                  <Star size={16} className="text-yellow-400" />
+                  <span>Starred</span>
+                </div>
+                {starredNotesCount > 0 && (
+                  <span className={`text-xs px-1.5 py-0.5 rounded-md ${
+                    selectedFolder === "starred"
+                      ? "bg-cyan-500/30 text-cyan-200"
+                      : "text-slate-500 hover:text-slate-400"
+                  }`}>
+                    {starredNotesCount}
+                  </span>
+                )}
               </button>
             </div>
           )}

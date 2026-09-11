@@ -61,8 +61,11 @@ router.delete("/:id/permanent", authMiddleware, deleteForever);
 // Pin / Favorite / Lock
 // ==========================
 router.patch("/:id/pin", authMiddleware, togglePinNote);
+router.put("/pin/:id", authMiddleware, togglePinNote);
 router.patch("/:id/favorite", authMiddleware, toggleFavoriteNote);
+router.put("/favorite/:id", authMiddleware, toggleFavoriteNote);
 router.patch("/:id/lock", authMiddleware, toggleLockNote);
+router.put("/lock/:id", authMiddleware, toggleLockNote);
 
 // ==========================
 // Password Protection

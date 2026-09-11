@@ -1,5 +1,6 @@
 import { useEffect, useState, useMemo } from "react";
 import { useSearchParams } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
 import SlimRail from "../components/layout/SlimRail";
 import NotebookSidebar from "../components/layout/NotebookSidebar";
 import Header from "../components/layout/Header";
@@ -73,6 +74,7 @@ const DEFAULT_RECORDINGS = [
 ];
 
 function Dashboard() {
+  const { user } = useAuth();
   const [searchParams] = useSearchParams();
   const filter = searchParams.get("filter");
   const [notes, setNotes] = useState([]);
@@ -103,6 +105,7 @@ function Dashboard() {
     }
   });
 
+  const [isDashboardOverview, setIsDashboardOverview] = useState(false);
   const [selectedNotebook, setSelectedNotebook] = useState("My Journal");
   const [selectedFolder, setSelectedFolder] = useState(null);
   const [selectedTag, setSelectedTag] = useState("");
@@ -115,10 +118,15 @@ function Dashboard() {
   const [showAllNotesSection, setShowAllNotesSection] = useState(true);
   const [activeTab, setActiveTab] = useState("overview");
 
-  // Voice Memos state (persisted in localStorage)
+  const isDashboardActive = isDashboardOverview || (!selectedNotebook && !selectedFolder && !selectedTag);
+
+  // Voice Memos state (persisted in localStorage, scoped by user id)
+  const voiceMemosKey = user?.id ? `innervoice_voice_memos_${user.id}` : "innervoice_voice_memos";
+
   const [recordings, setRecordings] = useState(() => {
     try {
-      const saved = localStorage.getItem("innervoice_voice_memos");
+      const key = user?.id ? `innervoice_voice_memos_${user.id}` : "innervoice_voice_memos";
+      const saved = localStorage.getItem(key);
       return saved ? JSON.parse(saved) : DEFAULT_RECORDINGS;
     } catch {
       return DEFAULT_RECORDINGS;
@@ -127,13 +135,27 @@ function Dashboard() {
 
   const [activeRecording, setActiveRecording] = useState(() => {
     try {
-      const saved = localStorage.getItem("innervoice_voice_memos");
+      const key = user?.id ? `innervoice_voice_memos_${user.id}` : "innervoice_voice_memos";
+      const saved = localStorage.getItem(key);
       const list = saved ? JSON.parse(saved) : DEFAULT_RECORDINGS;
       return list[0] || DEFAULT_RECORDINGS[0];
     } catch {
       return DEFAULT_RECORDINGS[0];
     }
   });
+
+  useEffect(() => {
+    if (!user?.id) return;
+    try {
+      const key = `innervoice_voice_memos_${user.id}`;
+      const saved = localStorage.getItem(key);
+      const list = saved ? JSON.parse(saved) : DEFAULT_RECORDINGS;
+      setRecordings(list);
+      setActiveRecording(list[0] || DEFAULT_RECORDINGS[0]);
+    } catch (e) {
+      console.error(e);
+    }
+  }, [user?.id]);
 
   const [isPlayingAudio, setIsPlayingAudio] = useState(false);
 
@@ -143,7 +165,7 @@ function Dashboard() {
     setRecordings(updated);
     setActiveRecording(newMemo);
     try {
-      localStorage.setItem("innervoice_voice_memos", JSON.stringify(updated));
+      localStorage.setItem(voiceMemosKey, JSON.stringify(updated));
     } catch (e) {
       console.error(e);
     }
@@ -154,7 +176,7 @@ function Dashboard() {
     const updated = recordings.filter((r) => r.id !== recId);
     setRecordings(updated);
     try {
-      localStorage.setItem("innervoice_voice_memos", JSON.stringify(updated));
+      localStorage.setItem(voiceMemosKey, JSON.stringify(updated));
     } catch (e) {
       console.error(e);
     }
@@ -267,19 +289,19 @@ function Dashboard() {
     fetchNotes();
   }, [filter]);
 
-  // Counts of notes per notebook
+  // Real dynamic counts of notes per notebook
   const notesCountByNotebook = useMemo(() => {
     const counts = {};
     notes.forEach((n) => {
-      const cat = n.category || "General";
+      const cat = n.category || "My Journal";
       counts[cat] = (counts[cat] || 0) + 1;
     });
-    // Ensure default counts reflect reference feel
-    if (!counts["My Journal"]) counts["My Journal"] = 12;
-    if (!counts["Creative Ideas"]) counts["Creative Ideas"] = 5;
-    if (!counts["Reflections"]) counts["Reflections"] = 8;
-    if (!counts["Project Notes"]) counts["Project Notes"] = 4;
     return counts;
+  }, [notes]);
+
+  const totalNotesCount = notes.length;
+  const starredNotesCount = useMemo(() => {
+    return notes.filter((n) => Boolean(n.is_favorite)).length;
   }, [notes]);
 
   // Helper to set active note and remember selection across refreshes
@@ -291,8 +313,22 @@ function Dashboard() {
     }
   };
 
+  // Handle Dashboard Overview selection
+  const handleSelectDashboard = () => {
+    setIsDashboardOverview(true);
+    setSelectedNotebook(null);
+    setSelectedFolder(null);
+    setSelectedTag("");
+    setActiveTab("overview");
+    setShowAllNotesSection(true);
+    if (notes.length > 0) {
+      handleSelectActiveNote(notes[0]);
+    }
+  };
+
   // Handle Notebook Selection
   const handleSelectNotebook = (nbName) => {
+    setIsDashboardOverview(false);
     setSelectedNotebook(nbName);
     setSelectedFolder(null);
     setSelectedTag("");
@@ -326,6 +362,7 @@ function Dashboard() {
 
   // Handle Folder Selection
   const handleSelectFolder = (folderKey) => {
+    setIsDashboardOverview(false);
     setSelectedFolder(folderKey);
     setSelectedNotebook(null);
     setSelectedTag("");
@@ -340,6 +377,7 @@ function Dashboard() {
 
   // Handle Tag Selection
   const handleSelectTag = (tag) => {
+    setIsDashboardOverview(false);
     setSelectedTag(tag);
     if (tag) {
       const tagged = notes.filter(
@@ -349,7 +387,7 @@ function Dashboard() {
     }
   };
 
-  // Handle Search Input
+  // Handle Search Input across title, content, category, feeling
   const handleSearchChange = (query) => {
     setSearchQuery(query);
     if (query.trim()) {
@@ -357,7 +395,9 @@ function Dashboard() {
       const match = notes.find(
         (n) =>
           (n.title && n.title.toLowerCase().includes(q)) ||
-          (n.content && n.content.toLowerCase().includes(q))
+          (n.content && n.content.toLowerCase().includes(q)) ||
+          (n.category && n.category.toLowerCase().includes(q)) ||
+          (n.feeling && n.feeling.toLowerCase().includes(q))
       );
       if (match) setActiveNote(match);
     }
@@ -597,7 +637,9 @@ function Dashboard() {
       list = list.filter(
         (n) =>
           (n.title && n.title.toLowerCase().includes(q)) ||
-          (n.content && n.content.toLowerCase().includes(q))
+          (n.content && n.content.toLowerCase().includes(q)) ||
+          (n.category && n.category.toLowerCase().includes(q)) ||
+          (n.feeling && n.feeling.toLowerCase().includes(q))
       );
     }
 
@@ -628,7 +670,7 @@ function Dashboard() {
           if (tab === "notes") {
             setShowAllNotesSection(true);
           } else if (tab === "overview") {
-            setShowAllNotesSection(true);
+            handleSelectDashboard();
           }
         }}
         onToggleDrawer={() => setIsSidebarOpen((prev) => !prev)}
@@ -674,6 +716,13 @@ function Dashboard() {
           onAddNewNotebook={handleAddNewNotebook}
           onDeleteNotebook={handleDeleteNotebook}
           notesCountByNotebook={notesCountByNotebook}
+          totalNotesCount={totalNotesCount}
+          starredNotesCount={starredNotesCount}
+          onSelectDashboard={() => {
+            handleSelectDashboard();
+            if (window.innerWidth < 1024) setIsSidebarOpen(false);
+          }}
+          isDashboardActive={isDashboardActive}
           recordings={recordings}
           activeRecordingId={activeRecording?.id}
           onSelectRecording={(rec) => {

@@ -7,11 +7,11 @@
 //   AuthProvider        → central authentication state
 // ============================================================
 
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { ThemeProvider } from "./context/ThemeContext";
 import { ToastProvider } from "./context/ToastContext";
 import { LiquidGlassProvider } from "./context/LiquidGlassProvider";
-import { AuthProvider } from "./context/AuthContext";
+import { AuthProvider, useAuth } from "./context/AuthContext";
 
 import ProtectedRoute from "./components/auth/ProtectedRoute";
 import PublicOnlyRoute from "./components/auth/PublicOnlyRoute";
@@ -26,6 +26,21 @@ import NotFound from "./pages/NotFound";
 import EditProfile from "./pages/EditProfile";
 import Trash from "./pages/Trash";
 
+// Handles https://innervoice4u.in/ -> /dashboard if authenticated, /login if not
+function RootRedirect() {
+  const { isAuthenticated, loading } = useAuth();
+
+  if (loading) {
+    return (
+      <div className="min-h-screen w-full flex flex-col items-center justify-center bg-[#040614] text-white">
+        <div className="w-12 h-12 rounded-full border-2 border-cyan-500/20 border-t-cyan-400 animate-spin" />
+      </div>
+    );
+  }
+
+  return <Navigate to={isAuthenticated ? "/dashboard" : "/login"} replace />;
+}
+
 function App() {
   return (
     <ThemeProvider>
@@ -34,10 +49,24 @@ function App() {
           <AuthProvider>
             <BrowserRouter>
               <Routes>
-                {/* Public / Landing Routes */}
-                <Route path="/" element={<Signup />} />
-                <Route path="/signup" element={<Signup />} />
-                <Route path="/login" element={<Login />} />
+                {/* Root Route: If authenticated -> dashboard, If not -> login */}
+                <Route path="/" element={<RootRedirect />} />
+                <Route
+                  path="/signup"
+                  element={
+                    <PublicOnlyRoute>
+                      <Signup />
+                    </PublicOnlyRoute>
+                  }
+                />
+                <Route
+                  path="/login"
+                  element={
+                    <PublicOnlyRoute>
+                      <Login />
+                    </PublicOnlyRoute>
+                  }
+                />
 
                 {/* Protected Routes (Unauthenticated users redirected to Login) */}
                 <Route
@@ -69,6 +98,14 @@ function App() {
                   element={
                     <ProtectedRoute>
                       <EditProfile />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/settings"
+                  element={
+                    <ProtectedRoute>
+                      <Profile />
                     </ProtectedRoute>
                   }
                 />

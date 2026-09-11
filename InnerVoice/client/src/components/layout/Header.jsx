@@ -20,7 +20,16 @@ export default function Header({
     navigate("/login");
   };
 
-  const [user, setUser] = useState(authUser || { full_name: "User" });
+  const readUser = () => {
+    try {
+      const userStr = localStorage.getItem("user");
+      return userStr ? JSON.parse(userStr) : { full_name: "User" };
+    } catch {
+      return { full_name: "User" };
+    }
+  };
+
+  const [user, setUser] = useState(authUser || readUser);
 
   useEffect(() => {
     if (authUser) setUser(authUser);
