@@ -18,7 +18,7 @@ import swaggerSpec from "./config/swagger.js";
 
 const app = express();
 
-// CORS — allow localhost for dev, Cloudflare Pages, Vercel, and CORS_ORIGIN env var
+// CORS — allow localhost for dev, Cloudflare Pages, custom domain, and CORS_ORIGIN env var
 const explicitOrigins = [
   "http://localhost:5173",
   "http://127.0.0.1:5173",
@@ -46,7 +46,6 @@ app.use(
       if (
         explicitOrigins.includes(origin) ||
         /\.pages\.dev$/.test(origin) ||
-        /\.vercel\.app$/.test(origin) ||
         /(^|\.)innervoice4u\.in$/.test(origin)
       ) {
         return callback(null, true);

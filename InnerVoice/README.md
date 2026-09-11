@@ -53,15 +53,14 @@ Built with a robust full-stack architecture (MySQL, Express, React, Node.js) and
 
 ## 📦 Deployment Instructions
 
-### Frontend (Vercel)
+### Frontend (Cloudflare Pages)
 1. Push your code to GitHub.
-2. Import the project into Vercel, and set the **Root Directory** to `client`.
-3. Vercel will automatically detect Vite and run `npm run build`.
-4. Add any required frontend environment variables (like the production API URL).
-5. Deploy!
+2. Connect your GitHub repository in Cloudflare Pages.
+3. Set **Framework preset** to `Vite`, **Root directory** to `client`, and **Build output directory** to `dist`.
+4. Add environment variables (`VITE_API_URL`, `VITE_GOOGLE_CLIENT_ID`).
+5. Deploy to `https://innervoice4u.in`!
 
-### Backend (Render / Railway)
-1. Deploy your repository to a Node.js Web Service on Render or Railway.
-2. Set the **Root Directory** to `server` or configure the start command to `node server/server.js`.
-3. Set your environment variables (`DB_HOST`, `DB_USER`, `DB_PASSWORD`, `DB_NAME`, `JWT_SECRET`).
-4. **Crucial:** Update your backend CORS configuration to accept requests specifically from your deployed Vercel frontend URL.
+### Backend (Node.js Service)
+1. Deploy your server to your Node.js Web Service (`https://api.innervoice4u.in`).
+2. Set your environment variables (`DB_HOST`, `DB_USER`, `DB_PASSWORD`, `DB_NAME`, `JWT_SECRET`, `GOOGLE_CLIENT_ID`).
+3. Deploy!
