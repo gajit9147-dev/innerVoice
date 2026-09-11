@@ -708,10 +708,10 @@ function Dashboard({ initialTab = "overview" }) {
     : "October 26, 2023, 10:00 PM";
 
   return (
-    <div className="min-h-screen bg-[#04080e] ambient-bg text-slate-100 flex overflow-hidden font-sans select-none">
-      <div className="w-full max-w-[2200px] mx-auto flex h-screen overflow-hidden relative">
-        {/* 1. Leftmost Slim Icon Rail (hidden on small mobile phones to maximize workspace) */}
-        <div className="hidden md:flex shrink-0">
+    <div className="min-h-[100dvh] bg-[#04080e] ambient-bg text-slate-100 flex overflow-hidden font-sans select-none">
+      <div className="w-full max-w-[2200px] mx-auto flex h-[100dvh] overflow-hidden relative">
+        {/* 1. Leftmost Slim Icon Rail (Visible on desktop lg: and up) */}
+        <div className="hidden lg:flex shrink-0">
           <SlimRail
             activeTab={activeTab}
             onSelectTab={(tab) => {
@@ -752,11 +752,11 @@ function Dashboard({ initialTab = "overview" }) {
         <div
           className={`fixed lg:static top-0 bottom-0 left-0 z-50 bg-[#080f19] lg:bg-transparent ${
             isSidebarOpen
-              ? "w-[85vw] max-w-xs sm:w-64 opacity-100 shadow-2xl lg:shadow-none pointer-events-auto"
+              ? "w-[min(85vw,320px)] sm:w-64 opacity-100 shadow-2xl lg:shadow-none pointer-events-auto"
               : "w-0 opacity-0 pointer-events-none"
-          } transition-all duration-300 ease-in-out shrink-0 overflow-hidden h-screen`}
+          } transition-all duration-300 ease-in-out shrink-0 overflow-hidden h-[100dvh]`}
         >
-          <div className="w-[85vw] max-w-xs sm:w-64 min-w-[16rem] h-full">
+          <div className="w-[min(85vw,320px)] sm:w-64 min-w-[min(85vw,320px)] sm:min-w-[16rem] h-full">
             <NotebookSidebar
               notebooks={notebooks}
               selectedNotebook={selectedNotebook}
@@ -784,6 +784,12 @@ function Dashboard({ initialTab = "overview" }) {
                 if (window.innerWidth < 1024) setIsSidebarOpen(false);
               }}
               isDashboardActive={isDashboardActive}
+              onSelectCalendar={() => {
+                setActiveTab("calendar");
+                navigate("/calendar");
+                if (window.innerWidth < 1024) setIsSidebarOpen(false);
+              }}
+              isCalendarActive={activeTab === "calendar"}
               recordings={recordings}
               activeRecordingId={activeRecording?.id}
               onSelectRecording={(rec) => {
@@ -804,7 +810,7 @@ function Dashboard({ initialTab = "overview" }) {
         </div>
 
         {/* 3. Main Center Note & Audio Workspace */}
-        <main className="flex-1 flex flex-col h-screen overflow-hidden px-3 sm:px-5 md:px-7 py-3 sm:py-5 min-w-0">
+        <main className="flex-1 flex flex-col h-[100dvh] overflow-hidden px-2 sm:px-5 md:px-7 py-2 sm:py-5 min-w-0 pt-[env(safe-area-inset-top,0px)] pb-[env(safe-area-inset-bottom,0px)]">
           {/* Top Search & Profile Bar */}
           <Header
             searchQuery={searchQuery}
@@ -814,7 +820,7 @@ function Dashboard({ initialTab = "overview" }) {
           />
 
           {/* Scrollable Workspace Container */}
-          <div className="flex-1 overflow-y-auto space-y-6 pt-2 pr-1 sm:pr-2 min-w-0">
+          <div className="flex-1 overflow-y-auto space-y-4 sm:space-y-6 pt-1 sm:pt-2 pr-1 sm:pr-2 min-w-0">
             {activeTab === "calendar" ? (
               <CalendarView
                 notes={notes}
@@ -833,22 +839,22 @@ function Dashboard({ initialTab = "overview" }) {
             ) : (
               <>
                 {/* Note Title & Date Header */}
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 min-w-0">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 sm:gap-4 min-w-0">
                   <div className="min-w-0 flex-1">
-                    <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-extrabold tracking-tight text-white drop-shadow-sm break-words">
+                    <h1 className="text-lg sm:text-2xl md:text-3xl lg:text-4xl font-extrabold tracking-tight text-white drop-shadow-sm break-words leading-tight">
                       {displayTitle}
                     </h1>
-                    <p className="text-xs sm:text-sm font-medium text-slate-400 mt-1">
+                    <p className="text-xs sm:text-sm font-medium text-slate-400 mt-0.5 sm:mt-1 break-words">
                       {displayDate}
                     </p>
                   </div>
 
-                  {/* View Switchers & New Note */}
-                  <div className="flex items-center gap-2 sm:gap-3 shrink-0 flex-wrap">
+                  {/* View Switchers & New Note (touch-friendly 44px on mobile) */}
+                  <div className="grid grid-cols-2 sm:flex sm:items-center gap-2 sm:gap-3 w-full sm:w-auto shrink-0 mt-1 sm:mt-0">
                     <button
                       type="button"
                       onClick={() => setShowAllNotesSection(!showAllNotesSection)}
-                      className="flex items-center gap-1.5 sm:gap-2 px-3 sm:px-3.5 py-2 rounded-xl bg-slate-900/80 hover:bg-slate-800 text-slate-200 border border-white/10 text-xs font-medium transition cursor-pointer min-h-[38px]"
+                      className="flex items-center justify-center gap-1.5 sm:gap-2 px-3 sm:px-3.5 py-2.5 sm:py-2 rounded-xl bg-slate-900/80 hover:bg-slate-800 text-slate-200 border border-white/10 text-xs font-semibold transition cursor-pointer min-h-[44px]"
                     >
                       {showAllNotesSection ? <List size={15} /> : <Grid size={15} />}
                       <span>{showAllNotesSection ? "Hide All Notes" : "View All Notes"}</span>
@@ -860,9 +866,9 @@ function Dashboard({ initialTab = "overview" }) {
                         setEditingNote(null);
                         setShowModal(true);
                       }}
-                      className="flex items-center gap-1.5 px-3.5 sm:px-4 py-2 rounded-xl bg-cyan-500/20 text-cyan-300 border border-cyan-400 hover:bg-cyan-500/30 text-xs font-semibold tracking-wide transition shadow-[0_0_16px_rgba(6,182,212,0.4)] cursor-pointer min-h-[38px]"
+                      className="flex items-center justify-center gap-1.5 px-3.5 sm:px-4 py-2.5 sm:py-2 rounded-xl bg-cyan-500/20 text-cyan-300 border border-cyan-400 hover:bg-cyan-500/30 text-xs font-semibold tracking-wide transition shadow-[0_0_16px_rgba(6,182,212,0.4)] cursor-pointer min-h-[44px]"
                     >
-                      <Plus size={15} />
+                      <Plus size={16} />
                       <span>New Note</span>
                     </button>
                   </div>

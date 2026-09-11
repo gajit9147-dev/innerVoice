@@ -250,12 +250,13 @@ export default function CalendarView({
         <div className="lg:col-span-7 xl:col-span-8 glass-panel p-4 sm:p-6 rounded-2xl">
           {/* Weekday Headers */}
           <div className="grid grid-cols-7 gap-1 sm:gap-2 mb-2">
-            {weekDays.map((day) => (
+            {weekDays.map((day, idx) => (
               <div
-                key={day}
-                className="text-center text-[11px] sm:text-xs font-semibold text-slate-400 py-1 uppercase tracking-wider"
+                key={`${day}-${idx}`}
+                className="text-center text-[10px] sm:text-xs font-semibold text-slate-400 py-1 uppercase tracking-wider"
               >
-                {day}
+                <span className="hidden sm:inline">{day}</span>
+                <span className="sm:hidden">{day.charAt(0)}</span>
               </div>
             ))}
           </div>
@@ -273,7 +274,7 @@ export default function CalendarView({
                   key={cell.dateKey}
                   type="button"
                   onClick={() => setSelectedDate(cell.date)}
-                  className={`relative min-h-[50px] sm:min-h-[64px] md:min-h-[72px] p-1.5 sm:p-2 rounded-xl flex flex-col justify-between items-start transition-all cursor-pointer text-left ${
+                  className={`relative min-h-[46px] sm:min-h-[64px] md:min-h-[72px] p-1 sm:p-2 rounded-xl flex flex-col justify-between items-start transition-all cursor-pointer text-left ${
                     !cell.isCurrentMonth
                       ? "opacity-30 hover:opacity-70 bg-white/[0.01]"
                       : isSelected
@@ -309,7 +310,7 @@ export default function CalendarView({
                   {hasNotes && (
                     <div className="w-full mt-1">
                       <div
-                        className={`w-full flex items-center justify-center gap-1 py-0.5 px-1 rounded-md text-[10px] font-mono transition ${
+                        className={`w-full flex items-center justify-center gap-1 py-0.5 px-0.5 sm:px-1 rounded-md text-[10px] font-mono transition ${
                           isSelected
                             ? "bg-cyan-400/30 text-cyan-100 font-bold"
                             : "bg-cyan-950/70 text-cyan-300 border border-cyan-500/30"
@@ -318,7 +319,10 @@ export default function CalendarView({
                       >
                         <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 shrink-0" />
                         <span className="truncate">
-                          {cellNotes.length} {cellNotes.length === 1 ? "note" : "notes"}
+                          {cellNotes.length}
+                          <span className="hidden sm:inline ml-0.5">
+                            {cellNotes.length === 1 ? "note" : "notes"}
+                          </span>
                         </span>
                       </div>
                     </div>

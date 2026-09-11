@@ -15,6 +15,7 @@ import {
   Trash2,
   Volume2,
   LayoutDashboard,
+  Calendar,
   Settings,
   BookOpen,
   HelpCircle,
@@ -40,6 +41,8 @@ export default function NotebookSidebar({
   // Dashboard & Counts Props
   onSelectDashboard,
   isDashboardActive = false,
+  onSelectCalendar,
+  isCalendarActive = false,
   totalNotesCount = 0,
   starredNotesCount = 0,
   // Voice Memos Props
@@ -85,8 +88,8 @@ export default function NotebookSidebar({
 
   return (
     <>
-      <aside className="w-full max-w-xs sm:w-64 h-full flex flex-col justify-between py-5 px-3.5 sm:px-4 bg-[#080f19]/95 border-r border-white/5 backdrop-blur-2xl shrink-0 select-none overflow-y-auto">
-      <div className="space-y-6">
+      <aside className="w-full max-w-[min(85vw,320px)] sm:w-64 h-full flex flex-col justify-between py-5 px-3 sm:px-4 bg-[#080f19]/95 border-r border-white/5 backdrop-blur-2xl shrink-0 select-none overflow-y-auto">
+      <div className="space-y-5">
         {/* Brand / Logo with Animated Cyan Soundwave */}
         <div className="flex items-center justify-between px-1 py-1">
           <div
@@ -111,7 +114,7 @@ export default function NotebookSidebar({
             <button
               type="button"
               onClick={onClose}
-              className="lg:hidden p-1.5 text-slate-400 hover:text-white hover:bg-white/10 rounded-xl transition cursor-pointer"
+              className="lg:hidden p-1.5 text-slate-400 hover:text-white hover:bg-white/10 rounded-xl transition cursor-pointer min-w-[36px] min-h-[36px] flex items-center justify-center"
               aria-label="Close sidebar"
             >
               <X size={20} />
@@ -119,8 +122,9 @@ export default function NotebookSidebar({
           )}
         </div>
 
-        {/* Main Dashboard Navigation Item */}
-        <div>
+        {/* Primary Navigation Items: Dashboard & Calendar */}
+        <div className="space-y-1.5">
+          {/* Dashboard Item */}
           <button
             type="button"
             onClick={() => {
@@ -150,6 +154,28 @@ export default function NotebookSidebar({
                 {totalNotesCount}
               </span>
             )}
+          </button>
+
+          {/* Calendar Item */}
+          <button
+            type="button"
+            onClick={() => {
+              if (onSelectCalendar) onSelectCalendar();
+            }}
+            className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-sm font-medium transition-all text-left cursor-pointer group ${
+              isCalendarActive
+                ? "pill-active-glow"
+                : "text-slate-300 hover:text-white hover:bg-white/5 border border-transparent"
+            }`}
+            aria-label="Open calendar"
+          >
+            <div className="flex items-center gap-2.5">
+              <Calendar
+                size={16}
+                className={isCalendarActive ? "text-cyan-400" : "text-slate-400 group-hover:text-cyan-300"}
+              />
+              <span>Calendar</span>
+            </div>
           </button>
         </div>
 

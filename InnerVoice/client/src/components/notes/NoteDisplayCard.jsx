@@ -120,30 +120,31 @@ export default function NoteDisplayCard({
   };
 
   return (
-    <div className="glass-panel rounded-2xl sm:rounded-3xl p-4 sm:p-6 md:p-7 relative overflow-hidden text-white transition-all shadow-[0_20px_50px_rgba(0,0,0,0.55)] min-h-[340px] sm:min-h-[380px] flex flex-col justify-between min-w-0">
+    <div className="glass-panel rounded-2xl sm:rounded-3xl p-4 sm:p-6 relative overflow-hidden text-white transition-all shadow-[0_20px_50px_rgba(0,0,0,0.55)] h-auto min-h-0 flex flex-col justify-start min-w-0">
       {/* Top subtle glow */}
       <div className="absolute top-0 left-0 w-64 h-64 bg-cyan-500/5 rounded-full blur-3xl pointer-events-none"></div>
 
       {/* Card Header & Controls */}
       <div className="relative z-10 min-w-0">
-        <div className="flex flex-wrap items-center justify-between gap-2 mb-3 sm:mb-4 pb-2.5 sm:pb-3 border-b border-white/5">
-          <div className="flex items-center gap-2">
-            <div className="flex items-center gap-1.5 text-[11px] sm:text-xs font-semibold uppercase tracking-wider text-cyan-400">
-              <Sparkles size={14} />
-              <span>Journal Entry</span>
+        <div className="flex items-center justify-between gap-2 mb-3 pb-2.5 border-b border-white/5 flex-wrap">
+          <div className="flex items-center gap-2 min-w-0">
+            <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-cyan-400 truncate">
+              <Sparkles size={14} className="shrink-0" />
+              <span className="truncate">{note?.category || "Journal Entry"}</span>
             </div>
             {justSaved && (
-              <span className="flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-[11px] font-medium animate-pulse">
+              <span className="flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-[11px] font-medium animate-pulse shrink-0">
                 <Check size={11} /> Saved
               </span>
             )}
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 shrink-0">
             {isEditing ? (
               <button
                 onClick={handleSave}
-                className="flex items-center gap-1.5 px-3 py-1 rounded-xl bg-cyan-500/20 text-cyan-300 border border-cyan-400 text-xs font-medium hover:bg-cyan-500/30 transition cursor-pointer shadow-[0_0_10px_rgba(6,182,212,0.3)]"
+                className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-cyan-500/20 text-cyan-300 border border-cyan-400 text-xs font-medium hover:bg-cyan-500/30 transition cursor-pointer shadow-[0_0_10px_rgba(6,182,212,0.3)] min-h-[38px]"
+                aria-label="Save note changes"
               >
                 <Check size={13} />
                 <span>Save</span>
@@ -151,8 +152,9 @@ export default function NoteDisplayCard({
             ) : (
               <button
                 onClick={() => setIsEditing(true)}
-                className="flex items-center gap-1.5 px-3 py-1 rounded-xl bg-white/5 text-slate-300 hover:text-cyan-300 hover:bg-white/10 text-xs font-medium transition cursor-pointer"
+                className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-white/5 text-slate-300 hover:text-cyan-300 hover:bg-white/10 text-xs font-medium transition cursor-pointer min-h-[38px]"
                 title="Quick edit note"
+                aria-label="Quick edit note"
               >
                 <Edit3 size={13} />
                 <span>Edit</span>
@@ -162,10 +164,11 @@ export default function NoteDisplayCard({
             {onOpenFullEdit && (
               <button
                 onClick={onOpenFullEdit}
-                className="p-1.5 text-slate-400 hover:text-white rounded-lg hover:bg-white/5 transition cursor-pointer"
+                className="p-2 text-slate-400 hover:text-white rounded-xl hover:bg-white/5 transition cursor-pointer min-h-[38px] min-w-[38px] flex items-center justify-center"
                 title="Full note details"
+                aria-label="Full note details"
               >
-                <Eye size={14} />
+                <Eye size={15} />
               </button>
             )}
           </div>
@@ -193,21 +196,21 @@ export default function NoteDisplayCard({
               <textarea
                 value={content}
                 onChange={(e) => setContent(e.target.value)}
-                rows={11}
-                className="w-full bg-[#070e17]/80 border border-cyan-500/30 rounded-2xl p-4 text-slate-100 font-mono text-sm leading-relaxed focus:outline-none focus:ring-1 focus:ring-cyan-400 resize-none"
+                rows={8}
+                className="w-full bg-[#070e17]/80 border border-cyan-500/30 rounded-2xl p-3.5 sm:p-4 text-slate-100 font-mono text-xs sm:text-sm leading-relaxed focus:outline-none focus:ring-1 focus:ring-cyan-400 resize-none"
                 placeholder="Write your thoughts..."
               />
             </div>
           </div>
         ) : (
-          <div className="py-2 pr-1 font-sans select-text">
+          <div className="py-1 sm:py-2 pr-1 font-sans select-text [overflow-wrap:anywhere]">
             {renderStyledContent(content)}
           </div>
         )}
       </div>
 
       {/* Footer info */}
-      <div className="pt-4 mt-6 border-t border-white/5 flex items-center justify-between text-xs text-slate-400">
+      <div className="pt-3 mt-4 border-t border-white/5 flex flex-wrap items-center justify-between gap-2 text-xs text-slate-400">
         <span>
           {content.split(/\s+/).filter(Boolean).length} words
         </span>
