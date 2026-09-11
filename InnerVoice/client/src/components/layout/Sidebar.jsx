@@ -23,29 +23,18 @@ const menu = [
   { name: "Profile", path: "/profile", icon: <Settings size={20} /> },
 ];
 
+import { useAuth } from "../../context/AuthContext";
+
 function Sidebar({ onClose }) {
   const location = useLocation();
   const navigate = useNavigate();
+  const { user: authUser, logout } = useAuth();
 
-  const readUser = () => {
-    const userStr = localStorage.getItem("user");
-    return userStr ? JSON.parse(userStr) : { full_name: "User", email: "" };
-  };
-
-  const [user, setUser] = useState(readUser);
-
-  // Re-read user whenever profile image is updated (AvatarUpload dispatches "storage")
-  useEffect(() => {
-    const handleStorage = () => setUser(readUser());
-    window.addEventListener("storage", handleStorage);
-    return () => window.removeEventListener("storage", handleStorage);
-  }, []);
-
+  const user = authUser || { full_name: "User", email: "" };
   const initials = user.full_name ? user.full_name.substring(0, 2).toUpperCase() : "GU";
 
-  const handleLogout = () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
+  const handleLogout = async () => {
+    await logout();
     navigate("/login");
   };
 

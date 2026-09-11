@@ -1,38 +1,65 @@
 // ============================================================
 // authController.js
-// Handles: Signup, Login, Profile Image Upload,
-//          Get/Update Profile, Set/Verify Vault PIN
+// Production Authentication System:
+// - Email + Password (Register & Login)
+// - Google Identity Services (Server-verified ID token)
+// - Sign in with Apple (Server-verified Identity token)
+// - Secure Account Linking
+// - Current User (GET /api/auth/me) & Logout
+// - Profile Management & Vault PIN
 // ============================================================
 
-import bcrypt from "bcryptjs"; // Used to hash & compare passwords securely
-import jwt from "jsonwebtoken"; // Used to create & verify JWT tokens
-import pool from "../config/db.js"; // MySQL database connection pool
-import cloudinary from "../config/cloudinary.js"; // Cloudinary CDN for image uploads
-import streamifier from "streamifier"; // Converts a buffer into a readable stream for Cloudinary
+import bcrypt from "bcryptjs";
+import pool from "../config/db.js";
+import cloudinary from "../config/cloudinary.js";
+import streamifier from "streamifier";
 import logger from "../utils/logger.js";
-import { sendOTPEmail } from "../utils/emailService.js";
+import { generateToken, sanitizeUser } from "../utils/jwt.js";
+import { verifyGoogleIdToken } from "../services/googleAuth.service.js";
+import { verifyAppleIdToken } from "../services/appleAuth.service.js";
+
+// Helper: validate password complexity
+const validatePasswordStrength = (password) => {
+  if (!password || typeof password !== "string") {
+    return "Password is required.";
+  }
+  if (password.length < 8) {
+    return "Password must be at least 8 characters long.";
+  }
+  if (!/[A-Za-z]/.test(password)) {
+    return "Password must contain at least one letter.";
+  }
+  if (!/[0-9]/.test(password) && !/[^A-Za-z0-9]/.test(password)) {
+    return "Password must contain at least one number or special character.";
+  }
+  return null;
+};
 
 // =========================
-// SIGNUP
-// Directly creates an account with email and password (no OTP required)
-// POST /api/auth/signup
+// REGISTER (EMAIL + PASSWORD)
+// POST /api/auth/register
 // =========================
-export const signup = async (req, res) => {
+export const register = async (req, res) => {
   try {
-    const { full_name, email, password } = req.body;
+    const { name, full_name, email, password, confirmPassword } = req.body || {};
+    const displayName = (name || full_name || "").trim();
 
-    if (!full_name || !email || !password) {
+    if (!displayName) {
       return res.status(400).json({
         success: false,
-        message: "Missing required fields",
+        message: "Full name is required.",
+      });
+    }
+
+    if (!email) {
+      return res.status(400).json({
+        success: false,
+        message: "Email address is required.",
       });
     }
 
     const cleanEmail = email.trim().toLowerCase();
-
-    // Basic email format validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
     if (!emailRegex.test(cleanEmail)) {
       return res.status(400).json({
         success: false,
@@ -40,232 +67,517 @@ export const signup = async (req, res) => {
       });
     }
 
-    // Check if account already exists
-    const [existingUser] = await pool.query(
-      "SELECT id FROM users WHERE email = ?",
-      [cleanEmail],
-    );
-
-    if (existingUser.length > 0) {
+    // Validate password strength
+    const pwdError = validatePasswordStrength(password);
+    if (pwdError) {
       return res.status(400).json({
         success: false,
-        message: "An account with this email already exists.",
+        message: pwdError,
       });
     }
 
-    // Hash password securely
-    const hashedPassword = await bcrypt.hash(password, 10);
+    // Validate confirmPassword if supplied
+    if (confirmPassword !== undefined && password !== confirmPassword) {
+      return res.status(400).json({
+        success: false,
+        message: "Passwords do not match.",
+      });
+    }
 
-    // Create user in database
-    const [result] = await pool.query(
-      `INSERT INTO users
-       (full_name, email, password)
-       VALUES (?, ?, ?)`,
-      [full_name.trim(), cleanEmail, hashedPassword],
+    // Check for existing account
+    const [existing] = await pool.query(
+      "SELECT id, auth_provider FROM users WHERE email = ?",
+      [cleanEmail]
     );
 
-    logger.info(`User registered successfully: ${cleanEmail}`);
+    if (existing.length > 0) {
+      return res.status(409).json({
+        success: false,
+        message: "An account already exists with this email.",
+      });
+    }
+
+    // Hash password with bcrypt cost factor 10
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    // Create user in MySQL
+    const [insertResult] = await pool.query(
+      `INSERT INTO users (full_name, email, password, auth_provider, email_verified)
+       VALUES (?, ?, ?, 'local', 0)`,
+      [displayName, cleanEmail, hashedPassword]
+    );
+
+    const [newUsers] = await pool.query("SELECT * FROM users WHERE id = ?", [
+      insertResult.insertId,
+    ]);
+    const newUser = newUsers[0];
+
+    logger.info(`New local user registered: ${cleanEmail} (ID: ${newUser.id})`);
+
+    // Generate standard session JWT
+    const token = generateToken(newUser);
 
     return res.status(201).json({
       success: true,
-      message: "Account created successfully! Please log in.",
-      userId: result.insertId,
+      message: "Account created successfully!",
+      token,
+      user: sanitizeUser(newUser),
     });
   } catch (error) {
-    logger.error("Signup Error: " + (error.stack || error.message));
-
+    logger.error("Register Error: " + (error.stack || error.message));
     return res.status(500).json({
       success: false,
-      message: error.message || "Signup failed. Please try again.",
+      message: "An unexpected error occurred during signup. Please try again.",
     });
   }
 };
 
-// =========================
-// VERIFY SIGNUP OTP
-// POST /api/auth/verify-signup-otp
-// =========================
-export const verifySignupOTP = async (req, res) => {
-  try {
-    const { full_name, email, password, otp } = req.body;
+// Signup alias for backward compatibility
+export const signup = register;
 
-    if (!full_name || !email || !password || !otp) {
+// =========================
+// LOGIN (EMAIL + PASSWORD)
+// POST /api/auth/login
+// =========================
+export const login = async (req, res) => {
+  try {
+    const { email, password } = req.body || {};
+
+    if (!email || !password) {
       return res.status(400).json({
         success: false,
-        message: "All fields are required.",
+        message: "Email and password are required.",
       });
     }
 
     const cleanEmail = email.trim().toLowerCase();
 
-    // Find the latest signup OTP
-    const [rows] = await pool.query(
-      `SELECT * FROM email_otps
-       WHERE email = ? AND purpose = ?
-       ORDER BY created_at DESC
-       LIMIT 1`,
-      [cleanEmail, "signup"],
-    );
+    // Look up user by email
+    const [rows] = await pool.query("SELECT * FROM users WHERE email = ?", [
+      cleanEmail,
+    ]);
 
+    // Use generic error message to prevent account enumeration vulnerabilities
     if (rows.length === 0) {
-      return res.status(400).json({
+      logger.warn(`Failed login attempt (user not found): ${cleanEmail}`);
+      return res.status(401).json({
         success: false,
-        message: "OTP not found. Please request a new OTP.",
+        message: "Email or password is incorrect.",
       });
     }
 
-    const otpRecord = rows[0];
+    const user = rows[0];
 
-    // Check OTP expiration
-    if (new Date(otpRecord.expires_at) < new Date()) {
-      await pool.query("DELETE FROM email_otps WHERE id = ?", [otpRecord.id]);
-
-      return res.status(400).json({
+    // If account was created with Google or Apple and has no local password
+    if (!user.password) {
+      logger.warn(`User ${cleanEmail} attempted password login on OAuth account`);
+      return res.status(401).json({
         success: false,
-        message: "OTP has expired. Please request a new OTP.",
+        message: `This account was registered using ${user.auth_provider}. Please sign in with ${user.auth_provider}.`,
       });
     }
 
-    // Limit incorrect attempts
-    if (otpRecord.attempts >= 5) {
-      await pool.query("DELETE FROM email_otps WHERE id = ?", [otpRecord.id]);
-
-      return res.status(429).json({
+    // Compare entered password with bcrypt hash
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) {
+      logger.warn(`Failed login attempt (wrong password): ${cleanEmail}`);
+      return res.status(401).json({
         success: false,
-        message: "Too many incorrect attempts. Please request a new OTP.",
+        message: "Email or password is incorrect.",
       });
     }
 
-    // Check OTP
-    const isValidOTP = await bcrypt.compare(otp.toString(), otpRecord.otp_hash);
+    // Issue application session JWT
+    const token = generateToken(user);
+    logger.info(`User logged in: ${cleanEmail} (ID: ${user.id})`);
 
-    if (!isValidOTP) {
-      await pool.query(
-        "UPDATE email_otps SET attempts = attempts + 1 WHERE id = ?",
-        [otpRecord.id],
-      );
-
-      return res.status(400).json({
-        success: false,
-        message: "Invalid OTP.",
-      });
-    }
-
-    // Make sure the email wasn't registered while verification was pending
-    const [existingUser] = await pool.query(
-      "SELECT id FROM users WHERE email = ?",
-      [cleanEmail],
-    );
-
-    if (existingUser.length > 0) {
-      await pool.query("DELETE FROM email_otps WHERE id = ?", [otpRecord.id]);
-
-      return res.status(400).json({
-        success: false,
-        message: "An account with this email already exists.",
-      });
-    }
-
-    // Hash password before storing
-    const hashedPassword = await bcrypt.hash(password, 10);
-
-    // Create the account only after successful OTP verification
-    await pool.query(
-      `INSERT INTO users
-       (full_name, email, password)
-       VALUES (?, ?, ?)`,
-      [full_name, cleanEmail, hashedPassword],
-    );
-
-    // Delete used OTP
-    await pool.query("DELETE FROM email_otps WHERE id = ?", [otpRecord.id]);
-
-    logger.info(`Email verified and user registered: ${cleanEmail}`);
-
-    return res.status(201).json({
+    return res.status(200).json({
       success: true,
-      message: "Email verified and account created successfully.",
+      message: "Login successful",
+      token,
+      user: sanitizeUser(user),
     });
   } catch (error) {
-    logger.error("Verify Signup OTP Error: " + (error.stack || error.message));
-
+    logger.error("Login Error: " + (error.stack || error.message));
     return res.status(500).json({
       success: false,
-      message: "Server Error",
+      message: "An unexpected server error occurred during login.",
     });
   }
 };
 
 // =========================
-// LOGIN
-// Authenticates user and returns a JWT token
-// POST /api/auth/login
+// GOOGLE SIGN IN / SIGN UP
+// POST /api/auth/google
 // =========================
-export const login = async (req, res) => {
+export const googleAuth = async (req, res) => {
   try {
-    const { email, password } = req.body;
+    const { id_token, credential, link_account, password } = req.body || {};
+    const tokenToVerify = id_token || credential;
 
-    logger.info(`Login attempt for ${email}`);
+    if (!tokenToVerify) {
+      return res.status(400).json({
+        success: false,
+        message: "Missing Google ID token or credential.",
+      });
+    }
 
-    // Look up the user by email
+    // Verify Google ID token cryptographically with Google Identity Services
+    const verifiedGoogleUser = await verifyGoogleIdToken(tokenToVerify);
+    const { sub, email, name, picture, email_verified } = verifiedGoogleUser;
+
+    // 1. Check if user exists by google_id
+    const [byGoogleId] = await pool.query(
+      "SELECT * FROM users WHERE google_id = ?",
+      [sub]
+    );
+
+    let user;
+
+    if (byGoogleId.length > 0) {
+      user = byGoogleId[0];
+      // Update avatar if not yet set
+      if (!user.profile_image && picture) {
+        await pool.query(
+          "UPDATE users SET profile_image = ?, avatar_url = ? WHERE id = ?",
+          [picture, picture, user.id]
+        );
+        user.profile_image = picture;
+        user.avatar_url = picture;
+      }
+      logger.info(`Existing Google user signed in: ${email} (sub: ${sub})`);
+    } else {
+      // 2. Check if user exists with the same email
+      const [byEmail] = await pool.query("SELECT * FROM users WHERE email = ?", [
+        email,
+      ]);
+
+      if (byEmail.length > 0) {
+        const existingUser = byEmail[0];
+
+        // If existing user already has a local password and user hasn't confirmed linking
+        if (existingUser.password && !link_account) {
+          return res.status(409).json({
+            success: false,
+            requireLinking: true,
+            email: existingUser.email,
+            message:
+              "An account with this email already exists. Please verify your password to link your Google account.",
+          });
+        }
+
+        // If link_account is requested, verify the user's password
+        if (existingUser.password && link_account) {
+          if (!password) {
+            return res.status(400).json({
+              success: false,
+              requireLinking: true,
+              message: "Please enter your password to authorize linking.",
+            });
+          }
+
+          const passwordValid = await bcrypt.compare(password, existingUser.password);
+          if (!passwordValid) {
+            return res.status(401).json({
+              success: false,
+              requireLinking: true,
+              message: "Incorrect password. Could not link Google account.",
+            });
+          }
+        }
+
+        // Safely link Google ID to existing account
+        await pool.query(
+          `UPDATE users 
+           SET google_id = ?, email_verified = 1,
+               avatar_url = COALESCE(avatar_url, ?),
+               profile_image = COALESCE(profile_image, ?)
+           WHERE id = ?`,
+          [sub, picture, picture, existingUser.id]
+        );
+
+        const [updatedRows] = await pool.query(
+          "SELECT * FROM users WHERE id = ?",
+          [existingUser.id]
+        );
+        user = updatedRows[0];
+        logger.info(`Google sub linked to existing account: ${email}`);
+      } else {
+        // 3. Completely new Google user
+        const [insertRes] = await pool.query(
+          `INSERT INTO users 
+           (full_name, email, password, auth_provider, google_id, avatar_url, profile_image, email_verified)
+           VALUES (?, ?, NULL, 'google', ?, ?, ?, ?)`,
+          [name, email, sub, picture, picture, email_verified ? 1 : 0]
+        );
+
+        const [newRows] = await pool.query("SELECT * FROM users WHERE id = ?", [
+          insertRes.insertId,
+        ]);
+        user = newRows[0];
+        logger.info(`New user registered via Google: ${email} (sub: ${sub})`);
+      }
+    }
+
+    // Issue application session JWT
+    const token = generateToken(user);
+
+    return res.status(200).json({
+      success: true,
+      message: "Successfully signed in with Google!",
+      token,
+      user: sanitizeUser(user),
+    });
+  } catch (error) {
+    logger.error("Google Auth Error: " + (error.stack || error.message));
+    return res.status(400).json({
+      success: false,
+      message: error.message || "Google sign-in could not be completed. Please try again.",
+    });
+  }
+};
+
+// =========================
+// APPLE SIGN IN / SIGN UP
+// POST /api/auth/apple
+// =========================
+export const appleAuth = async (req, res) => {
+  try {
+    const { id_token, user: rawAppleUser, link_account, password } = req.body || {};
+
+    if (!id_token) {
+      return res.status(400).json({
+        success: false,
+        message: "Missing Apple identity token.",
+      });
+    }
+
+    // Verify Apple identity token cryptographically using Apple's official JWKS
+    const verifiedApple = await verifyAppleIdToken(id_token);
+    const { sub, email: appleEmail, email_verified } = verifiedApple;
+
+    // 1. Check if user exists by apple_id
+    const [byAppleId] = await pool.query(
+      "SELECT * FROM users WHERE apple_id = ?",
+      [sub]
+    );
+
+    let user;
+
+    if (byAppleId.length > 0) {
+      user = byAppleId[0];
+      logger.info(`Returning Apple user authenticated: sub=${sub}`);
+    } else {
+      // 2. Check if user exists by email (if email was provided by Apple)
+      if (appleEmail) {
+        const [byEmail] = await pool.query(
+          "SELECT * FROM users WHERE email = ?",
+          [appleEmail]
+        );
+
+        if (byEmail.length > 0) {
+          const existingUser = byEmail[0];
+
+          if (existingUser.password && !link_account) {
+            return res.status(409).json({
+              success: false,
+              requireLinking: true,
+              email: existingUser.email,
+              message:
+                "An account with this email already exists. Please verify your password to link your Apple ID.",
+            });
+          }
+
+          if (existingUser.password && link_account) {
+            if (!password) {
+              return res.status(400).json({
+                success: false,
+                requireLinking: true,
+                message: "Please enter your password to authorize linking.",
+              });
+            }
+
+            const passwordValid = await bcrypt.compare(
+              password,
+              existingUser.password
+            );
+            if (!passwordValid) {
+              return res.status(401).json({
+                success: false,
+                requireLinking: true,
+                message: "Incorrect password. Could not link Apple ID.",
+              });
+            }
+          }
+
+          // Link Apple ID
+          await pool.query(
+            "UPDATE users SET apple_id = ?, email_verified = 1 WHERE id = ?",
+            [sub, existingUser.id]
+          );
+
+          const [updatedRows] = await pool.query(
+            "SELECT * FROM users WHERE id = ?",
+            [existingUser.id]
+          );
+          user = updatedRows[0];
+          logger.info(`Apple ID linked to existing account: ${appleEmail}`);
+        }
+      }
+
+      // 3. Completely new Apple user
+      if (!user) {
+        // Parse user name from Apple's first-time user payload
+        let displayName = "Apple User";
+        if (rawAppleUser) {
+          let parsed = rawAppleUser;
+          if (typeof rawAppleUser === "string") {
+            try {
+              parsed = JSON.parse(rawAppleUser);
+            } catch {
+              parsed = {};
+            }
+          }
+          const firstName = parsed?.name?.firstName || "";
+          const lastName = parsed?.name?.lastName || "";
+          const combined = `${firstName} ${lastName}`.trim();
+          if (combined) displayName = combined;
+        }
+
+        const effectiveEmail =
+          appleEmail || `${sub}@privaterelay.appleid.com`;
+
+        const [insertRes] = await pool.query(
+          `INSERT INTO users 
+           (full_name, email, password, auth_provider, apple_id, email_verified)
+           VALUES (?, ?, NULL, 'apple', ?, ?)`,
+          [displayName, effectiveEmail, sub, email_verified ? 1 : 0]
+        );
+
+        const [newRows] = await pool.query("SELECT * FROM users WHERE id = ?", [
+          insertRes.insertId,
+        ]);
+        user = newRows[0];
+        logger.info(`New user registered via Apple ID: ${effectiveEmail} (sub: ${sub})`);
+      }
+    }
+
+    // Issue application session JWT
+    const token = generateToken(user);
+
+    return res.status(200).json({
+      success: true,
+      message: "Successfully signed in with Apple!",
+      token,
+      user: sanitizeUser(user),
+    });
+  } catch (error) {
+    logger.error("Apple Auth Error: " + (error.stack || error.message));
+    return res.status(400).json({
+      success: false,
+      message: error.message || "Apple sign-in could not be completed. Please try again.",
+    });
+  }
+};
+
+// =========================
+// SECURE ACCOUNT LINKING
+// POST /api/auth/link-account
+// =========================
+export const linkAccount = async (req, res) => {
+  try {
+    const { email, password, provider, oauth_id } = req.body || {};
+
+    if (!email || !password || !provider || !oauth_id) {
+      return res.status(400).json({
+        success: false,
+        message: "Email, password, provider, and OAuth ID are required for linking.",
+      });
+    }
+
+    const cleanEmail = email.trim().toLowerCase();
     const [rows] = await pool.query("SELECT * FROM users WHERE email = ?", [
-      email,
+      cleanEmail,
     ]);
 
-    // If no user found, return 404
     if (rows.length === 0) {
-      logger.warn(`Failed login attempt (user not found) for ${email}`);
+      return res.status(404).json({
+        success: false,
+        message: "Account not found.",
+      });
+    }
+
+    const user = rows[0];
+
+    // Verify existing password
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) {
+      return res.status(401).json({
+        success: false,
+        message: "Incorrect password. Account linking rejected.",
+      });
+    }
+
+    if (provider === "google") {
+      await pool.query("UPDATE users SET google_id = ? WHERE id = ?", [
+        oauth_id,
+        user.id,
+      ]);
+    } else if (provider === "apple") {
+      await pool.query("UPDATE users SET apple_id = ? WHERE id = ?", [
+        oauth_id,
+        user.id,
+      ]);
+    } else {
+      return res.status(400).json({
+        success: false,
+        message: `Unknown provider: ${provider}`,
+      });
+    }
+
+    const [updated] = await pool.query("SELECT * FROM users WHERE id = ?", [
+      user.id,
+    ]);
+    const token = generateToken(updated[0]);
+
+    return res.status(200).json({
+      success: true,
+      message: `Successfully linked ${provider} to your account!`,
+      token,
+      user: sanitizeUser(updated[0]),
+    });
+  } catch (error) {
+    logger.error("Link Account Error: " + (error.stack || error.message));
+    return res.status(500).json({
+      success: false,
+      message: "Server error during account linking.",
+    });
+  }
+};
+
+// =========================
+// GET CURRENT USER
+// GET /api/auth/me
+// =========================
+export const getCurrentUser = async (req, res) => {
+  try {
+    const [rows] = await pool.query("SELECT * FROM users WHERE id = ?", [
+      req.user.id,
+    ]);
+
+    if (rows.length === 0) {
       return res.status(404).json({
         success: false,
         message: "User not found",
       });
     }
 
-    const user = rows[0];
-
-    // Compare the entered plain password against the stored hashed password
-    const isMatch = await bcrypt.compare(password, user.password);
-
-    if (!isMatch) {
-      logger.warn(`Failed login attempt for ${email}`);
-      return res.status(401).json({
-        success: false,
-        message: "Invalid password",
-      });
-    }
-
-    // Generate a JWT token valid for 7 days
-    // Payload contains user id, email, and role
-    const token = jwt.sign(
-      {
-        id: user.id,
-        email: user.email,
-        role: user.role,
-      },
-      process.env.JWT_SECRET, // Secret key from .env file
-      {
-        expiresIn: "7d",
-      },
-    );
-
-    logger.info(`User ${user.email} logged in`);
-
-    // Return token + basic user info (no password)
     return res.status(200).json({
       success: true,
-      message: "Login successful",
-      token,
-      user: {
-        id: user.id,
-        full_name: user.full_name,
-        email: user.email,
-        role: user.role,
-        profile_image: user.profile_image,
-      },
+      user: sanitizeUser(rows[0]),
     });
   } catch (error) {
-    logger.error("Login Error: " + (error.stack || error.message));
-
+    logger.error("Get Current User Error: " + (error.stack || error.message));
     return res.status(500).json({
       success: false,
       message: "Server Error",
@@ -274,74 +586,27 @@ export const login = async (req, res) => {
 };
 
 // =========================
-// UPLOAD PROFILE IMAGE
-// Uploads image to Cloudinary and saves the URL in the DB
-// POST /api/auth/upload-profile
+// LOGOUT
+// POST /api/auth/logout
 // =========================
-export const uploadProfileImage = async (req, res) => {
-  try {
-    // multer puts the uploaded file on req.file
-    if (!req.file) {
-      return res.status(400).json({
-        success: false,
-        message: "No image uploaded",
-      });
-    }
-
-    // Cloudinary doesn't accept buffers directly — wrap it in a Promise
-    // that pipes the buffer through a readable stream into Cloudinary's upload_stream
-    const uploadFromBuffer = () =>
-      new Promise((resolve, reject) => {
-        const stream = cloudinary.uploader.upload_stream(
-          {
-            folder: "innervoice/profile-images", // Folder inside Cloudinary
-          },
-          (error, result) => {
-            if (error) return reject(error);
-            resolve(result); // result.secure_url = the CDN image URL
-          },
-        );
-
-        // Convert req.file.buffer (in-memory file from multer) into a readable stream
-        streamifier.createReadStream(req.file.buffer).pipe(stream);
-      });
-
-    const result = await uploadFromBuffer();
-
-    // Save the Cloudinary image URL to the user's record in MySQL
-    await pool.query("UPDATE users SET profile_image = ? WHERE id = ?", [
-      result.secure_url,
-      req.user.id,
-    ]);
-
-    // Return the CDN URL so the frontend can display it immediately
-    return res.json({
-      success: true,
-      image: result.secure_url,
-    });
-  } catch (error) {
-    console.error(error);
-
-    return res.status(500).json({
-      success: false,
-      message: "Upload failed",
-    });
-  }
+export const logout = async (req, res) => {
+  return res.status(200).json({
+    success: true,
+    message: "Logged out successfully.",
+  });
 };
 
 // =========================
 // GET PROFILE
-// Returns the logged-in user's profile data
 // GET /api/auth/profile
 // =========================
 export const getProfile = async (req, res) => {
   try {
-    // Select only the safe fields (never return the hashed password)
     const [rows] = await pool.query(
-      `SELECT id, full_name, email, username, phone, bio, role, profile_image
+      `SELECT id, full_name, email, username, phone, bio, role, profile_image, avatar_url, auth_provider, email_verified
        FROM users
        WHERE id = ?`,
-      [req.user.id], // req.user is set by authMiddleware after JWT decode
+      [req.user.id]
     );
 
     if (rows.length === 0) {
@@ -356,8 +621,7 @@ export const getProfile = async (req, res) => {
       profile: rows[0],
     });
   } catch (error) {
-    console.error("Get Profile Error:", error);
-
+    logger.error("Get Profile Error: " + (error.stack || error.message));
     return res.status(500).json({
       success: false,
       message: error.message || "Server Error",
@@ -367,22 +631,19 @@ export const getProfile = async (req, res) => {
 
 // =========================
 // UPDATE PROFILE
-// Updates full_name, username, phone, bio
 // PUT /api/auth/profile
 // =========================
 export const updateProfile = async (req, res) => {
   try {
     const { full_name, username, phone, bio } = req.body || {};
 
-    // Treat empty/whitespace username as null (allow clearing it)
     const cleanUsername =
       username && username.trim() !== "" ? username.trim() : null;
 
-    // If a new username is provided, make sure it's not taken by another user
     if (cleanUsername) {
       const [existingUser] = await pool.query(
         "SELECT id FROM users WHERE username = ? AND id != ?",
-        [cleanUsername, req.user.id],
+        [cleanUsername, req.user.id]
       );
 
       if (existingUser.length > 0) {
@@ -393,7 +654,6 @@ export const updateProfile = async (req, res) => {
       }
     }
 
-    // Update the user's profile fields in the database
     await pool.query(
       `UPDATE users
        SET full_name = ?, username = ?, phone = ?, bio = ?
@@ -404,15 +664,14 @@ export const updateProfile = async (req, res) => {
         phone || null,
         bio || null,
         req.user.id,
-      ],
+      ]
     );
 
-    // Re-fetch the updated row so the frontend gets fresh data
     const [rows] = await pool.query(
-      `SELECT id, full_name, email, username, phone, bio, profile_image, role
+      `SELECT id, full_name, email, username, phone, bio, profile_image, avatar_url, role
        FROM users
        WHERE id = ?`,
-      [req.user.id],
+      [req.user.id]
     );
 
     return res.status(200).json({
@@ -421,9 +680,7 @@ export const updateProfile = async (req, res) => {
       profile: rows[0],
     });
   } catch (error) {
-    console.error("Update Profile Error:", error);
-
-    // MySQL duplicate entry error (e.g., duplicate username)
+    logger.error("Update Profile Error: " + (error.stack || error.message));
     if (error.code === "ER_DUP_ENTRY") {
       return res.status(400).json({
         success: false,
@@ -439,15 +696,58 @@ export const updateProfile = async (req, res) => {
 };
 
 // =========================
+// UPLOAD PROFILE IMAGE
+// POST /api/auth/upload-profile
+// =========================
+export const uploadProfileImage = async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({
+        success: false,
+        message: "No image uploaded",
+      });
+    }
+
+    const uploadFromBuffer = () =>
+      new Promise((resolve, reject) => {
+        const stream = cloudinary.uploader.upload_stream(
+          { folder: "innervoice/profile-images" },
+          (error, result) => {
+            if (error) return reject(error);
+            resolve(result);
+          }
+        );
+        streamifier.createReadStream(req.file.buffer).pipe(stream);
+      });
+
+    const result = await uploadFromBuffer();
+
+    await pool.query(
+      "UPDATE users SET profile_image = ?, avatar_url = ? WHERE id = ?",
+      [result.secure_url, result.secure_url, req.user.id]
+    );
+
+    return res.json({
+      success: true,
+      image: result.secure_url,
+    });
+  } catch (error) {
+    logger.error("Upload Profile Image Error: " + (error.stack || error.message));
+    return res.status(500).json({
+      success: false,
+      message: "Upload failed",
+    });
+  }
+};
+
+// =========================
 // SET VAULT PIN
-// Saves a hashed 4-digit PIN used to lock/unlock notes
 // PUT /api/auth/set-vault-pin
 // =========================
 export const setVaultPin = async (req, res) => {
   try {
-    const { pin } = req.body;
+    const { pin } = req.body || {};
 
-    // Validate: must be exactly 4 numeric digits
     if (!pin || !/^\d{4}$/.test(pin)) {
       return res.status(400).json({
         success: false,
@@ -455,10 +755,7 @@ export const setVaultPin = async (req, res) => {
       });
     }
 
-    // Hash the PIN before storing (same security as passwords)
     const hashedPin = await bcrypt.hash(pin, 10);
-
-    // Save the hashed PIN in the user's row
     await pool.query("UPDATE users SET vault_pin = ? WHERE id = ?", [
       hashedPin,
       req.user.id,
@@ -469,8 +766,7 @@ export const setVaultPin = async (req, res) => {
       message: "Vault PIN set successfully.",
     });
   } catch (error) {
-    console.error("Set Vault PIN Error:", error);
-
+    logger.error("Set Vault PIN Error: " + (error.stack || error.message));
     return res.status(500).json({
       success: false,
       message: "Server Error",
@@ -480,17 +776,15 @@ export const setVaultPin = async (req, res) => {
 
 // =========================
 // VERIFY VAULT PIN
-// Checks if the entered PIN matches the stored hash
 // POST /api/auth/verify-vault-pin
 // =========================
 export const verifyVaultPin = async (req, res) => {
   try {
-    const { pin } = req.body;
+    const { pin } = req.body || {};
 
-    // Fetch the stored hashed PIN for this user
     const [rows] = await pool.query(
       "SELECT vault_pin FROM users WHERE id = ?",
-      [req.user.id],
+      [req.user.id]
     );
 
     if (rows.length === 0) {
@@ -500,7 +794,6 @@ export const verifyVaultPin = async (req, res) => {
       });
     }
 
-    // If no PIN has been set yet, reject
     if (!rows[0].vault_pin) {
       return res.status(400).json({
         success: false,
@@ -508,9 +801,7 @@ export const verifyVaultPin = async (req, res) => {
       });
     }
 
-    // Compare entered PIN (plain) against stored bcrypt hash
     const isMatch = await bcrypt.compare(pin, rows[0].vault_pin);
-
     if (!isMatch) {
       return res.status(401).json({
         success: false,
@@ -523,96 +814,10 @@ export const verifyVaultPin = async (req, res) => {
       message: "PIN verified.",
     });
   } catch (error) {
-    console.error("Verify Vault PIN Error:", error);
-
+    logger.error("Verify Vault PIN Error: " + (error.stack || error.message));
     return res.status(500).json({
       success: false,
       message: "Server Error",
     });
   }
 };
-
-// =========================
-// SOCIAL LOGIN / SIGNUP (Google, Apple, GitHub)
-// POST /api/auth/social-login
-// =========================
-export const socialLogin = async (req, res) => {
-  try {
-    const { provider, email, full_name, avatar_url } = req.body;
-
-    if (!email || !provider) {
-      return res.status(400).json({
-        success: false,
-        message: "Email and provider are required.",
-      });
-    }
-
-    const cleanEmail = email.trim().toLowerCase();
-    const displayName =
-      (full_name && full_name.trim()) ||
-      cleanEmail.split("@")[0].replace(/[._-]/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
-
-    // Check if user already exists
-    const [rows] = await pool.query("SELECT * FROM users WHERE email = ?", [cleanEmail]);
-
-    let user;
-
-    if (rows.length > 0) {
-      user = rows[0];
-      // Update avatar if provided and not yet set
-      if (!user.profile_image && avatar_url) {
-        await pool.query("UPDATE users SET profile_image = ? WHERE id = ?", [avatar_url, user.id]);
-        user.profile_image = avatar_url;
-      }
-      logger.info(`Existing user logged in via ${provider}: ${cleanEmail}`);
-    } else {
-      // Auto-create account for social signup
-      const randomPassword = await bcrypt.hash(
-        Math.random().toString(36) + Date.now().toString(),
-        10
-      );
-
-      const [insertRes] = await pool.query(
-        `INSERT INTO users (full_name, email, password, profile_image) VALUES (?, ?, ?, ?)`,
-        [displayName, cleanEmail, randomPassword, avatar_url || null]
-      );
-
-      const [newRows] = await pool.query("SELECT * FROM users WHERE id = ?", [insertRes.insertId]);
-      user = newRows[0];
-      logger.info(`New user registered via ${provider}: ${cleanEmail}`);
-    }
-
-    // Generate JWT token valid for 7 days
-    const token = jwt.sign(
-      {
-        id: user.id,
-        email: user.email,
-        role: user.role,
-      },
-      process.env.JWT_SECRET,
-      {
-        expiresIn: "7d",
-      }
-    );
-
-    return res.status(200).json({
-      success: true,
-      message: `Successfully authenticated with ${provider.charAt(0).toUpperCase() + provider.slice(1)}!`,
-      token,
-      user: {
-        id: user.id,
-        full_name: user.full_name,
-        email: user.email,
-        role: user.role,
-        profile_image: user.profile_image,
-      },
-    });
-  } catch (error) {
-    logger.error("Social Login Error: " + (error.stack || error.message));
-    return res.status(500).json({
-      success: false,
-      message: error.message || "Social login failed. Please try again.",
-    });
-  }
-};
-

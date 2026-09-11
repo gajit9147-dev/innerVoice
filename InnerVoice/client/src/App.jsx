@@ -1,47 +1,118 @@
 // ============================================================
 // App.jsx
 // Root component — wraps the entire app in:
-//   ThemeProvider      → dark/light mode
-//   ToastProvider      → global toast notifications
-//   LiquidGlassProvider → fetches color palette, activates glare,
-//                         renders MeshBackground
+//   ThemeProvider       → dark/light mode
+//   ToastProvider       → global toast notifications
+//   LiquidGlassProvider → dynamic styling palette
+//   AuthProvider        → central authentication state
 // ============================================================
 
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { ThemeProvider }       from "./context/ThemeContext";
-import { ToastProvider }       from "./context/ToastContext";
+import { ThemeProvider } from "./context/ThemeContext";
+import { ToastProvider } from "./context/ToastContext";
 import { LiquidGlassProvider } from "./context/LiquidGlassProvider";
+import { AuthProvider } from "./context/AuthContext";
 
-import Signup         from "./pages/Signup";
-import Login          from "./pages/Login";
-import Dashboard      from "./pages/Dashboard";
-import Analytics      from "./pages/Analytics";
-import Profile        from "./pages/Profile";
+import ProtectedRoute from "./components/auth/ProtectedRoute";
+import PublicOnlyRoute from "./components/auth/PublicOnlyRoute";
+
+import Signup from "./pages/Signup";
+import Login from "./pages/Login";
+import Dashboard from "./pages/Dashboard";
+import Analytics from "./pages/Analytics";
+import Profile from "./pages/Profile";
 import AdminDashboard from "./pages/AdminDashboard";
-import NotFound       from "./pages/NotFound";
-import EditProfile    from "./pages/EditProfile";
-import Trash          from "./pages/Trash";
+import NotFound from "./pages/NotFound";
+import EditProfile from "./pages/EditProfile";
+import Trash from "./pages/Trash";
 
 function App() {
   return (
     <ThemeProvider>
       <ToastProvider>
-        {/* LiquidGlassProvider must be inside ThemeProvider so it can read dark/light state */}
         <LiquidGlassProvider>
-          <BrowserRouter>
-            <Routes>
-              <Route path="/"            element={<Signup />} />
-              <Route path="/signup"      element={<Signup />} />
-              <Route path="/login"       element={<Login />} />
-              <Route path="/dashboard"   element={<Dashboard />} />
-              <Route path="/analytics"   element={<Analytics />} />
-              <Route path="/profile"     element={<Profile />} />
-              <Route path="/profile/edit" element={<EditProfile />} />
-              <Route path="/admin"       element={<AdminDashboard />} />
-              <Route path="/trash"       element={<Trash />} />
-              <Route path="*"            element={<NotFound />} />
-            </Routes>
-          </BrowserRouter>
+          <AuthProvider>
+            <BrowserRouter>
+              <Routes>
+                {/* Public Only Routes (Authenticated users redirected to Dashboard) */}
+                <Route
+                  path="/"
+                  element={
+                    <PublicOnlyRoute>
+                      <Signup />
+                    </PublicOnlyRoute>
+                  }
+                />
+                <Route
+                  path="/signup"
+                  element={
+                    <PublicOnlyRoute>
+                      <Signup />
+                    </PublicOnlyRoute>
+                  }
+                />
+                <Route
+                  path="/login"
+                  element={
+                    <PublicOnlyRoute>
+                      <Login />
+                    </PublicOnlyRoute>
+                  }
+                />
+
+                {/* Protected Routes (Unauthenticated users redirected to Login) */}
+                <Route
+                  path="/dashboard"
+                  element={
+                    <ProtectedRoute>
+                      <Dashboard />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/analytics"
+                  element={
+                    <ProtectedRoute>
+                      <Analytics />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/profile"
+                  element={
+                    <ProtectedRoute>
+                      <Profile />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/profile/edit"
+                  element={
+                    <ProtectedRoute>
+                      <EditProfile />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/admin"
+                  element={
+                    <ProtectedRoute>
+                      <AdminDashboard />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/trash"
+                  element={
+                    <ProtectedRoute>
+                      <Trash />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </BrowserRouter>
+          </AuthProvider>
         </LiquidGlassProvider>
       </ToastProvider>
     </ThemeProvider>

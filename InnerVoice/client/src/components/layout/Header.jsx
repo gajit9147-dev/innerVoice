@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Search, Settings, Sun, Moon, Menu } from "lucide-react";
 import { useTheme } from "../../context/ThemeContext";
+import { useAuth } from "../../context/AuthContext";
 import { Link } from "react-router-dom";
 import { getProfileInfo } from "../../api/profile";
 
@@ -11,17 +12,13 @@ export default function Header({
   placeholder = "Search",
 }) {
   const { theme, toggleTheme } = useTheme();
+  const { user: authUser, setUser: setAuthUser } = useAuth();
 
-  const readUser = () => {
-    try {
-      const userStr = localStorage.getItem("user");
-      return userStr ? JSON.parse(userStr) : { full_name: "Ajeet" };
-    } catch {
-      return { full_name: "Ajeet" };
-    }
-  };
+  const [user, setUser] = useState(authUser || { full_name: "User" });
 
-  const [user, setUser] = useState(readUser);
+  useEffect(() => {
+    if (authUser) setUser(authUser);
+  }, [authUser]);
 
   useEffect(() => {
     const syncProfile = async () => {

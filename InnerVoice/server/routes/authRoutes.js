@@ -1,12 +1,21 @@
+// ============================================================
+// server/routes/authRoutes.js
+// Production Authentication and Profile API Routes
+// ============================================================
+
 import express from "express";
 import authMiddleware from "../middleware/authMiddleware.js";
 import upload from "../middleware/upload.js";
 
 import {
+  register,
   signup,
-  verifySignupOTP,
   login,
-  socialLogin,
+  googleAuth,
+  appleAuth,
+  linkAccount,
+  getCurrentUser,
+  logout,
   uploadProfileImage,
   getProfile,
   updateProfile,
@@ -17,67 +26,45 @@ import {
 const router = express.Router();
 
 // =========================
-// AUTH ROUTES
+// AUTHENTICATION ROUTES
 // =========================
-router.post("/signup", signup);
-router.post("/verify-signup-otp", verifySignupOTP);
-router.post("/social-login", socialLogin);
-/**
- * @swagger
- * /api/auth/login:
- *   post:
- *     summary: Login user
- *     tags:
- *       - Authentication
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required:
- *               - email
- *               - password
- *             properties:
- *               email:
- *                 type: string
- *                 example: ajeet@example.com
- *               password:
- *                 type: string
- *                 example: MyPassword123
- *     responses:
- *       200:
- *         description: Login successful.
- *       401:
- *         description: Invalid credentials.
- */
+
+// Email + Password Registration
+router.post("/register", register);
+router.post("/signup", signup); // Backwards compatibility
+
+// Email + Password Login
 router.post("/login", login);
 
+// Official Google Identity Services OAuth
+router.post("/google", googleAuth);
+
+// Official Sign in with Apple OAuth
+router.post("/apple", appleAuth);
+
+// Secure Account Linking
+router.post("/link-account", linkAccount);
+
+// Session State & Logout
+router.get("/me", authMiddleware, getCurrentUser);
+router.post("/logout", logout);
+
 // =========================
-// PROFILE
+// PROFILE ROUTES
 // =========================
 router.get("/profile", authMiddleware, getProfile);
-
 router.put("/profile", authMiddleware, updateProfile);
-
-
-
-// =========================
-// VAULT PIN
-// =========================
-router.put("/set-vault-pin", authMiddleware, setVaultPin);
-
-router.post("/verify-vault-pin", authMiddleware, verifyVaultPin);
-
-
-// =========================
-// UPLOAD PROFILE IMAGE
-// =========================
 router.post(
   "/upload-profile",
   authMiddleware,
   upload.single("image"),
   uploadProfileImage
 );
+
+// =========================
+// VAULT PIN ROUTES
+// =========================
+router.put("/set-vault-pin", authMiddleware, setVaultPin);
+router.post("/verify-vault-pin", authMiddleware, verifyVaultPin);
 
 export default router;

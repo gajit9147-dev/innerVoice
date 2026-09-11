@@ -1,13 +1,26 @@
+// ============================================================
+// client/src/api/auth.js
+// Production Authentication API Client
+// ============================================================
+
 import API from "./axios";
 
-export const signupUser = (userData) => API.post("/auth/signup", userData);
-export const verifySignupOTP = (data) =>
-  API.post("/auth/verify-signup-otp", data);
-
+// Email + Password
+export const registerUser = (userData) => API.post("/auth/register", userData);
+export const signupUser = registerUser; // Backwards compatibility
 export const loginUser = (userData) => API.post("/auth/login", userData);
-export const socialLoginUser = (data) => API.post("/auth/social-login", data);
-export const setVaultPin = (pin) =>
-  API.put("/auth/set-vault-pin", { pin });
 
-export const verifyVaultPin = (pin) =>
-  API.post("/auth/verify-vault-pin", { pin });
+// Official OAuth
+export const googleAuthUser = (data) => API.post("/auth/google", data);
+export const appleAuthUser = (data) => API.post("/auth/apple", data);
+
+// Account Linking
+export const linkAccountUser = (data) => API.post("/auth/link-account", data);
+
+// Session State & Current User
+export const getMe = () => API.get("/auth/me");
+export const logoutUser = () => API.post("/auth/logout");
+
+// Vault PIN
+export const setVaultPin = (pin) => API.put("/auth/set-vault-pin", { pin });
+export const verifyVaultPin = (pin) => API.post("/auth/verify-vault-pin", { pin });
