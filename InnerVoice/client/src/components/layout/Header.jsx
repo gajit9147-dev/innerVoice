@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
-import { Search, Settings, Sun, Moon, Menu } from "lucide-react";
+import { Search, Settings, Sun, Moon, Menu, LogOut } from "lucide-react";
 import { useTheme } from "../../context/ThemeContext";
 import { useAuth } from "../../context/AuthContext";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { getProfileInfo } from "../../api/profile";
 
 export default function Header({
@@ -11,8 +11,14 @@ export default function Header({
   setSearchQuery,
   placeholder = "Search",
 }) {
+  const navigate = useNavigate();
   const { theme, toggleTheme } = useTheme();
-  const { user: authUser, setUser: setAuthUser } = useAuth();
+  const { user: authUser, setUser: setAuthUser, logout } = useAuth();
+
+  const handleLogout = async () => {
+    await logout();
+    navigate("/login");
+  };
 
   const [user, setUser] = useState(authUser || { full_name: "User" });
 
@@ -103,6 +109,15 @@ export default function Header({
         >
           <Settings size={19} />
         </Link>
+
+        {/* Logout button */}
+        <button
+          onClick={handleLogout}
+          className="p-2.5 rounded-xl text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 transition cursor-pointer"
+          title="Sign Out"
+        >
+          <LogOut size={19} />
+        </button>
 
         {/* User Profile Avatar */}
         <Link

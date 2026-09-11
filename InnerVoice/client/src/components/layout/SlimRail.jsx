@@ -8,8 +8,10 @@ import {
   Settings,
   BookOpen,
   HelpCircle,
+  LogOut,
 } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { useAuth } from "../../context/AuthContext";
 
 export default function SlimRail({
   activeTab = "overview",
@@ -19,6 +21,13 @@ export default function SlimRail({
   onOpenGuide,
   onOpenHelp,
 }) {
+  const navigate = useNavigate();
+  const { logout } = useAuth();
+
+  const handleLogout = async () => {
+    await logout();
+    navigate("/login");
+  };
   const readUser = () => {
     try {
       const userStr = localStorage.getItem("user");
@@ -143,6 +152,15 @@ export default function SlimRail({
           title="Help & Shortcuts"
         >
           <HelpCircle size={19} />
+        </button>
+
+        {/* Logout / Sign Out */}
+        <button
+          onClick={handleLogout}
+          className="w-10 h-10 rounded-xl flex items-center justify-center text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 transition-all cursor-pointer"
+          title="Sign Out"
+        >
+          <LogOut size={18} />
         </button>
 
         {/* Small Profile Avatar at the very bottom */}

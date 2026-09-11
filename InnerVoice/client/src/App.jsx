@@ -34,31 +34,10 @@ function App() {
           <AuthProvider>
             <BrowserRouter>
               <Routes>
-                {/* Public Only Routes (Authenticated users redirected to Dashboard) */}
-                <Route
-                  path="/"
-                  element={
-                    <PublicOnlyRoute>
-                      <Signup />
-                    </PublicOnlyRoute>
-                  }
-                />
-                <Route
-                  path="/signup"
-                  element={
-                    <PublicOnlyRoute>
-                      <Signup />
-                    </PublicOnlyRoute>
-                  }
-                />
-                <Route
-                  path="/login"
-                  element={
-                    <PublicOnlyRoute>
-                      <Login />
-                    </PublicOnlyRoute>
-                  }
-                />
+                {/* Public / Landing Routes */}
+                <Route path="/" element={<Signup />} />
+                <Route path="/signup" element={<Signup />} />
+                <Route path="/login" element={<Login />} />
 
                 {/* Protected Routes (Unauthenticated users redirected to Login) */}
                 <Route
