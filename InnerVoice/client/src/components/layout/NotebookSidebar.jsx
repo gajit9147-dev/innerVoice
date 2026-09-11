@@ -16,6 +16,7 @@ import {
   Volume2,
   LayoutDashboard,
   Calendar,
+  Disc3,
   Settings,
   BookOpen,
   HelpCircle,
@@ -23,6 +24,7 @@ import {
 } from "lucide-react";
 
 export default function NotebookSidebar({
+  onOpenMusicLibrary,
   notebooks = [
     { id: "my-journal", name: "My Journal" },
     { id: "creative-ideas", name: "Creative Ideas" },
@@ -175,6 +177,24 @@ export default function NotebookSidebar({
                 className={isCalendarActive ? "text-cyan-400" : "text-slate-400 group-hover:text-cyan-300"}
               />
               <span>Calendar</span>
+            </div>
+          </button>
+
+          {/* Music Library Item */}
+          <button
+            type="button"
+            onClick={() => {
+              if (onOpenMusicLibrary) onOpenMusicLibrary();
+            }}
+            className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-sm font-medium transition-all text-left cursor-pointer group text-slate-300 hover:text-white hover:bg-white/5 border border-transparent"
+            aria-label="Open music library"
+          >
+            <div className="flex items-center gap-2.5">
+              <Disc3
+                size={16}
+                className="text-slate-400 group-hover:text-cyan-300"
+              />
+              <span>Music Library</span>
             </div>
           </button>
         </div>

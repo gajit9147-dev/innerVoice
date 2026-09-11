@@ -11,6 +11,7 @@ import profileRoutes from "./routes/profileRoutes.js";
 import adminRoutes from "./routes/adminRoutes.js";
 import aiRoutes from "./routes/aiRoutes.js";
 import voiceMemoRoutes from "./routes/voiceMemoRoutes.js";
+import mediaRoutes from "./routes/mediaRoutes.js";
 import { notFound, errorHandler } from "./middleware/errorMiddleware.js";
 import liquidLogger from "./middleware/liquidLogger.js";
 import logger from "./utils/logger.js";
@@ -86,6 +87,7 @@ app.use("/api/ai", aiRoutes);
 app.use("/api/profile", profileRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/voice-memos", voiceMemoRoutes);
+app.use("/api/media", mediaRoutes);
 
 // Test Route
 app.get("/", (req, res) => {

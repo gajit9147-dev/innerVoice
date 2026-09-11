@@ -5,6 +5,7 @@ import {
   Layers,
   PenTool,
   Calendar,
+  Disc3,
   Settings,
   BookOpen,
   HelpCircle,
@@ -21,6 +22,7 @@ export default function SlimRail({
   onOpenNewNote,
   onOpenGuide,
   onOpenHelp,
+  onOpenMusicLibrary,
 }) {
   const navigate = useNavigate();
   const { logout } = useAuth();
@@ -133,6 +135,18 @@ export default function SlimRail({
             aria-label="Open calendar"
           >
             <Calendar size={19} />
+          </button>
+
+          {/* Music Library */}
+          <button
+            onClick={() => {
+              if (onOpenMusicLibrary) onOpenMusicLibrary();
+            }}
+            className="w-11 h-11 rounded-xl flex items-center justify-center text-slate-400 hover:text-cyan-300 hover:bg-white/5 transition-all cursor-pointer"
+            title="Memory Music Library"
+            aria-label="Open music library"
+          >
+            <Disc3 size={19} />
           </button>
 
           {/* Settings */}

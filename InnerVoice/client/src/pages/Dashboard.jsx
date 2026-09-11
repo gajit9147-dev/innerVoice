@@ -17,6 +17,7 @@ import VerifyPasswordModal from "../components/notes/security/VerifyPasswordModa
 import SetNotePasswordModal from "../components/notes/security/SetNotePasswordModal";
 import SetVaultPinModal from "../components/notes/security/SetVaultPinModal";
 import ProtectNoteModal from "../components/notes/security/ProtectNoteModal";
+import MusicLibraryModal from "../components/dashboard/MusicLibraryModal";
 import {
   getNotes,
   createNote,
@@ -113,6 +114,7 @@ function Dashboard({ initialTab = "overview" }) {
   const [showRemovePasswordModal, setShowRemovePasswordModal] = useState(false);
   const [showSetPinModal, setShowSetPinModal] = useState(false);
   const [sessionUnlockedIds, setSessionUnlockedIds] = useState(new Set());
+  const [showMusicLibrary, setShowMusicLibrary] = useState(false);
 
   // Navigation state matching reference UI
   const [notebooks, setNotebooks] = useState(() => {
@@ -821,6 +823,7 @@ function Dashboard({ initialTab = "overview" }) {
             onOpenNewNote={handleNewNote}
             onOpenGuide={() => setShowGuideModal(true)}
             onOpenHelp={() => setShowHelpModal(true)}
+            onOpenMusicLibrary={() => setShowMusicLibrary(true)}
           />
         </div>
 
@@ -886,6 +889,10 @@ function Dashboard({ initialTab = "overview" }) {
               onClose={() => setIsSidebarOpen(false)}
               onOpenGuide={() => setShowGuideModal(true)}
               onOpenHelp={() => setShowHelpModal(true)}
+              onOpenMusicLibrary={() => {
+                setShowMusicLibrary(true);
+                if (window.innerWidth < 1024) setIsSidebarOpen(false);
+              }}
               onLogout={async () => {
                 await logout();
                 navigate("/login");
@@ -1461,6 +1468,18 @@ function Dashboard({ initialTab = "overview" }) {
           </div>
         </div>
       )}
+
+      {/* Global Music Library Modal */}
+      <MusicLibraryModal
+        isOpen={showMusicLibrary}
+        onClose={() => setShowMusicLibrary(false)}
+        onSelectNote={(noteId) => {
+          const target = notes.find((n) => n.id === noteId);
+          if (target) {
+            handleSelectActiveNote(target);
+          }
+        }}
+      />
     </div>
   );
 }

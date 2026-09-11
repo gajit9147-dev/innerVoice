@@ -18,6 +18,7 @@ import { useTheme } from "../../context/ThemeContext";
 import { useAuth } from "../../context/AuthContext";
 import { Link, useNavigate } from "react-router-dom";
 import { getProfileInfo } from "../../api/profile";
+import OnlineStatusBadge from "../common/OnlineStatusBadge";
 
 export default function Header({
   onMenuClick,
@@ -381,9 +382,12 @@ export default function Header({
         </div>
 
         {/* =================================================== */}
-        {/* RIGHT: [Mobile Search] [AI Assist] [Theme] [Profile]*/}
+        {/* RIGHT: [Online Status] [Mobile Search] [AI Assist] [Theme] [Profile]*/}
         {/* =================================================== */}
         <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0">
+          {/* Real-time Connectivity Badge */}
+          <OnlineStatusBadge />
+
           {/* Mobile Search Trigger Icon (< sm only) */}
           <button
             type="button"

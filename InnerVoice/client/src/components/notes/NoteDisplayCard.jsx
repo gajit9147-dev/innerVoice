@@ -1,5 +1,14 @@
 import { useState, useEffect } from "react";
-import { Edit3, Check, Eye, Sparkles } from "lucide-react";
+import { Edit3, Check, Eye, Sparkles, HardDriveDownload, Loader2 } from "lucide-react";
+import PhotoGallerySection from "./media/PhotoGallerySection";
+import MemoryMusicSection from "./media/MemoryMusicSection";
+import { getNoteMedia } from "../../api/media";
+import {
+  cacheNoteForOffline,
+  removeNoteFromOffline,
+  isNoteOfflineCached,
+  getOfflineMediaForNote,
+} from "../../utils/offlineStorage";
 
 export default function NoteDisplayCard({
   note,
@@ -10,6 +19,12 @@ export default function NoteDisplayCard({
   const [content, setContent] = useState("");
   const [title, setTitle] = useState("");
   const [justSaved, setJustSaved] = useState(false);
+
+  // Attached media state
+  const [photos, setPhotos] = useState([]);
+  const [musicTracks, setMusicTracks] = useState([]);
+  const [isOfflineCached, setIsOfflineCached] = useState(false);
+  const [cachingNote, setCachingNote] = useState(false);
 
   const defaultContent = `#1 Personal Growth Journey
 
@@ -29,6 +44,80 @@ export default function NoteDisplayCard({
       setTitle("October 26: Evening Reflections");
     }
   }, [note]);
+
+  // Load attached media (photos and music) for this note
+  useEffect(() => {
+    let active = true;
+
+    const loadMedia = async () => {
+      if (!note?.id) {
+        setPhotos([]);
+        setMusicTracks([]);
+        setIsOfflineCached(false);
+        return;
+      }
+
+      // 1. Check offline status
+      const cached = await isNoteOfflineCached(note.id);
+      if (active) setIsOfflineCached(cached);
+
+      const isOffline = typeof navigator !== "undefined" && !navigator.onLine;
+
+      if (isOffline) {
+        // Load from IndexedDB
+        const offlineItems = await getOfflineMediaForNote(note.id);
+        if (active) {
+          setPhotos(offlineItems.filter((m) => m.media_type === "photo"));
+          setMusicTracks(offlineItems.filter((m) => m.media_type === "music"));
+        }
+      } else {
+        // Fetch from backend
+        try {
+          const res = await getNoteMedia(note.id);
+          const allMedia = res.data?.media || [];
+          if (active) {
+            setPhotos(allMedia.filter((m) => m.media_type === "photo"));
+            setMusicTracks(allMedia.filter((m) => m.media_type === "music"));
+          }
+        } catch {
+          // Fallback to local offline cache if network error
+          const offlineItems = await getOfflineMediaForNote(note.id);
+          if (active) {
+            setPhotos(offlineItems.filter((m) => m.media_type === "photo"));
+            setMusicTracks(offlineItems.filter((m) => m.media_type === "music"));
+          }
+        }
+      }
+    };
+
+    loadMedia();
+
+    return () => {
+      active = false;
+    };
+  }, [note?.id]);
+
+  // Toggle offline caching for this entire note + its media
+  const handleToggleNoteOffline = async () => {
+    if (!note?.id) return;
+    setCachingNote(true);
+
+    try {
+      if (isOfflineCached) {
+        await removeNoteFromOffline(note.id);
+        setIsOfflineCached(false);
+      } else {
+        const allMedia = [...photos, ...musicTracks];
+        await cacheNoteForOffline(note, allMedia);
+        setIsOfflineCached(true);
+      }
+    } catch (err) {
+      console.error("Failed to toggle note offline cache:", err);
+      alert("Could not update offline storage for this note.");
+    } finally {
+      setCachingNote(false);
+    }
+  };
 
   const handleSave = () => {
     setIsEditing(false);
@@ -140,6 +229,34 @@ export default function NoteDisplayCard({
           </div>
 
           <div className="flex items-center gap-2 shrink-0">
+            {/* Available Offline Toggle Button */}
+            {note?.id && (
+              <button
+                onClick={handleToggleNoteOffline}
+                disabled={cachingNote}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-xs font-medium transition cursor-pointer min-h-[38px] ${
+                  isOfflineCached
+                    ? "bg-emerald-500/15 border-emerald-500/30 text-emerald-300 shadow-[0_0_12px_rgba(16,185,129,0.25)]"
+                    : "bg-white/5 border-white/10 text-slate-300 hover:text-white hover:bg-white/10"
+                }`}
+                title={
+                  isOfflineCached
+                    ? "Available Offline (Click to remove offline copy)"
+                    : "Make this note and its media available offline"
+                }
+                aria-label="Toggle offline note"
+              >
+                {cachingNote ? (
+                  <Loader2 size={13} className="animate-spin text-cyan-400" />
+                ) : isOfflineCached ? (
+                  <Check size={13} className="text-emerald-400" />
+                ) : (
+                  <HardDriveDownload size={13} />
+                )}
+                <span>{isOfflineCached ? "Offline Ready" : "Make Offline"}</span>
+              </button>
+            )}
+
             {isEditing ? (
               <button
                 onClick={handleSave}
@@ -207,6 +324,23 @@ export default function NoteDisplayCard({
             {renderStyledContent(content)}
           </div>
         )}
+
+        {/* 📷 Attached Photos Gallery */}
+        <PhotoGallerySection
+          noteId={note?.id}
+          photos={photos}
+          onPhotosChange={setPhotos}
+          isLocked={Boolean(note?.is_locked)}
+        />
+
+        {/* 🎵 Attached Memory Music Tracks */}
+        <MemoryMusicSection
+          noteId={note?.id}
+          parentNote={note}
+          musicTracks={musicTracks}
+          onTracksChange={setMusicTracks}
+          isLocked={Boolean(note?.is_locked)}
+        />
       </div>
 
       {/* Footer info */}

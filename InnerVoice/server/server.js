@@ -3,6 +3,7 @@ import app from "./app.js";
 import env from "./config/env.js";
 import logger from "./utils/logger.js";
 import { runAuthMigration } from "./migrations/auth_migration.js";
+import { runMediaMigration } from "./migrations/media_migration.js";
 
 if (dns.setDefaultResultOrder) {
   dns.setDefaultResultOrder("ipv4first");
@@ -10,10 +11,14 @@ if (dns.setDefaultResultOrder) {
 
 const PORT = env.PORT || 5000;
 
-// Execute idempotent auth migrations on startup
+// Execute idempotent migrations on startup
 runAuthMigration()
   .then(() => logger.info("✅ Auth database schema is up to date"))
   .catch((err) => logger.warn("⚠️ Auth migration startup check: " + err.message));
+
+runMediaMigration()
+  .then(() => logger.info("✅ Media database schema is up to date"))
+  .catch((err) => logger.warn("⚠️ Media migration startup check: " + err.message));
 
 // Server start listener
 const server = app.listen(PORT, "0.0.0.0", () => {
