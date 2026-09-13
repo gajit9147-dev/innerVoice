@@ -27,6 +27,7 @@ const explicitOrigins = [
   "http://localhost:3000",
   "http://127.0.0.1:3000",
   "https://innervoice-bt6.pages.dev",
+  "https://innervoice-b6t.pages.dev",
   "https://innervoice4u.in",
   "https://www.innervoice4u.in",
   "https://api.innervoice4u.in",
