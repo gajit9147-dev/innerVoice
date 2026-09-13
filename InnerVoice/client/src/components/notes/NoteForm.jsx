@@ -1,21 +1,35 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
+import {
+  ArrowLeft,
+  Image as ImageIcon,
+  Mic,
+  Music2,
+  MoreHorizontal,
+  Lock,
+  Save,
+  Tag,
+  Check,
+} from "lucide-react";
+import GlassSurface from "../glass/GlassSurface";
 
-function NoteForm({ onSave, onCancel, initialData }) {
+export default function NoteForm({ onSave, onCancel, initialData }) {
   const [formData, setFormData] = useState({
     title: "",
     content: "",
-    category: "General",
-    feeling: "Neutral",
+    category: "My Journal",
+    feeling: "Peaceful",
     is_locked: false,
   });
+
+  const [showMore, setShowMore] = useState(false);
 
   useEffect(() => {
     if (initialData) {
       setFormData({
         title: initialData.title || "",
         content: initialData.content || "",
-        category: initialData.category || "General",
-        feeling: initialData.feeling || "Neutral",
+        category: initialData.category || "My Journal",
+        feeling: initialData.feeling || "Peaceful",
         is_locked: initialData.is_locked === 1 || initialData.is_locked === true || false,
       });
     }
@@ -28,188 +42,202 @@ function NoteForm({ onSave, onCancel, initialData }) {
     }));
   };
 
-  const handleLockToggle = (e) => {
-    setFormData((prev) => ({
-      ...prev,
-      is_locked: e.target.checked,
-    }));
-  };
-
   const handleSubmit = (e) => {
-    e.preventDefault();
+    if (e) e.preventDefault();
 
-    if (!formData.title.trim() || !formData.content.trim()) {
-      alert("Title and Content are required");
+    if (!formData.content.trim()) {
+      alert("Please write something for your note.");
       return;
     }
 
-    onSave(formData);
+    const titleToSave =
+      formData.title.trim() ||
+      formData.content.trim().split("\n")[0].substring(0, 45) ||
+      "My Journal Entry";
 
-    if (!initialData) {
-      setFormData({
-        title: "",
-        content: "",
-        category: "General",
-        feeling: "Neutral",
-        is_locked: false,
-      });
-    }
+    onSave({
+      ...formData,
+      title: titleToSave,
+    });
   };
 
+  const feelings = [
+    "Peaceful",
+    "Grateful",
+    "Inspired",
+    "Happy",
+    "Reflective",
+    "Overthinking",
+    "Sad",
+    "Stressed",
+  ];
+
+  const categories = [
+    "My Journal",
+    "Reflections",
+    "Creative Ideas",
+    "Project Notes",
+    "Memories",
+  ];
+
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      {/* Title */}
-      <input
-        type="text"
-        name="title"
-        placeholder="Title"
-        value={formData.title}
-        onChange={handleChange}
-        className="w-full p-3 rounded-lg border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-blue-500"
-      />
-
-      {/* Category & Feeling */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {/* Category */}
-        <select
-          name="category"
-          value={formData.category}
-          onChange={handleChange}
-          className="w-full p-3 rounded-lg border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-blue-500"
-        >
-          <option value="General">📒 General</option>
-          <option value="Work">💼 Work</option>
-          <option value="Study">📚 Study</option>
-          <option value="Personal">👤 Personal</option>
-          <option value="Ideas">💡 Ideas</option>
-          <option value="Journal">📝 Journal</option>
-        </select>
-
-        {/* Feeling */}
-        <select
-          name="feeling"
-          value={formData.feeling}
-          onChange={handleChange}
-          className="w-full p-3 rounded-lg border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-blue-500"
-        >
-          <optgroup label="😊 Positive">
-            <option value="Neutral">Neutral</option>
-            <option value="Happy">Happy</option>
-            <option value="Excited">Excited</option>
-            <option value="Grateful">Grateful</option>
-            <option value="Motivated">Motivated</option>
-            <option value="Proud">Proud</option>
-            <option value="Hopeful">Hopeful</option>
-            <option value="Peaceful">Peaceful</option>
-            <option value="Inspired">Inspired</option>
-          </optgroup>
-
-          <optgroup label="😔 Sad & Difficult">
-            <option value="Lonely">Lonely</option>
-            <option value="Sad">Sad</option>
-            <option value="Heartbroken">Heartbroken</option>
-            <option value="Disappointed">Disappointed</option>
-            <option value="Anxious">Anxious</option>
-            <option value="Worried">Worried</option>
-            <option value="Overwhelmed">Overwhelmed</option>
-            <option value="Exhausted">Exhausted</option>
-          </optgroup>
-
-          <optgroup label="😡 Stress">
-            <option value="Angry">Angry</option>
-            <option value="Frustrated">Frustrated</option>
-            <option value="Confused">Confused</option>
-            <option value="Overthinking">Overthinking</option>
-            <option value="Stressed">Stressed</option>
-          </optgroup>
-
-          <optgroup label="❤️ Relationships">
-            <option value="Love">Love</option>
-            <option value="Crush">Crush</option>
-            <option value="Friendship">Friendship</option>
-            <option value="Family">Family</option>
-            <option value="Breakup">Breakup</option>
-          </optgroup>
-
-          <optgroup label="🧠 Personal Growth">
-            <option value="Healing">Healing</option>
-            <option value="Learning">Learning</option>
-            <option value="Focused">Focused</option>
-            <option value="Self Growth">Self Growth</option>
-          </optgroup>
-
-          <optgroup label="🌟 Goals">
-            <option value="Dream">Dream</option>
-            <option value="Goal">Goal</option>
-            <option value="Career">Career</option>
-            <option value="Finance">Finance</option>
-            <option value="Fitness">Fitness</option>
-          </optgroup>
-
-          <optgroup label="🔒 Private">
-            <option value="Secret">Secret</option>
-            <option value="Confession">Confession</option>
-            <option value="Fantasy">Fantasy</option>
-            <option value="Memory">Memory</option>
-            <option value="Random Thoughts">Random Thoughts</option>
-            <option value="Private">Private</option>
-          </optgroup>
-
-          <optgroup label="🌍 Daily Life">
-            <option value="Travel">Travel</option>
-            <option value="Food">Food</option>
-            <option value="Gaming">Gaming</option>
-            <option value="Music">Music</option>
-            <option value="Movies">Movies</option>
-            <option value="Photography">Photography</option>
-            <option value="Pets">Pets</option>
-          </optgroup>
-        </select>
-      </div>
-
-      {/* Content */}
-      <textarea
-        rows={6}
-        name="content"
-        placeholder="Write your thoughts..."
-        value={formData.content}
-        onChange={handleChange}
-        className="w-full p-3 rounded-lg border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-blue-500 resize-none"
-      />
-
-      {/* Lock Option */}
-      <div className="flex items-center gap-2 py-1.5">
-        <label className="flex items-center gap-2.5 cursor-pointer text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition text-sm">
-          <input
-            type="checkbox"
-            name="is_locked"
-            checked={formData.is_locked}
-            onChange={handleLockToggle}
-            className="w-4 h-4 text-blue-600 border-gray-300 dark:border-slate-700 bg-transparent rounded focus:ring-blue-500"
-          />
-          <span>🔒 Protect this note with Vault PIN</span>
-        </label>
-      </div>
-
-      {/* Buttons */}
-      <div className="flex justify-end gap-3">
+    <div className="w-full max-w-2xl mx-auto flex flex-col h-full select-none">
+      {/* Top Header Bar */}
+      <div className="flex items-center justify-between pb-4 mb-3 border-b border-white/[0.08]">
         <button
           type="button"
           onClick={onCancel}
-          className="px-4 py-2 rounded-lg bg-gray-400 hover:bg-gray-500 dark:bg-slate-700 dark:hover:bg-slate-600 text-white font-medium transition"
+          className="flex items-center gap-2 text-xs font-medium text-[#9e9990] hover:text-[#f5f2eb] transition cursor-pointer p-1"
         >
-          Cancel
+          <ArrowLeft size={16} />
+          <span>Back</span>
         </button>
+
+        <h2 className="font-serif text-xl sm:text-2xl text-[#f5f2eb] font-normal tracking-tight">
+          {initialData ? "Edit Note" : "Create a Note"}
+        </h2>
 
         <button
-          type="submit"
-          className="px-5 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-medium transition"
+          type="button"
+          onClick={handleSubmit}
+          className="btn-champagne px-4 py-1.5 rounded-xl text-xs font-semibold cursor-pointer"
         >
-          {initialData ? "Update Note" : "Save Note"}
+          Save
         </button>
       </div>
-    </form>
+
+      {/* Inputs Area */}
+      <div className="space-y-3 flex-1 overflow-y-auto pr-1">
+        {/* Title Input */}
+        <div>
+          <input
+            type="text"
+            name="title"
+            value={formData.title}
+            onChange={handleChange}
+            placeholder="Title (optional)"
+            className="w-full bg-transparent border-b border-white/[0.08] focus:border-[#e2b17a]/50 py-2.5 text-base sm:text-lg font-serif italic text-[#f5f2eb] placeholder-[#6f6b64] focus:outline-none transition"
+          />
+        </div>
+
+        {/* Content Textarea */}
+        <div>
+          <textarea
+            name="content"
+            value={formData.content}
+            onChange={handleChange}
+            rows={10}
+            placeholder="Start writing..."
+            className="w-full bg-transparent border-none py-2 text-sm sm:text-base leading-relaxed text-[#f5f2eb] placeholder-[#6f6b64] font-sans focus:outline-none resize-none"
+          />
+        </div>
+
+        {/* More Details Drawer */}
+        {showMore && (
+          <GlassSurface level={2} className="p-4 rounded-2xl space-y-3 animate-fade-scale text-xs">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div>
+                <span className="text-[#9e9990] block mb-1">Notebook:</span>
+                <select
+                  name="category"
+                  value={formData.category}
+                  onChange={handleChange}
+                  className="bg-[#121319] border border-white/[0.1] rounded-xl px-3 py-1.5 text-[#f5f2eb] text-xs focus:outline-none"
+                >
+                  {categories.map((c) => (
+                    <option key={c} value={c} className="bg-[#121319]">
+                      {c}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <span className="text-[#9e9990] block mb-1">Feeling:</span>
+                <select
+                  name="feeling"
+                  value={formData.feeling}
+                  onChange={handleChange}
+                  className="bg-[#121319] border border-white/[0.1] rounded-xl px-3 py-1.5 text-[#f5f2eb] text-xs focus:outline-none"
+                >
+                  {feelings.map((f) => (
+                    <option key={f} value={f} className="bg-[#121319]">
+                      {f}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <label className="flex items-center gap-2 text-[#9e9990] hover:text-white cursor-pointer mt-4 sm:mt-0">
+                <input
+                  type="checkbox"
+                  name="is_locked"
+                  checked={formData.is_locked}
+                  onChange={(e) =>
+                    setFormData((prev) => ({ ...prev, is_locked: e.target.checked }))
+                  }
+                  className="accent-[#e2b17a] rounded"
+                />
+                <Lock size={13} />
+                <span>Protect with Lock</span>
+              </label>
+            </div>
+          </GlassSurface>
+        )}
+      </div>
+
+      {/* Bottom Action Row */}
+      <div className="pt-3 mt-2 border-t border-white/[0.08] flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] text-[#9e9990] hover:text-[#f5f2eb] text-xs font-medium transition cursor-pointer"
+            onClick={() => alert("Photo attachment is available once saved or via the quick composer!")}
+          >
+            <ImageIcon size={15} />
+            <span>Photo</span>
+          </button>
+
+          <button
+            type="button"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] text-[#9e9990] hover:text-[#f5f2eb] text-xs font-medium transition cursor-pointer"
+            onClick={() => alert("Voice memos can be attached via Voice Recorder!")}
+          >
+            <Mic size={15} />
+            <span>Voice</span>
+          </button>
+
+          <button
+            type="button"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] text-[#9e9990] hover:text-[#f5f2eb] text-xs font-medium transition cursor-pointer"
+            onClick={() => alert("Music tracks can be connected via the Music Library!")}
+          >
+            <Music2 size={15} />
+            <span>Music</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setShowMore(!showMore)}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium transition cursor-pointer ${
+              showMore
+                ? "bg-[#e2b17a]/20 text-[#e2b17a]"
+                : "bg-white/[0.04] hover:bg-white/[0.08] text-[#9e9990] hover:text-[#f5f2eb]"
+            }`}
+          >
+            <MoreHorizontal size={15} />
+            <span>More</span>
+          </button>
+        </div>
+
+        <button
+          type="button"
+          onClick={handleSubmit}
+          className="btn-champagne px-5 py-1.5 rounded-xl text-xs font-semibold cursor-pointer"
+        >
+          Save
+        </button>
+      </div>
+    </div>
   );
 }
-
-export default NoteForm;

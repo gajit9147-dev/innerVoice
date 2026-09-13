@@ -1,151 +1,191 @@
-import { useState, useEffect } from "react";
+import React from "react";
 import {
-  LayoutDashboard,
-  NotebookPen,
-  Star,
+  Home,
+  BookOpen,
+  Image as ImageIcon,
+  Music2,
   Archive,
-  Trash2,
-  BarChart3,
+  Search,
   Settings,
-  X,
   LogOut,
-  ShieldAlert
+  X,
 } from "lucide-react";
-import { Link, useLocation, useNavigate } from "react-router-dom";
-
-const menu = [
-  { name: "Dashboard", path: "/dashboard", icon: <LayoutDashboard size={20} /> },
-  { name: "Notes", path: "/dashboard", icon: <NotebookPen size={20} /> },
-  { name: "Favorites", path: "/dashboard?filter=favorites", icon: <Star size={20} /> },
-  { name: "Archive", path: "/dashboard?filter=archive", icon: <Archive size={20} /> },
-  { name: "Trash", path: "/trash", icon: <Trash2 size={20} /> },
-  { name: "Analytics", path: "/analytics", icon: <BarChart3 size={20} /> },
-  { name: "Profile", path: "/profile", icon: <Settings size={20} /> },
-];
-
+import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
+import GlassSurface from "../glass/GlassSurface";
 
-function Sidebar({ onClose }) {
-  const location = useLocation();
+export default function Sidebar({
+  activeTab = "today",
+  onSelectTab,
+  onCloseMobile,
+  onOpenSettings,
+}) {
   const navigate = useNavigate();
-  const { user: authUser, logout } = useAuth();
-
-  const user = authUser || { full_name: "User", email: "" };
-  const initials = user.full_name ? user.full_name.substring(0, 2).toUpperCase() : "GU";
+  const { user, logout } = useAuth();
 
   const handleLogout = async () => {
-    await logout();
-    navigate("/login");
+    try {
+      await logout();
+      navigate("/login");
+    } catch (err) {
+      console.error(err);
+    }
   };
 
+  const navItems = [
+    { key: "today", label: "Today", icon: Home },
+    { key: "journal", label: "Journal", icon: BookOpen },
+    { key: "memories", label: "Memories", icon: ImageIcon },
+    { key: "music", label: "Music", icon: Music2 },
+    { key: "archive", label: "Archive", icon: Archive },
+    { key: "search", label: "Search", icon: Search },
+  ];
+
+  const userName = user?.name || user?.full_name || "Ajeet";
+  const userAvatar = user?.profile_image || "/assets/avatar.png";
+
   return (
-    <aside className="w-64 h-screen bg-[#080f19]/95 backdrop-blur-2xl shadow-2xl border-r border-white/5 flex flex-col transition-colors duration-300">
-      
-      {/* Logo */}
-      <div className="p-6 border-b border-white/5 transition-colors flex justify-between items-center">
-        <div className="flex items-center gap-3">
-          <div className="flex items-center gap-1 h-7">
-            <span className="w-1 h-3.5 bg-cyan-400 rounded-full animate-pulse shadow-[0_0_8px_rgba(6,182,212,0.8)]"></span>
-            <span className="w-1 h-6 bg-cyan-300 rounded-full shadow-[0_0_10px_rgba(6,182,212,0.9)]"></span>
-            <span className="w-1 h-4 bg-teal-400 rounded-full animate-pulse shadow-[0_0_8px_rgba(20,184,166,0.8)]"></span>
-            <span className="w-1 h-7 bg-cyan-400 rounded-full shadow-[0_0_10px_rgba(6,182,212,0.9)]"></span>
-            <span className="w-1 h-3 bg-cyan-500 rounded-full animate-pulse shadow-[0_0_8px_rgba(6,182,212,0.8)]"></span>
-          </div>
+    <GlassSurface
+      level={1}
+      className="w-64 h-[calc(100vh-2rem)] my-4 ml-4 flex flex-col justify-between p-5 select-none shrink-0 overflow-y-auto"
+    >
+      {/* Top Header & Logo */}
+      <div>
+        <div className="flex items-start justify-between">
           <div>
-            <h1 className="text-xl font-bold tracking-tight text-white">
+            <h1 className="font-serif text-3xl tracking-tight text-[#f5f2eb] font-normal">
               InnerVoice
             </h1>
-            <p className="text-slate-400 text-xs">
-              Express your thoughts
+            <p className="text-[12px] text-[#9e9990] mt-1 font-sans">
+              A safe space for your real self.
             </p>
           </div>
+          {onCloseMobile && (
+            <button
+              onClick={onCloseMobile}
+              className="lg:hidden p-1.5 text-stone-400 hover:text-white rounded-lg transition"
+              aria-label="Close sidebar"
+            >
+              <X size={18} />
+            </button>
+          )}
         </div>
-        {onClose && (
-          <button onClick={onClose} className="lg:hidden p-2 text-slate-400 hover:bg-white/5 rounded-xl transition">
-            <X size={22} />
-          </button>
-        )}
+
+        {/* Navigation Items */}
+        <nav className="mt-8 space-y-2">
+          {navItems.map((item) => {
+            const Icon = item.icon;
+            const isActive = activeTab === item.key;
+            return (
+              <button
+                key={item.key}
+                type="button"
+                onClick={() => {
+                  if (onSelectTab) onSelectTab(item.key);
+                  if (onCloseMobile) onCloseMobile();
+                }}
+                className={`w-full flex items-center gap-3.5 px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 cursor-pointer ${
+                  isActive
+                    ? "nav-item-active text-[#f5f2eb]"
+                    : "text-[#9e9990] hover:text-[#f5f2eb] hover:bg-white/[0.04]"
+                }`}
+              >
+                <Icon
+                  size={18}
+                  className={isActive ? "text-[#e2b17a]" : "text-[#9e9990]"}
+                />
+                <span>{item.label}</span>
+              </button>
+            );
+          })}
+        </nav>
       </div>
 
-      {/* Navigation */}
-      <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
-        {menu.map((item) => {
-          const currentPath = location.pathname + location.search;
-          const isCurrent = 
-            currentPath === item.path || 
-            (location.pathname === '/' && item.path === '/dashboard' && !location.search);
+      {/* Center / Decorative Artistic Flourish */}
+      <div className="my-6 px-2 py-4 flex items-center justify-between border-t border-b border-white/[0.04]">
+        {/* Botanical sprig SVG */}
+        <svg
+          className="w-8 h-14 text-[#9e9990]/40 shrink-0"
+          viewBox="0 0 40 70"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.4"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
+          <path d="M20 65 C20 40, 22 25, 20 5" />
+          <path d="M20 48 C28 42, 34 45, 33 50 C31 54, 25 52, 20 48" />
+          <path d="M20 36 C12 30, 6 33, 7 38 C9 42, 15 40, 20 36" />
+          <path d="M20 24 C27 18, 33 21, 32 26 C30 29, 24 28, 20 24" />
+          <path d="M20 12 C14 8, 9 10, 10 14 C12 17, 16 16, 20 12" />
+        </svg>
 
-          return (
-            <Link
-              key={item.name}
-              to={item.path}
-              onClick={onClose}
-              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${
-                isCurrent 
-                  ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-400/80 shadow-[0_0_12px_rgba(6,182,212,0.25)] font-medium' 
-                  : 'text-slate-400 hover:bg-white/5 hover:text-cyan-300 border border-transparent'
-              }`}
-            >
-              {item.icon}
-              <span>{item.name}</span>
-            </Link>
-          );
-        })}
+        <div className="font-handwriting text-right leading-tight pr-1">
+          <span className="block text-lg text-[#d1cdc7]/85 tracking-wide">
+            Better
+          </span>
+          <span className="block text-xl text-[#e2b17a] font-medium">
+            Thoughts
+          </span>
+          <span className="block text-base text-[#9e9990]">
+            Brighter You
+          </span>
+        </div>
+      </div>
 
-        {user.role === 'admin' && (
-          <div className="px-4 mt-6">
-            <Link
-              to="/admin"
-              onClick={onClose}
-              className={`flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-all ${
-                location.pathname === "/admin"
-                  ? "bg-red-50 text-red-600 dark:bg-red-900/20 dark:text-red-400"
-                  : "text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-700/50 hover:text-gray-900 dark:hover:text-white"
-              }`}
-            >
-              <ShieldAlert size={20} />
-              Admin Panel
-            </Link>
-          </div>
-        )}
-      </nav>
+      {/* Bottom Settings & User Profile */}
+      <div className="space-y-3 pt-2">
+        <button
+          type="button"
+          onClick={() => {
+            if (onOpenSettings) onOpenSettings();
+            else if (onSelectTab) onSelectTab("settings");
+            if (onCloseMobile) onCloseMobile();
+          }}
+          className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl text-sm transition-all cursor-pointer ${
+            activeTab === "settings"
+              ? "nav-item-active text-[#f5f2eb]"
+              : "text-[#9e9990] hover:text-[#f5f2eb] hover:bg-white/[0.04]"
+          }`}
+        >
+          <Settings size={18} className="text-[#9e9990]" />
+          <span>Settings</span>
+        </button>
 
-      {/* User */}
-      <div className="border-t border-white/5 p-4 transition-colors">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3 overflow-hidden">
-            <div className="w-10 h-10 shrink-0 rounded-full overflow-hidden bg-gradient-to-tr from-cyan-600 to-blue-600 text-white flex items-center justify-center text-sm font-bold shadow-md">
-              {user.profile_image ? (
+        {/* Profile Pill */}
+        <div className="flex items-center justify-between p-2.5 rounded-2xl bg-white/[0.03] border border-white/[0.06]">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="w-9 h-9 rounded-full overflow-hidden bg-[#242228] border border-white/10 shrink-0 flex items-center justify-center text-xs font-semibold text-[#e2b17a]">
+              {user?.profile_image ? (
                 <img
                   src={user.profile_image}
-                  alt="Profile"
+                  alt={userName}
                   className="w-full h-full object-cover"
                 />
               ) : (
-                initials
+                userName.substring(0, 2).toUpperCase()
               )}
             </div>
-            <div className="overflow-hidden">
-              <h3 className="font-semibold text-slate-100 text-sm truncate">
-                {user.full_name}
-              </h3>
-              <p className="text-slate-400 text-xs truncate">
-                {user.email}
-              </p>
+            <div className="min-w-0">
+              <div className="text-sm font-medium text-[#f5f2eb] truncate">
+                {userName}
+              </div>
+              <div className="text-[11px] text-[#9e9990] truncate font-sans">
+                Stay kind to yourself.
+              </div>
             </div>
           </div>
-          <button 
+
+          <button
             onClick={handleLogout}
-            className="p-2 text-slate-400 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors ml-2 cursor-pointer"
-            title="Logout"
+            className="p-1.5 text-[#9e9990] hover:text-rose-400 rounded-lg transition shrink-0"
+            title="Sign out"
+            aria-label="Sign out"
           >
-            <LogOut size={18} />
+            <LogOut size={16} />
           </button>
         </div>
       </div>
-
-    </aside>
+    </GlassSurface>
   );
 }
-
-export default Sidebar;

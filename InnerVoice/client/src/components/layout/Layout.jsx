@@ -3,12 +3,7 @@ import Sidebar from "./Sidebar";
 import Header from "./Header";
 
 function Layout({ children }) {
-  const [isSidebarOpen, setIsSidebarOpen] = useState(() => {
-    if (typeof window !== "undefined") {
-      return window.innerWidth >= 1024;
-    }
-    return false;
-  });
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   // Mobile drawer Escape key handler
   useEffect(() => {
@@ -36,7 +31,7 @@ function Layout({ children }) {
   }, [isSidebarOpen]);
 
   return (
-    <div className="min-h-screen bg-[#060b11] ambient-bg flex transition-colors duration-300 text-slate-100 font-sans select-none">
+    <div className="min-h-screen bg-[#090a0e] ambient-cinematic-bg flex transition-colors duration-300 text-[#f5f2eb] font-sans select-none">
       {/* Mobile Sidebar Backdrop */}
       {isSidebarOpen && (
         <div 
@@ -48,7 +43,7 @@ function Layout({ children }) {
 
       {/* Sidebar Drawer */}
       <div className={`fixed inset-y-0 left-0 z-50 lg:relative transform ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0 transition-transform duration-300 ease-in-out`}>
-        <Sidebar onClose={() => setIsSidebarOpen(false)} />
+        <Sidebar onCloseMobile={() => setIsSidebarOpen(false)} />
       </div>
 
       {/* Main Content Area */}

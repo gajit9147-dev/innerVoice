@@ -47,6 +47,7 @@ app.use(
 
       if (
         explicitOrigins.includes(origin) ||
+        /^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin) ||
         /\.pages\.dev$/.test(origin) ||
         /(^|\.)innervoice4u\.in$/.test(origin)
       ) {

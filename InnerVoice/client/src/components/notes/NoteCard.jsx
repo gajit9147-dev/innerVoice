@@ -1,360 +1,408 @@
-import { Pencil, Trash2, Pin, Star, Lock, RotateCcw } from "lucide-react";
-import MoodBadge from "./MoodBadge";
-import Tag from "./Tag";
+import React, { useState, useEffect } from "react";
+import {
+  Play,
+  Pause,
+  MoreVertical,
+  Pencil,
+  Trash2,
+  Pin,
+  Star,
+  Lock,
+  RotateCcw,
+  Volume2,
+  Image as ImageIcon,
+} from "lucide-react";
+import GlassSurface from "../glass/GlassSurface";
+import { useAudioPlayer } from "../../context/AudioPlayerContext";
 
-function NoteCard({ note, onDelete, onEdit, onPin, onFavorite, onLock, onRestore, onDeleteForever, isSessionUnlocked = false, mode = "dashboard" }) {
-  const categoryColors = {
-    General: "bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-200",
-    Work: "bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300",
-    Study: "bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300",
-    Personal:
-      "bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300",
-    Ideas:
-      "bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-300",
-    Journal: "bg-pink-100 text-pink-700 dark:bg-pink-900 dark:text-pink-300",
+export default function NoteCard({
+  note,
+  onDelete,
+  onEdit,
+  onPin,
+  onFavorite,
+  onLock,
+  onRestore,
+  onDeleteForever,
+  isTrash = false,
+  isUnlocked = false,
+}) {
+  const { currentTrack, isPlaying, playTrack, togglePlay } = useAudioPlayer();
+  const [showMenu, setShowMenu] = useState(false);
+  const [isLocalAudioPlaying, setIsLocalAudioPlaying] = useState(false);
+
+  // Format date parts
+  const noteDate = note?.created_at ? new Date(note.created_at) : new Date();
+  const dayNumber = noteDate.getDate();
+  const monthYear = noteDate.toLocaleDateString("en-US", { month: "short", year: "numeric" });
+  const dayOfWeek = noteDate.toLocaleDateString("en-US", { weekday: "short" });
+
+  // Attached media detection
+  // 1. Photos
+  const attachedPhoto =
+    note?.photos?.[0]?.file_url ||
+    note?.photo_url ||
+    (note?.id === "demo-journal-1" ? "/assets/sunset_skyline.jpg" : null) ||
+    (note?.id === "demo-journal-2" ? "/assets/coffee_notebook.jpg" : null);
+
+  // 2. Music
+  const musicTrack = note?.music?.[0] || note?.attached_music || (
+    note?.id === "demo-journal-1"
+      ? {
+          id: "demo-track-1",
+          title: "Night Changes",
+          artist: "One Direction",
+          artwork_url: "/assets/sunset_skyline.jpg",
+          duration: 238,
+          durationFormatted: "03:58",
+          currentTimeFormatted: "02:41",
+        }
+      : null
+  );
+
+  // 3. Voice Memo
+  const voiceMemo = note?.voice_memo || note?.voice?.[0] || (
+    note?.id === "demo-journal-2"
+      ? {
+          id: "demo-voice-1",
+          title: "Clarity Session",
+          durationFormatted: "04:18",
+          currentTimeFormatted: "01:24",
+        }
+      : null
+  );
+
+  // Handwritten phrase selector
+  const handwrittenPhrase =
+    note?.handwritten_note ||
+    (note?.id === "demo-journal-1"
+      ? "Good things take time. ♡"
+      : note?.id === "demo-journal-2"
+      ? "Just me... ♡"
+      : "Your story matters. ♡");
+
+  // Check if current global track is this note's music
+  const isThisMusicPlaying = isPlaying && currentTrack?.id === musicTrack?.id;
+
+  const handleMusicPlay = (e) => {
+    e.stopPropagation();
+    if (!musicTrack) return;
+    if (currentTrack?.id === musicTrack.id) {
+      togglePlay();
+    } else {
+      playTrack(musicTrack, note);
+    }
   };
 
-  const categoryEmojis = {
-    General: "📒",
-    Work: "💼",
-    Study: "📚",
-    Personal: "👤",
-    Ideas: "💡",
-    Journal: "📝",
-  };
-
-  const feelingColors = {
-    Neutral: "bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-200",
-
-    Happy:
-      "bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-300",
-    Excited:
-      "bg-orange-100 text-orange-700 dark:bg-orange-900 dark:text-orange-300",
-    Grateful:
-      "bg-emerald-100 text-emerald-700 dark:bg-emerald-900 dark:text-emerald-300",
-    Motivated:
-      "bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300",
-    Proud: "bg-lime-100 text-lime-700 dark:bg-lime-900 dark:text-lime-300",
-    Hopeful: "bg-cyan-100 text-cyan-700 dark:bg-cyan-900 dark:text-cyan-300",
-    Peaceful: "bg-sky-100 text-sky-700 dark:bg-sky-900 dark:text-sky-300",
-    Inspired:
-      "bg-violet-100 text-violet-700 dark:bg-violet-900 dark:text-violet-300",
-
-    Lonely:
-      "bg-indigo-100 text-indigo-700 dark:bg-indigo-900 dark:text-indigo-300",
-    Sad: "bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300",
-    Heartbroken:
-      "bg-rose-100 text-rose-700 dark:bg-rose-900 dark:text-rose-300",
-    Disappointed:
-      "bg-gray-200 text-gray-800 dark:bg-gray-800 dark:text-gray-300",
-    Anxious: "bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300",
-    Worried:
-      "bg-amber-100 text-amber-700 dark:bg-amber-900 dark:text-amber-300",
-    Overwhelmed:
-      "bg-rose-200 text-rose-800 dark:bg-rose-950 dark:text-rose-300",
-    Exhausted:
-      "bg-slate-200 text-slate-800 dark:bg-slate-800 dark:text-slate-300",
-
-    Angry: "bg-red-200 text-red-800 dark:bg-red-950 dark:text-red-300",
-    Frustrated:
-      "bg-orange-200 text-orange-800 dark:bg-orange-950 dark:text-orange-300",
-    Confused:
-      "bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300",
-    Overthinking:
-      "bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300",
-    Stressed: "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300",
-
-    Love: "bg-pink-100 text-pink-700 dark:bg-pink-900 dark:text-pink-300",
-    Crush:
-      "bg-fuchsia-100 text-fuchsia-700 dark:bg-fuchsia-900 dark:text-fuchsia-300",
-    Friendship: "bg-teal-100 text-teal-700 dark:bg-teal-900 dark:text-teal-300",
-    Family: "bg-amber-100 text-amber-700 dark:bg-amber-900 dark:text-amber-300",
-    Breakup:
-      "bg-stone-200 text-stone-800 dark:bg-stone-800 dark:text-stone-300",
-
-    Healing:
-      "bg-emerald-100 text-emerald-700 dark:bg-emerald-900 dark:text-emerald-300",
-    Learning: "bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300",
-    Focused:
-      "bg-indigo-100 text-indigo-700 dark:bg-indigo-900 dark:text-indigo-300",
-    "Self Growth":
-      "bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300",
-
-    Dream: "bg-blue-50 text-blue-800 dark:bg-blue-900 dark:text-blue-300",
-    Goal: "bg-green-50 text-green-800 dark:bg-green-900 dark:text-green-300",
-    Career: "bg-cyan-100 text-cyan-700 dark:bg-cyan-900 dark:text-cyan-300",
-    Finance:
-      "bg-emerald-100 text-emerald-700 dark:bg-emerald-900 dark:text-emerald-300",
-    Fitness:
-      "bg-orange-100 text-orange-700 dark:bg-orange-900 dark:text-orange-300",
-
-    Secret: "bg-slate-200 text-slate-700 dark:bg-slate-800 dark:text-slate-300",
-    Confession:
-      "bg-stone-100 text-stone-700 dark:bg-stone-800 dark:text-stone-300",
-    Fantasy:
-      "bg-purple-200 text-purple-800 dark:bg-purple-950 dark:text-purple-300",
-    Memory:
-      "bg-yellow-50 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300",
-    "Random Thoughts":
-      "bg-teal-50 text-teal-800 dark:bg-teal-900 dark:text-teal-300",
-    Private: "bg-gray-200 text-gray-700 dark:bg-gray-800 dark:text-gray-300",
-
-    Travel: "bg-sky-100 text-sky-700 dark:bg-sky-900 dark:text-sky-300",
-    Food: "bg-amber-100 text-amber-700 dark:bg-amber-900 dark:text-amber-300",
-    Gaming:
-      "bg-violet-100 text-violet-700 dark:bg-violet-900 dark:text-violet-300",
-    Music:
-      "bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300",
-    Movies:
-      "bg-indigo-100 text-indigo-700 dark:bg-indigo-900 dark:text-indigo-300",
-    Photography:
-      "bg-pink-100 text-pink-700 dark:bg-pink-900 dark:text-pink-300",
-    Pets: "bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-300",
-  };
-
-  const feelingEmojis = {
-    Neutral: "😐",
-    Happy: "😊",
-    Excited: "🤩",
-    Grateful: "🙏",
-    Motivated: "🔥",
-    Proud: "🏆",
-    Hopeful: "✨",
-    Peaceful: "🕊️",
-    Inspired: "💡",
-
-    Lonely: "🥺",
-    Sad: "😔",
-    Heartbroken: "💔",
-    Disappointed: "😞",
-    Anxious: "😰",
-    Worried: "😟",
-    Overwhelmed: "🤯",
-    Exhausted: "😫",
-
-    Angry: "😡",
-    Frustrated: "😤",
-    Confused: "😕",
-    Overthinking: "🌀",
-    Stressed: "⚡",
-
-    Love: "❤️",
-    Crush: "💖",
-    Friendship: "🤝",
-    Family: "🏠",
-    Breakup: "🌧️",
-
-    Healing: "🌱",
-    Learning: "📖",
-    Focused: "🎯",
-    "Self Growth": "📈",
-
-    Dream: "🌙",
-    Goal: "🚀",
-    Career: "💼",
-    Finance: "💰",
-    Fitness: "💪",
-
-    Secret: "🤫",
-    Confession: "🗣️",
-    Fantasy: "🔮",
-    Memory: "📷",
-    "Random Thoughts": "💭",
-    Private: "🔒",
-
-    Travel: "✈️",
-    Food: "🍔",
-    Gaming: "🎮",
-    Music: "🎵",
-    Movies: "🎬",
-    Photography: "📸",
-    Pets: "🐾",
+  const handleVoicePlay = (e) => {
+    e.stopPropagation();
+    setIsLocalAudioPlaying((prev) => !prev);
   };
 
   return (
-    <div className="group bg-white dark:bg-slate-900 rounded-2xl border bg-white shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl p-5 border-gray-200 dark:border-slate-700">
-      
-      {/* Category and Mood Header */}
-      <div className="mb-4 flex items-center justify-between">
-        <span className="rounded-full bg-blue-100 dark:bg-blue-900/30 px-3 py-1 text-xs font-semibold text-blue-700 dark:text-blue-400">
-          📂 {note.category || "General"}
-        </span>
-
-        <MoodBadge
-          mood={note.mood}
-          confidence={null}
-        />
-      </div>
-
-      {/* Header */}
-      <div className="flex justify-between items-start mb-4">
-        <div className="flex-1 pr-2">
-          <h2 className="text-xl font-bold text-gray-900 dark:text-white truncate">
-            {note.title}
-          </h2>
-
-          {note.ai_title && (
-            <div className="mt-2 rounded-lg bg-violet-50 px-3 py-2 dark:bg-violet-900/20">
-              <p className="text-xs font-semibold uppercase tracking-wide text-violet-600 dark:text-violet-400">
-                AI Title
-              </p>
-
-              <p className="text-sm font-medium text-violet-700 dark:text-violet-300">
-                🤖 {note.ai_title}
-              </p>
-            </div>
-          )}
-        </div>
-
-        {onLock && mode !== "trash" && (
-          <button
-            onClick={() => onLock(note)}
-            className={`transition duration-200 ${
-              note.is_locked && !isSessionUnlocked
-                ? "text-red-500 scale-110"
-                : "text-gray-400 hover:text-red-500"
-            }`}
-            title={
-              note.is_locked && !isSessionUnlocked
-                ? "Unlock Note"
-                : "Protect Note"
-            }
-          >
-            <Lock
-              size={20}
-              fill={note.is_locked && !isSessionUnlocked ? "currentColor" : "none"}
-            />
-          </button>
-        )}
-
-        <div className="flex items-center gap-2">
-          {/* Favorite */}
-          {onFavorite && mode !== "trash" && (
-            <button
-              onClick={() => onFavorite(note.id)}
-              className={`transition duration-200 ${
-                note.is_favorite
-                  ? "text-yellow-400 scale-110"
-                  : "text-gray-400 hover:text-yellow-400"
-              }`}
-              title={note.is_favorite ? "Remove Favorite" : "Add Favorite"}
-            >
-              <Star
-                size={20}
-                fill={note.is_favorite ? "currentColor" : "none"}
-              />
-            </button>
-          )}
-
-          {/* Pin */}
-          {onPin && mode !== "trash" && (
-            <button
-              onClick={() => onPin(note.id)}
-              className={`transition duration-200 ${
-                note.is_pinned
-                  ? "text-blue-500 rotate-45"
-                  : "text-gray-400 hover:text-blue-500"
-              }`}
-              title={note.is_pinned ? "Unpin" : "Pin"}
-            >
-              <Pin size={20} fill={note.is_pinned ? "currentColor" : "none"} />
-            </button>
-          )}
-        </div>
-      </div>
-
-      {/* Content */}
-      {note.is_locked && !isSessionUnlocked ? (
-        <div
-          onClick={() => onLock && onLock(note)}
-          className="mb-6 rounded-lg border border-red-300 bg-red-50 dark:bg-red-950 dark:border-red-800 p-4 text-center cursor-pointer hover:bg-red-100 dark:hover:bg-red-900/60 hover:border-red-400 active:scale-95 transition-all duration-200 select-none"
-          title="Click to unlock"
-        >
-          <div className="text-3xl mb-2">🔒</div>
-          <p className="text-red-600 dark:text-red-300 font-semibold">
-            This note is locked
-          </p>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-            Click to enter password
-          </p>
-        </div>
-      ) : (
-        <p className="text-gray-600 dark:text-gray-300 mb-6 line-clamp-4 leading-relaxed">
-          {note.content}
-        </p>
-      )}
-
-      {/* AI Tags */}
-      {Array.isArray(note.ai_tags) &&
-       note.ai_tags.length > 0 && (
-        <div className="mt-3 mb-4 flex flex-wrap gap-2">
-          {note.ai_tags.slice(0, 3).map((tag) => (
-            <Tag
-              key={tag}
-              text={tag}
-            />
-          ))}
-        </div>
-      )}
-
-      {/* AI Status Indicator */}
-      {note.ai_status === "pending" && (
-        <div className="mt-3 mb-4 rounded-lg bg-yellow-100 px-3 py-2 text-sm text-yellow-700">
-          ✨ AI is analyzing...
-        </div>
-      )}
-
-      {note.ai_status === "failed" && (
-        <div className="mt-3 mb-4 rounded-lg bg-red-100 px-3 py-2 text-sm text-red-700">
-          ⚠ AI analysis failed
-        </div>
-      )}
-
-      {/* Deleted Date (Only in Trash Mode) */}
-      {mode === "trash" && note.deleted_at && (
-        <div className="mt-4 text-xs text-gray-500 dark:text-gray-400 mb-4 italic">
-          Deleted on {new Date(note.deleted_at).toLocaleDateString()}
-        </div>
-      )}
-
-      {/* Footer */}
-      <div className="flex justify-end gap-3">
-        {mode === "trash" ? (
-          <>
-            {onRestore && (
-              <button
-                onClick={() => onRestore(note.id)}
-                className="text-green-500 hover:text-green-700 transition"
-                title="Restore Note"
-              >
-                <RotateCcw size={18} />
-              </button>
-            )}
-          </>
-        ) : (
-          <button
-            onClick={() => onEdit(note)}
-            className="text-blue-500 hover:text-blue-700 transition"
-            title="Edit Note"
-          >
-            <Pencil size={18} />
-          </button>
-        )}
-
+    <GlassSurface
+      level={1}
+      className="p-5 sm:p-6 rounded-3xl relative overflow-hidden transition-all duration-300 hover:border-white/[0.14] hover:shadow-[0_24px_56px_rgba(0,0,0,0.7)] group"
+    >
+      {/* Top Right Context Menu */}
+      <div className="absolute top-4 right-4 z-20">
         <button
-          onClick={() =>
-            mode === "trash"
-              ? onDeleteForever && onDeleteForever(note.id)
-              : onDelete && onDelete(note.id)
-          }
-          className="text-red-500 hover:text-red-700 transition"
-          title={mode === "trash" ? "Delete Permanently" : "Move to Trash"}
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            setShowMenu(!showMenu);
+          }}
+          className="p-1.5 rounded-lg text-[#9e9990] hover:text-[#f5f2eb] hover:bg-white/[0.06] transition"
+          aria-label="Note options"
         >
-          <Trash2 size={18} />
+          <MoreVertical size={16} />
         </button>
+
+        {showMenu && (
+          <GlassSurface
+            level={3}
+            className="absolute right-0 top-8 w-40 py-1.5 z-30 shadow-2xl rounded-xl text-xs"
+          >
+            {!isTrash ? (
+              <>
+                {onEdit && (
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setShowMenu(false);
+                      onEdit(note);
+                    }}
+                    className="w-full flex items-center gap-2 px-3 py-2 text-[#d1cdc7] hover:text-white hover:bg-white/[0.06] transition"
+                  >
+                    <Pencil size={13} />
+                    <span>Edit Note</span>
+                  </button>
+                )}
+
+                {onFavorite && (
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setShowMenu(false);
+                      onFavorite(note.id);
+                    }}
+                    className="w-full flex items-center gap-2 px-3 py-2 text-[#d1cdc7] hover:text-white hover:bg-white/[0.06] transition"
+                  >
+                    <Star
+                      size={13}
+                      className={note?.is_favorite ? "text-[#e2b17a] fill-[#e2b17a]" : ""}
+                    />
+                    <span>{note?.is_favorite ? "Unfavorite" : "Favorite"}</span>
+                  </button>
+                )}
+
+                {onPin && (
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setShowMenu(false);
+                      onPin(note.id);
+                    }}
+                    className="w-full flex items-center gap-2 px-3 py-2 text-[#d1cdc7] hover:text-white hover:bg-white/[0.06] transition"
+                  >
+                    <Pin
+                      size={13}
+                      className={note?.is_pinned ? "text-[#e2b17a] fill-[#e2b17a]" : ""}
+                    />
+                    <span>{note?.is_pinned ? "Unpin Note" : "Pin Note"}</span>
+                  </button>
+                )}
+
+                {onLock && (
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setShowMenu(false);
+                      onLock(note);
+                    }}
+                    className="w-full flex items-center gap-2 px-3 py-2 text-[#d1cdc7] hover:text-white hover:bg-white/[0.06] transition"
+                  >
+                    <Lock size={13} />
+                    <span>{note?.is_locked ? "Unlock" : "Protect"}</span>
+                  </button>
+                )}
+
+                {onDelete && (
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setShowMenu(false);
+                      onDelete(note.id);
+                    }}
+                    className="w-full flex items-center gap-2 px-3 py-2 text-rose-400 hover:bg-rose-500/10 transition"
+                  >
+                    <Trash2 size={13} />
+                    <span>Move to Trash</span>
+                  </button>
+                )}
+              </>
+            ) : (
+              <>
+                {onRestore && (
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setShowMenu(false);
+                      onRestore(note.id);
+                    }}
+                    className="w-full flex items-center gap-2 px-3 py-2 text-emerald-400 hover:bg-emerald-500/10 transition"
+                  >
+                    <RotateCcw size={13} />
+                    <span>Restore Note</span>
+                  </button>
+                )}
+                {onDeleteForever && (
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setShowMenu(false);
+                      onDeleteForever(note.id);
+                    }}
+                    className="w-full flex items-center gap-2 px-3 py-2 text-rose-400 hover:bg-rose-500/10 transition"
+                  >
+                    <Trash2 size={13} />
+                    <span>Delete Forever</span>
+                  </button>
+                )}
+              </>
+            )}
+          </GlassSurface>
+        )}
       </div>
-    </div>
+
+      {/* Main Grid: Date Column | Content & Media Player | Photo Attachment */}
+      <div className="flex flex-col md:flex-row items-start gap-4 sm:gap-6 pr-6">
+        {/* 1. Left Vertical Date Block */}
+        <div className="shrink-0 flex md:flex-col items-baseline md:items-start gap-1.5 md:gap-0 min-w-[65px] pt-1">
+          <div className="font-serif text-3xl sm:text-4xl text-[#f5f2eb] font-normal leading-none">
+            {dayNumber}
+          </div>
+          <div className="text-xs font-serif text-[#9e9990] mt-1">
+            {monthYear}
+          </div>
+          <div className="text-[11px] font-sans uppercase tracking-wider text-[#9e9990]/80">
+            {dayOfWeek}
+          </div>
+          {note?.is_pinned ? (
+            <span className="mt-2 text-[#e2b17a]" title="Pinned note">
+              <Pin size={12} fill="currentColor" />
+            </span>
+          ) : null}
+        </div>
+
+        {/* 2. Middle Column: Title, Body Text, Embedded Player, Handwritten sign-off */}
+        <div className="flex-1 min-w-0 flex flex-col justify-between">
+          <div>
+            {/* Note Title (Serif Italic) */}
+            <h2 className="font-serif italic text-lg sm:text-xl text-[#f5f2eb] tracking-tight leading-snug break-words">
+              {note?.title || "Untitled Reflection"}
+            </h2>
+
+            {/* Note Content */}
+            {note?.is_locked && !isUnlocked ? (
+              <div
+                onClick={(e) => {
+                  e.stopPropagation();
+                  if (onLock) onLock(note);
+                }}
+                className="mt-3 py-3 px-4 rounded-xl bg-white/[0.03] border border-white/[0.08] flex items-center gap-3 cursor-pointer hover:bg-white/[0.05] transition"
+              >
+                <Lock size={16} className="text-[#e2b17a]" />
+                <span className="text-xs text-[#9e9990]">
+                  This note is protected. Click to unlock.
+                </span>
+              </div>
+            ) : (
+              <p className="text-xs sm:text-sm text-[#9e9990] mt-2 leading-relaxed line-clamp-3 break-words font-sans">
+                {note?.content || "No thoughts recorded yet..."}
+              </p>
+            )}
+
+            {/* Embedded Level 2 Inner Glass Music Player */}
+            {musicTrack && (
+              <GlassSurface
+                level={2}
+                className="mt-4 p-3 rounded-2xl flex items-center gap-3.5 max-w-md"
+              >
+                {/* Album artwork */}
+                <div className="w-11 h-11 rounded-xl overflow-hidden bg-black/40 shrink-0 relative">
+                  <img
+                    src={musicTrack.artwork_url || "/assets/sunset_skyline.jpg"}
+                    alt={musicTrack.title}
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+
+                {/* Track Details */}
+                <div className="flex-1 min-w-0">
+                  <div className="text-xs font-semibold text-[#f5f2eb] truncate">
+                    {musicTrack.title || "Night Changes"}
+                  </div>
+                  <div className="text-[11px] text-[#9e9990] truncate">
+                    {musicTrack.artist || "One Direction"}
+                  </div>
+
+                  {/* Progress slider bar */}
+                  <div className="flex items-center gap-2 mt-1">
+                    <div className="flex-1 h-1 bg-white/10 rounded-full overflow-hidden">
+                      <div
+                        className="h-full bg-[#e2b17a] rounded-full transition-all"
+                        style={{ width: isThisMusicPlaying ? "70%" : "45%" }}
+                      />
+                    </div>
+                    <span className="text-[10px] text-[#9e9990] font-mono shrink-0">
+                      {musicTrack.currentTimeFormatted || "02:41"} / {musicTrack.durationFormatted || "03:58"}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Play / Pause button */}
+                <button
+                  type="button"
+                  onClick={handleMusicPlay}
+                  className="w-8 h-8 rounded-full bg-[#f5f2eb] text-[#1a140d] hover:bg-[#e2b17a] transition flex items-center justify-center shrink-0 cursor-pointer shadow-md"
+                  aria-label="Play music"
+                >
+                  {isThisMusicPlaying ? <Pause size={14} /> : <Play size={14} className="ml-0.5" />}
+                </button>
+              </GlassSurface>
+            )}
+
+            {/* Embedded Level 2 Inner Glass Voice Waveform Player */}
+            {voiceMemo && (
+              <GlassSurface
+                level={2}
+                className="mt-4 p-3 rounded-2xl flex items-center gap-3.5 max-w-md"
+              >
+                {/* Play / Pause */}
+                <button
+                  type="button"
+                  onClick={handleVoicePlay}
+                  className="w-8 h-8 rounded-full bg-[#f5f2eb] text-[#1a140d] hover:bg-[#e2b17a] transition flex items-center justify-center shrink-0 cursor-pointer shadow-md"
+                  aria-label="Play voice memo"
+                >
+                  {isLocalAudioPlaying ? <Pause size={14} /> : <Play size={14} className="ml-0.5" />}
+                </button>
+
+                {/* Waveform graphic bars */}
+                <div className="flex-1 flex items-center gap-0.5 h-6">
+                  {[4, 8, 12, 18, 14, 22, 16, 24, 18, 10, 14, 20, 16, 8, 12, 22, 14, 10, 6, 14, 18, 12, 8, 4].map(
+                    (height, idx) => (
+                      <span
+                        key={idx}
+                        className={`w-1 rounded-full transition-all ${
+                          isLocalAudioPlaying
+                            ? "bg-[#e2b17a] wave-bar-active"
+                            : "bg-[#9e9990]/60"
+                        }`}
+                        style={{
+                          height: `${height}px`,
+                          animationDelay: `${idx * 40}ms`,
+                        }}
+                      />
+                    )
+                  )}
+                </div>
+
+                {/* Duration */}
+                <span className="text-[10px] text-[#9e9990] font-mono shrink-0">
+                  {voiceMemo.currentTimeFormatted || "01:24"} / {voiceMemo.durationFormatted || "04:18"}
+                </span>
+              </GlassSurface>
+            )}
+          </div>
+
+          {/* Bottom Handwritten Sign-off */}
+          <div className="mt-4 pt-1 flex justify-end">
+            <span className="font-handwriting text-base sm:text-lg text-[#d1cdc7]/80 tracking-wide">
+              {handwrittenPhrase}
+            </span>
+          </div>
+        </div>
+
+        {/* 3. Right Column: Attached Photo */}
+        {attachedPhoto && (
+          <div className="w-full md:w-44 lg:w-52 h-36 sm:h-40 rounded-2xl overflow-hidden shrink-0 bg-black/40 border border-white/[0.08] relative group/photo">
+            <img
+              src={attachedPhoto}
+              alt="Memory moment"
+              className="w-full h-full object-cover group-hover/photo:scale-105 transition-transform duration-700"
+            />
+          </div>
+        )}
+      </div>
+    </GlassSurface>
   );
 }
-
-export default NoteCard;

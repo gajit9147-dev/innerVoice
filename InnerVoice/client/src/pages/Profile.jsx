@@ -48,18 +48,18 @@ function Profile() {
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
           <div className="flex items-center gap-3">
-            <UserCog className="text-blue-600 dark:text-blue-500" size={32} />
-            <h1 className="text-3xl font-bold text-gray-800 dark:text-white">
+            <UserCog className="text-[#e2b17a]" size={30} />
+            <h1 className="font-serif text-3xl font-normal text-[#f5f2eb]">
               Profile Settings
             </h1>
           </div>
 
           <button
             onClick={() => navigate("/profile/edit")}
-            className="flex items-center justify-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg shadow-md transition-all duration-300"
+            className="btn-champagne flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl shadow-md cursor-pointer"
           >
-            <SquarePen size={18} />
-            Edit Profile
+            <SquarePen size={17} />
+            <span>Edit Profile</span>
           </button>
         </div>
 
