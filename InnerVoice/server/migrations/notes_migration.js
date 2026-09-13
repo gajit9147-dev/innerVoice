@@ -31,6 +31,36 @@ export const runNotesMigration = async () => {
       logger.info("✅ Column 'is_archived' added to notes table");
     }
 
+    // 2. Add ai_status column (required by dashboard stats and AI service)
+    if (!(await columnExists("ai_status"))) {
+      await connection.query(`
+        ALTER TABLE notes ADD COLUMN ai_status VARCHAR(20) NOT NULL DEFAULT 'pending';
+      `);
+      logger.info("✅ Column 'ai_status' added to notes table");
+    }
+
+    // 3. Ensure other AI fields exist so AI analysis never fails on production
+    if (!(await columnExists("ai_title"))) {
+      await connection.query(`ALTER TABLE notes ADD COLUMN ai_title VARCHAR(255) NULL;`);
+      logger.info("✅ Column 'ai_title' added to notes table");
+    }
+    if (!(await columnExists("ai_summary"))) {
+      await connection.query(`ALTER TABLE notes ADD COLUMN ai_summary TEXT NULL;`);
+      logger.info("✅ Column 'ai_summary' added to notes table");
+    }
+    if (!(await columnExists("ai_tags"))) {
+      await connection.query(`ALTER TABLE notes ADD COLUMN ai_tags JSON NULL;`);
+      logger.info("✅ Column 'ai_tags' added to notes table");
+    }
+    if (!(await columnExists("ai_keywords"))) {
+      await connection.query(`ALTER TABLE notes ADD COLUMN ai_keywords JSON NULL;`);
+      logger.info("✅ Column 'ai_keywords' added to notes table");
+    }
+    if (!(await columnExists("ai_confidence"))) {
+      await connection.query(`ALTER TABLE notes ADD COLUMN ai_confidence INT NULL;`);
+      logger.info("✅ Column 'ai_confidence' added to notes table");
+    }
+
     logger.info("🎉 Notes table migration completed successfully!");
   } catch (error) {
     logger.error("❌ Notes migration failed: " + (error.stack || error.message));
