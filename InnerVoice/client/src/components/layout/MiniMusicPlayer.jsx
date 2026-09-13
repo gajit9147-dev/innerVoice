@@ -27,7 +27,7 @@ export default function MiniMusicPlayer() {
   };
 
   return (
-    <div className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-40 max-w-[340px] sm:max-w-sm w-[calc(100vw-2rem)] animate-fade-scale">
+    <div className="fixed bottom-20 sm:bottom-6 right-4 sm:right-6 z-40 max-w-[340px] sm:max-w-sm w-[calc(100vw-2rem)] animate-fade-scale">
       <GlassSurface
         level={3}
         className="relative rounded-2xl p-3 sm:p-3.5 text-white shadow-[0_20px_50px_rgba(0,0,0,0.7)] overflow-hidden"

@@ -228,9 +228,31 @@ export default function AudioVoiceMemo({
         setTimeout(() => setSavedSuccessMsg(null), 3000);
       }
     } catch (err) {
-      console.error("Failed to upload voice memo:", err);
-      setRecordingState("stopped");
-      setRecordingError("Could not save recording to cloud.");
+      console.warn("Failed to upload voice memo to cloud, falling back to local recording:", err);
+      try {
+        const localUrl = URL.createObjectURL(recordedBlob);
+        const fallbackMemo = {
+          id: `local-memo-${Date.now()}`,
+          title: title || "Voice Reflection",
+          file_url: localUrl,
+          duration_seconds: duration || recordTime || 0,
+          is_offline: true,
+        };
+        setAudioUrl(localUrl);
+        setRecordedBlob(null);
+        setRecordingState("saved");
+        setSavedSuccessMsg("Voice memo saved locally to note!");
+
+        if (onSaveNewRecording) {
+          onSaveNewRecording(fallbackMemo);
+        }
+
+        setTimeout(() => setSavedSuccessMsg(null), 3000);
+      } catch (localErr) {
+        console.error("Local fallback error:", localErr);
+        setRecordingState("stopped");
+        setRecordingError("Could not save recording.");
+      }
     }
   };
 

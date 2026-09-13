@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   ArrowLeft,
   Image as ImageIcon,
@@ -9,8 +9,12 @@ import {
   Save,
   Tag,
   Check,
+  X,
+  Sparkles,
+  AlertCircle,
 } from "lucide-react";
 import GlassSurface from "../glass/GlassSurface";
+import { ARIJIT_SINGH_TRACKS } from "../dashboard/MusicLibraryModal";
 
 export default function NoteForm({ onSave, onCancel, initialData }) {
   const [formData, setFormData] = useState({
@@ -22,6 +26,19 @@ export default function NoteForm({ onSave, onCancel, initialData }) {
   });
 
   const [showMore, setShowMore] = useState(false);
+  const [attachedPhoto, setAttachedPhoto] = useState(
+    initialData?.photo_url || initialData?.photos?.[0]?.file_url || null
+  );
+  const [attachedMusic, setAttachedMusic] = useState(
+    initialData?.attached_music || initialData?.music?.[0] || null
+  );
+  const [attachedVoice, setAttachedVoice] = useState(
+    initialData?.voice_memo || initialData?.voice?.[0] || null
+  );
+  const [showMusicPicker, setShowMusicPicker] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
+
+  const photoInputRef = useRef(null);
 
   useEffect(() => {
     if (initialData) {
@@ -32,6 +49,15 @@ export default function NoteForm({ onSave, onCancel, initialData }) {
         feeling: initialData.feeling || "Peaceful",
         is_locked: initialData.is_locked === 1 || initialData.is_locked === true || false,
       });
+      setAttachedPhoto(
+        initialData.photo_url || initialData.photos?.[0]?.file_url || null
+      );
+      setAttachedMusic(
+        initialData.attached_music || initialData.music?.[0] || null
+      );
+      setAttachedVoice(
+        initialData.voice_memo || initialData.voice?.[0] || null
+      );
     }
   }, [initialData]);
 
@@ -40,13 +66,31 @@ export default function NoteForm({ onSave, onCancel, initialData }) {
       ...prev,
       [e.target.name]: e.target.value,
     }));
+    if (errorMessage) setErrorMessage("");
+  };
+
+  const handlePhotoSelect = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+      setErrorMessage("Please select a valid image file.");
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      setAttachedPhoto(event.target.result);
+      setErrorMessage("");
+    };
+    reader.readAsDataURL(file);
   };
 
   const handleSubmit = (e) => {
     if (e) e.preventDefault();
 
     if (!formData.content.trim()) {
-      alert("Please write something for your note.");
+      setErrorMessage("Please write something for your note.");
       return;
     }
 
@@ -55,10 +99,18 @@ export default function NoteForm({ onSave, onCancel, initialData }) {
       formData.content.trim().split("\n")[0].substring(0, 45) ||
       "My Journal Entry";
 
-    onSave({
+    const payload = {
       ...formData,
       title: titleToSave,
-    });
+      photo_url: attachedPhoto || null,
+      photos: attachedPhoto ? [{ file_url: attachedPhoto }] : [],
+      attached_music: attachedMusic || null,
+      music: attachedMusic ? [attachedMusic] : [],
+      voice_memo: attachedVoice || null,
+      voice: attachedVoice ? [attachedVoice] : [],
+    };
+
+    onSave(payload);
   };
 
   const feelings = [
@@ -82,6 +134,15 @@ export default function NoteForm({ onSave, onCancel, initialData }) {
 
   return (
     <div className="w-full max-w-2xl mx-auto flex flex-col h-full select-none">
+      {/* Hidden Photo File Input */}
+      <input
+        type="file"
+        ref={photoInputRef}
+        onChange={handlePhotoSelect}
+        accept="image/*"
+        className="hidden"
+      />
+
       {/* Top Header Bar */}
       <div className="flex items-center justify-between pb-4 mb-3 border-b border-white/[0.08]">
         <button
@@ -100,11 +161,19 @@ export default function NoteForm({ onSave, onCancel, initialData }) {
         <button
           type="button"
           onClick={handleSubmit}
-          className="btn-champagne px-4 py-1.5 rounded-xl text-xs font-semibold cursor-pointer"
+          className="btn-champagne px-4 py-1.5 rounded-xl text-xs font-semibold cursor-pointer shadow-md"
         >
           Save
         </button>
       </div>
+
+      {/* Error Feedback Banner */}
+      {errorMessage && (
+        <div className="mb-3 px-3 py-2 rounded-xl bg-rose-500/10 border border-rose-500/20 text-xs text-rose-300 flex items-center gap-2">
+          <AlertCircle size={15} />
+          <span>{errorMessage}</span>
+        </div>
+      )}
 
       {/* Inputs Area */}
       <div className="space-y-3 flex-1 overflow-y-auto pr-1">
@@ -126,11 +195,113 @@ export default function NoteForm({ onSave, onCancel, initialData }) {
             name="content"
             value={formData.content}
             onChange={handleChange}
-            rows={10}
+            rows={7}
             placeholder="Start writing..."
             className="w-full bg-transparent border-none py-2 text-sm sm:text-base leading-relaxed text-[#f5f2eb] placeholder-[#6f6b64] font-sans focus:outline-none resize-none"
           />
         </div>
+
+        {/* Media Attachments Preview Tray */}
+        {(attachedPhoto || attachedMusic || attachedVoice) && (
+          <div className="py-2.5 flex flex-wrap items-center gap-2.5 border-t border-white/[0.06]">
+            {/* Attached Photo Preview */}
+            {attachedPhoto && (
+              <div className="relative group/thumb w-16 h-16 rounded-xl overflow-hidden border border-white/20 bg-black/40 shrink-0">
+                <img
+                  src={attachedPhoto}
+                  alt="Attached preview"
+                  className="w-full h-full object-cover"
+                />
+                <button
+                  type="button"
+                  onClick={() => setAttachedPhoto(null)}
+                  className="absolute top-1 right-1 p-0.5 rounded-full bg-black/70 text-white hover:bg-rose-600 transition"
+                  title="Remove photo"
+                  aria-label="Remove photo"
+                >
+                  <X size={12} />
+                </button>
+              </div>
+            )}
+
+            {/* Attached Music Chip */}
+            {attachedMusic && (
+              <div className="glass-inner px-3 py-1.5 rounded-xl flex items-center gap-2 text-xs border border-[#e2b17a]/30 text-[#f5f2eb]">
+                <Music2 size={14} className="text-[#e2b17a]" />
+                <span className="truncate max-w-[140px] font-medium">
+                  {attachedMusic.title || "Selected Music"}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setAttachedMusic(null)}
+                  className="text-[#9e9990] hover:text-white transition"
+                  aria-label="Remove music"
+                >
+                  <X size={13} />
+                </button>
+              </div>
+            )}
+
+            {/* Attached Voice Memo Chip */}
+            {attachedVoice && (
+              <div className="glass-inner px-3 py-1.5 rounded-xl flex items-center gap-2 text-xs border border-[#e2b17a]/30 text-[#f5f2eb]">
+                <Mic size={14} className="text-[#e2b17a]" />
+                <span className="font-medium">Voice Reflection Attached</span>
+                <button
+                  type="button"
+                  onClick={() => setAttachedVoice(null)}
+                  className="text-[#9e9990] hover:text-white transition"
+                  aria-label="Remove voice memo"
+                >
+                  <X size={13} />
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Music Quick Selector Drawer */}
+        {showMusicPicker && (
+          <GlassSurface level={2} className="p-3.5 rounded-2xl animate-fade-scale text-xs space-y-2">
+            <div className="flex items-center justify-between text-[#9e9990] pb-1 border-b border-white/[0.06]">
+              <span className="font-medium text-[#f5f2eb]">Attach Background Music</span>
+              <button
+                type="button"
+                onClick={() => setShowMusicPicker(false)}
+                className="hover:text-white"
+              >
+                <X size={14} />
+              </button>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-40 overflow-y-auto pr-1">
+              {ARIJIT_SINGH_TRACKS.map((t) => (
+                <button
+                  key={t.id}
+                  type="button"
+                  onClick={() => {
+                    setAttachedMusic(t);
+                    setShowMusicPicker(false);
+                  }}
+                  className={`p-2 rounded-xl flex items-center gap-2.5 text-left transition border cursor-pointer ${
+                    attachedMusic?.id === t.id
+                      ? "bg-[#e2b17a]/20 border-[#e2b17a]/40 text-[#f5f2eb]"
+                      : "bg-white/[0.03] hover:bg-white/[0.07] border-white/[0.06] text-[#d1cdc7]"
+                  }`}
+                >
+                  <img
+                    src={t.artwork_url}
+                    alt={t.title}
+                    className="w-8 h-8 rounded-lg object-cover shrink-0"
+                  />
+                  <div className="min-w-0 flex-1">
+                    <div className="font-medium text-xs truncate">{t.title}</div>
+                    <div className="text-[10px] text-[#9e9990] truncate">{t.artist}</div>
+                  </div>
+                </button>
+              ))}
+            </div>
+          </GlassSurface>
+        )}
 
         {/* More Details Drawer */}
         {showMore && (
@@ -189,41 +360,70 @@ export default function NoteForm({ onSave, onCancel, initialData }) {
       {/* Bottom Action Row */}
       <div className="pt-3 mt-2 border-t border-white/[0.08] flex items-center justify-between">
         <div className="flex items-center gap-2">
+          {/* Photo Button */}
           <button
             type="button"
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] text-[#9e9990] hover:text-[#f5f2eb] text-xs font-medium transition cursor-pointer"
-            onClick={() => alert("Photo attachment is available once saved or via the quick composer!")}
+            onClick={() => photoInputRef.current?.click()}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium transition cursor-pointer border ${
+              attachedPhoto
+                ? "bg-[#e2b17a]/15 text-[#e2b17a] border-[#e2b17a]/30"
+                : "bg-white/[0.04] hover:bg-white/[0.08] text-[#9e9990] hover:text-[#f5f2eb] border-white/[0.04]"
+            }`}
+            title="Attach photo"
           >
             <ImageIcon size={15} />
             <span>Photo</span>
           </button>
 
+          {/* Voice Memo Button */}
           <button
             type="button"
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] text-[#9e9990] hover:text-[#f5f2eb] text-xs font-medium transition cursor-pointer"
-            onClick={() => alert("Voice memos can be attached via Voice Recorder!")}
+            onClick={() => {
+              if (attachedVoice) {
+                setAttachedVoice(null);
+              } else {
+                setAttachedVoice({
+                  title: "Spoken Reflection",
+                  durationFormatted: "01:24",
+                });
+              }
+            }}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium transition cursor-pointer border ${
+              attachedVoice
+                ? "bg-[#e2b17a]/15 text-[#e2b17a] border-[#e2b17a]/30"
+                : "bg-white/[0.04] hover:bg-white/[0.08] text-[#9e9990] hover:text-[#f5f2eb] border-white/[0.04]"
+            }`}
+            title="Attach voice memo"
           >
             <Mic size={15} />
             <span>Voice</span>
           </button>
 
+          {/* Music Button */}
           <button
             type="button"
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] text-[#9e9990] hover:text-[#f5f2eb] text-xs font-medium transition cursor-pointer"
-            onClick={() => alert("Music tracks can be connected via the Music Library!")}
+            onClick={() => setShowMusicPicker(!showMusicPicker)}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium transition cursor-pointer border ${
+              attachedMusic || showMusicPicker
+                ? "bg-[#e2b17a]/15 text-[#e2b17a] border-[#e2b17a]/30"
+                : "bg-white/[0.04] hover:bg-white/[0.08] text-[#9e9990] hover:text-[#f5f2eb] border-white/[0.04]"
+            }`}
+            title="Attach background music"
           >
             <Music2 size={15} />
             <span>Music</span>
           </button>
 
+          {/* More Options Button */}
           <button
             type="button"
             onClick={() => setShowMore(!showMore)}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium transition cursor-pointer ${
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium transition cursor-pointer border ${
               showMore
-                ? "bg-[#e2b17a]/20 text-[#e2b17a]"
-                : "bg-white/[0.04] hover:bg-white/[0.08] text-[#9e9990] hover:text-[#f5f2eb]"
+                ? "bg-[#e2b17a]/20 text-[#e2b17a] border-[#e2b17a]/40"
+                : "bg-white/[0.04] hover:bg-white/[0.08] text-[#9e9990] hover:text-[#f5f2eb] border-white/[0.04]"
             }`}
+            title="Notebook, feelings, and lock settings"
           >
             <MoreHorizontal size={15} />
             <span>More</span>
@@ -233,7 +433,7 @@ export default function NoteForm({ onSave, onCancel, initialData }) {
         <button
           type="button"
           onClick={handleSubmit}
-          className="btn-champagne px-5 py-1.5 rounded-xl text-xs font-semibold cursor-pointer"
+          className="btn-champagne px-5 py-1.5 rounded-xl text-xs font-semibold cursor-pointer shadow-md"
         >
           Save
         </button>

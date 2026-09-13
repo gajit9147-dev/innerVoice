@@ -23,7 +23,6 @@ function ProfileImageModal({
       }
     };
 
-    // Prevent background scrolling while modal is open
     document.body.style.overflow = "hidden";
     window.addEventListener("keydown", handleKeyDown);
 
@@ -41,11 +40,11 @@ function ProfileImageModal({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 animate-fade-in"
+      className="fixed inset-0 z-[110] flex items-center justify-center p-4 sm:p-6 animate-fade-in"
       style={{
-        backgroundColor: "rgba(0, 0, 0, 0.7)",
-        backdropFilter: "blur(8px)",
-        WebkitBackdropFilter: "blur(8px)",
+        backgroundColor: "rgba(0, 0, 0, 0.75)",
+        backdropFilter: "blur(12px)",
+        WebkitBackdropFilter: "blur(12px)",
       }}
       onClick={(e) => {
         if (e.target === e.currentTarget) {
@@ -58,34 +57,39 @@ function ProfileImageModal({
     >
       <div
         ref={modalRef}
-        className="w-[90%] max-w-[400px] bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-2xl shadow-2xl p-6 sm:p-8 flex flex-col items-center relative transition-all duration-200 animate-scale-up text-gray-900 dark:text-white"
+        className="w-[92%] max-w-[420px] rounded-2xl p-6 sm:p-8 flex flex-col items-center relative transition-all duration-200 animate-scale-up border border-white/[0.12] shadow-2xl"
+        style={{
+          background: "linear-gradient(180deg, rgba(22, 25, 31, 0.96) 0%, rgba(14, 16, 20, 0.98) 100%)",
+          boxShadow: "0 25px 60px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.1)",
+        }}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="w-full flex items-center justify-between mb-6 pb-2 border-b border-gray-100 dark:border-slate-800">
+        <div className="w-full flex items-center justify-between mb-6 pb-3 border-b border-white/[0.08]">
           <h3
             id="profile-modal-title"
-            className="text-xl font-bold text-gray-900 dark:text-white tracking-tight"
+            className="font-serif text-xl sm:text-2xl text-[#f5f2eb] font-normal tracking-tight"
           >
-            Profile Picture
+            Profile Portrait
           </h3>
 
           <button
             onClick={onClose}
             aria-label="Close"
-            className="w-9 h-9 flex items-center justify-center rounded-full text-gray-400 hover:text-gray-700 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors"
+            className="w-8 h-8 flex items-center justify-center rounded-xl text-[#9e9990] hover:text-[#f5f2eb] hover:bg-white/[0.06] transition-colors"
           >
-            <X size={20} />
+            <X size={18} />
           </button>
         </div>
 
         {/* Profile Image Frame */}
         <div className="my-2 relative flex items-center justify-center">
           <div
-            className="w-56 h-56 sm:w-60 sm:h-60 rounded-full overflow-hidden flex items-center justify-center text-6xl font-extrabold text-white bg-gradient-to-br from-blue-600 to-indigo-600 transition-all duration-300"
+            className="w-52 h-52 sm:w-56 sm:h-56 rounded-full overflow-hidden flex items-center justify-center text-5xl font-serif text-[#d8b27a] transition-all duration-300 relative group"
             style={{
-              border: "2px solid rgba(59, 130, 246, 0.4)",
-              boxShadow: "0 0 20px rgba(59, 130, 246, 0.25)",
+              background: "linear-gradient(135deg, #1d222b 0%, #11141a 100%)",
+              border: "2px solid rgba(216, 178, 122, 0.4)",
+              boxShadow: "0 0 35px rgba(216, 178, 122, 0.18)",
             }}
           >
             {image ? (
@@ -95,33 +99,36 @@ function ProfileImageModal({
                 className="w-full h-full object-cover"
               />
             ) : (
-              initials
+              <span>{initials}</span>
             )}
           </div>
         </div>
 
-        <p className="text-sm font-semibold text-gray-800 dark:text-slate-200 mt-4 mb-1">
-          {user?.full_name}
+        <p className="font-serif text-base text-[#f5f2eb] mt-4 mb-0.5">
+          {user?.full_name || "InnerVoice User"}
         </p>
-        <p className="text-xs text-gray-400 dark:text-slate-400 mb-6">
-          {user?.username ? `@${user.username}` : "InnerVoice User"}
+        <p className="text-xs text-[#9e9990] font-sans mb-6">
+          {user?.username ? `@${user.username}` : user?.email || "Personal sanctuary"}
         </p>
 
         {/* Action Buttons */}
-        <div className="w-full flex flex-col gap-3">
+        <div className="w-full flex flex-col gap-2.5">
           <button
             onClick={onChangePhoto}
             disabled={isUploading}
-            className="w-full flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white rounded-xl py-3 font-semibold text-sm shadow-md shadow-blue-500/20 transition-all duration-200 disabled:opacity-50"
+            className="w-full flex items-center justify-center gap-2 rounded-xl py-3 font-sans font-medium text-xs sm:text-sm transition-all duration-200 disabled:opacity-50 text-[#121418] shadow-md hover:brightness-105 active:scale-[0.99]"
+            style={{
+              background: "linear-gradient(180deg, #dfbc86 0%, #c89e62 100%)",
+            }}
           >
             {isUploading ? (
               <>
-                <Loader2 size={18} className="animate-spin" />
-                <span>Uploading...</span>
+                <Loader2 size={16} className="animate-spin" />
+                <span>Updating Portrait...</span>
               </>
             ) : (
               <>
-                <Upload size={18} />
+                <Upload size={16} />
                 <span>Change Photo</span>
               </>
             )}
@@ -131,16 +138,16 @@ function ProfileImageModal({
             <button
               onClick={onRemovePhoto}
               disabled={isDeleting}
-              className="w-full flex items-center justify-center gap-2 bg-transparent hover:bg-red-50 dark:hover:bg-red-950/40 border border-red-200 dark:border-red-800/80 text-red-600 dark:text-red-400 rounded-xl py-3 font-semibold text-sm transition-all duration-200 disabled:opacity-50"
+              className="w-full flex items-center justify-center gap-2 rounded-xl py-2.5 font-sans font-normal text-xs sm:text-sm border border-rose-500/25 hover:border-rose-500/40 text-rose-300 hover:bg-rose-500/10 transition-all duration-200 disabled:opacity-50"
             >
               {isDeleting ? (
                 <>
-                  <Loader2 size={18} className="animate-spin" />
-                  <span>Removing...</span>
+                  <Loader2 size={16} className="animate-spin" />
+                  <span>Removing Portrait...</span>
                 </>
               ) : (
                 <>
-                  <Trash2 size={18} />
+                  <Trash2 size={16} />
                   <span>Remove Photo</span>
                 </>
               )}
@@ -153,3 +160,4 @@ function ProfileImageModal({
 }
 
 export default ProfileImageModal;
+

@@ -81,7 +81,11 @@ export default function Sidebar({
                 key={item.key}
                 type="button"
                 onClick={() => {
-                  if (onSelectTab) onSelectTab(item.key);
+                  if (onSelectTab) {
+                    onSelectTab(item.key);
+                  } else {
+                    navigate(`/dashboard?tab=${item.key}`);
+                  }
                   if (onCloseMobile) onCloseMobile();
                 }}
                 className={`w-full flex items-center gap-3.5 px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 cursor-pointer ${
@@ -138,8 +142,11 @@ export default function Sidebar({
         <button
           type="button"
           onClick={() => {
-            if (onOpenSettings) onOpenSettings();
-            else if (onSelectTab) onSelectTab("settings");
+            if (onOpenSettings) {
+              onOpenSettings();
+            } else {
+              navigate("/profile");
+            }
             if (onCloseMobile) onCloseMobile();
           }}
           className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl text-sm transition-all cursor-pointer ${

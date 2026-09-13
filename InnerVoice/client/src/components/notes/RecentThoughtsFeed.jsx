@@ -61,25 +61,27 @@ export default function RecentThoughtsFeed({
   return (
     <div className="space-y-4">
       {/* Header & Filter Pills */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-2">
-        <h2 className="font-serif text-xl sm:text-2xl text-[#f5f2eb] font-normal tracking-tight">
-          Recent Thoughts
-        </h2>
+      {!isTrash ? (
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-2">
+          <h2 className="font-serif text-xl sm:text-2xl text-[#f5f2eb] font-normal tracking-tight">
+            Recent Thoughts
+          </h2>
 
-        {/* Filter Pills */}
-        <div className="flex items-center gap-1.5 overflow-x-auto pb-1">
-          {filters.map((f) => (
-            <button
-              key={f}
-              type="button"
-              onClick={() => setActiveFilter(f)}
-              className={`pill-filter ${activeFilter === f ? "active" : ""}`}
-            >
-              {f}
-            </button>
-          ))}
+          {/* Filter Pills */}
+          <div className="flex items-center gap-1.5 overflow-x-auto pb-1">
+            {filters.map((f) => (
+              <button
+                key={f}
+                type="button"
+                onClick={() => setActiveFilter(f)}
+                className={`pill-filter ${activeFilter === f ? "active" : ""}`}
+              >
+                {f}
+              </button>
+            ))}
+          </div>
         </div>
-      </div>
+      ) : null}
 
       {/* Note List */}
       {filteredNotes.length === 0 ? (
@@ -91,12 +93,14 @@ export default function RecentThoughtsFeed({
             <Sparkles size={20} />
           </div>
           <h3 className="font-serif text-lg text-[#f5f2eb]">
-            No thoughts recorded yet
+            {isTrash ? "Archive is Empty" : "No thoughts recorded yet"}
           </h3>
           <p className="text-xs text-[#9e9990] max-w-sm">
-            InnerVoice is ready whenever you are. Write something on your mind above to start your quiet reflection.
+            {isTrash
+              ? "Any thoughts or memories you move to trash will be kept here safely until you choose to restore or delete them."
+              : "InnerVoice is ready whenever you are. Write something on your mind above to start your quiet reflection."}
           </p>
-          {onNewNote && (
+          {!isTrash && onNewNote && (
             <button
               type="button"
               onClick={onNewNote}

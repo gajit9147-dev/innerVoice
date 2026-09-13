@@ -3,6 +3,7 @@ import { Edit3, Check, Eye, Sparkles, HardDriveDownload, Loader2 } from "lucide-
 import PhotoGallerySection from "./media/PhotoGallerySection";
 import MemoryMusicSection from "./media/MemoryMusicSection";
 import { getNoteMedia } from "../../api/media";
+import { useToast } from "../../context/ToastContext";
 import {
   cacheNoteForOffline,
   removeNoteFromOffline,
@@ -25,6 +26,7 @@ export default function NoteDisplayCard({
   const [musicTracks, setMusicTracks] = useState([]);
   const [isOfflineCached, setIsOfflineCached] = useState(false);
   const [cachingNote, setCachingNote] = useState(false);
+  const { addToast } = useToast();
 
   const defaultContent = `#1 Personal Growth Journey
 
@@ -81,17 +83,22 @@ export default function NoteDisplayCard({
           }
         } catch {
           // Fallback to local offline cache if network error
-          const offlineItems = await getOfflineMediaForNote(note.id);
-          if (active) {
-            setPhotos(offlineItems.filter((m) => m.media_type === "photo"));
-            setMusicTracks(offlineItems.filter((m) => m.media_type === "music"));
+          if (res.data?.media && active) {
+            const ph = res.data.media.filter((m) => m.media_type === "photo");
+            const mu = res.data.media.filter((m) => m.media_type === "music");
+            setPhotos(ph);
+            setMusicTracks(mu);
           }
         }
+
+        const cached = await isNoteOfflineCached(note.id);
+        if (active) setIsOfflineCached(cached);
+      } catch (err) {
+        console.warn("Could not load note media:", err);
       }
     };
 
-    loadMedia();
-
+    fetchMedia();
     return () => {
       active = false;
     };
@@ -106,14 +113,16 @@ export default function NoteDisplayCard({
       if (isOfflineCached) {
         await removeNoteFromOffline(note.id);
         setIsOfflineCached(false);
+        addToast("Note removed from offline cache", "success");
       } else {
         const allMedia = [...photos, ...musicTracks];
         await cacheNoteForOffline(note, allMedia);
         setIsOfflineCached(true);
+        addToast("Note saved for offline reading", "success");
       }
     } catch (err) {
       console.error("Failed to toggle note offline cache:", err);
-      alert("Could not update offline storage for this note.");
+      addToast("Could not update offline storage for this note.", "error");
     } finally {
       setCachingNote(false);
     }

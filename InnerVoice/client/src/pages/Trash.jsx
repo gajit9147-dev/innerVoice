@@ -3,6 +3,7 @@ import Layout from "../components/layout/Layout";
 import NoteCard from "../components/notes/NoteCard";
 import GlassSurface from "../components/glass/GlassSurface";
 import { Archive, Loader2, Trash2 } from "lucide-react";
+import { useToast } from "../context/ToastContext";
 import {
   getTrashNotes,
   restoreNote,
@@ -12,6 +13,7 @@ import {
 function Trash() {
   const [notes, setNotes] = useState([]);
   const [loading, setLoading] = useState(true);
+  const { addToast } = useToast();
 
   const fetchTrash = async () => {
     try {
@@ -32,9 +34,10 @@ function Trash() {
     try {
       await restoreNote(id);
       setNotes((prev) => prev.filter((note) => note.id !== id));
+      addToast("Note restored to your journal", "success");
     } catch (error) {
       console.error(error);
-      alert("Unable to restore note.");
+      addToast("Unable to restore note", "error");
     }
   };
 
@@ -45,9 +48,10 @@ function Trash() {
     try {
       await deleteForever(id);
       setNotes((prev) => prev.filter((note) => note.id !== id));
+      addToast("Note permanently removed", "success");
     } catch (error) {
       console.error(error);
-      alert("Unable to delete note.");
+      addToast("Unable to delete note", "error");
     }
   };
 

@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import { uploadMediaFile, deleteMediaItem } from "../../../api/media";
 import { getOfflineMediaBlob } from "../../../utils/offlineStorage";
+import { useToast } from "../../../context/ToastContext";
 
 export default function PhotoGallerySection({
   noteId,
@@ -30,6 +31,7 @@ export default function PhotoGallerySection({
   const [activeLightboxIndex, setActiveLightboxIndex] = useState(null);
   const [deletingId, setDeletingId] = useState(null);
   const [photoBlobs, setPhotoBlobs] = useState({});
+  const { addToast } = useToast();
 
   // Check for local offline Blobs if images fail or offline
   useEffect(() => {
@@ -38,23 +40,25 @@ export default function PhotoGallerySection({
       const isOffline = typeof navigator !== "undefined" && !navigator.onLine;
       if (!isOffline) return;
 
-      const blobMap = {};
+      const blobs = {};
       for (const p of photos) {
-        try {
-          const blob = await getOfflineMediaBlob(p.id);
-          if (blob && active) {
-            blobMap[p.id] = URL.createObjectURL(blob);
+        if (p.id) {
+          try {
+            const blob = await getOfflineMediaBlob(p.id);
+            if (blob && active) {
+              blobs[p.id] = URL.createObjectURL(blob);
+            }
+          } catch (err) {
+            console.warn("Could not load offline photo Blob:", err);
           }
-        } catch {
-          // ignore
         }
       }
-      if (active) {
-        setPhotoBlobs(blobMap);
-      }
+      if (active) setPhotoBlobs(blobs);
     };
 
-    loadOfflineBlobs();
+    if (photos.length > 0) {
+      loadOfflineBlobs();
+    }
 
     return () => {
       active = false;
@@ -68,12 +72,12 @@ export default function PhotoGallerySection({
     if (!file) return;
 
     if (!file.type.startsWith("image/")) {
-      alert("Please upload a valid image file (JPEG, PNG, WEBP, or GIF).");
+      addToast("Please upload a valid image file (JPEG, PNG, WEBP, or GIF).", "error");
       return;
     }
 
     if (file.size > 10 * 1024 * 1024) {
-      alert("Image size exceeds the 10MB limit.");
+      addToast("Image size exceeds the 10MB limit.", "error");
       return;
     }
 
@@ -92,10 +96,11 @@ export default function PhotoGallerySection({
         if (onPhotosChange) {
           onPhotosChange([...photos, res.data.media]);
         }
+        addToast("Photo attached to note", "success");
       }
     } catch (err) {
       console.error("Upload photo error:", err);
-      alert(err.response?.data?.message || "Failed to upload photo. Please try again.");
+      addToast(err.response?.data?.message || "Failed to upload photo. Please try again.", "error");
     } finally {
       setUploading(false);
       if (fileInputRef.current) {
@@ -118,9 +123,10 @@ export default function PhotoGallerySection({
       if (activeLightboxIndex !== null) {
         setActiveLightboxIndex(null);
       }
+      addToast("Photo removed", "success");
     } catch (err) {
       console.error("Delete photo error:", err);
-      alert("Failed to delete photo.");
+      addToast("Failed to delete photo.", "error");
     } finally {
       setDeletingId(null);
     }

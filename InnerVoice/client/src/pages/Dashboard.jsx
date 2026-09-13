@@ -6,7 +6,6 @@ import Header from "../components/layout/Header";
 import RightContextPanel from "../components/layout/RightContextPanel";
 import WritingComposer from "../components/notes/WritingComposer";
 import RecentThoughtsFeed from "../components/notes/RecentThoughtsFeed";
-import NoteDisplayCard from "../components/notes/NoteDisplayCard";
 import NoteForm from "../components/notes/NoteForm";
 import Modal from "../components/common/Modal";
 import MusicLibraryModal from "../components/dashboard/MusicLibraryModal";
@@ -49,6 +48,7 @@ import {
   Check,
   Loader2,
   Archive,
+  Search,
 } from "lucide-react";
 import GlassSurface from "../components/glass/GlassSurface";
 
@@ -522,6 +522,36 @@ export default function Dashboard({ initialTab = "today" }) {
                   onRestoreNote={handleRestoreNote}
                   onDeleteForever={handleDeleteForever}
                   isTrash={true}
+                />
+              </div>
+            ) : activeTab === "search" ? (
+              <div className="space-y-4">
+                <div className="flex items-center justify-between pb-2 border-b border-white/[0.06]">
+                  <div className="flex items-center gap-2">
+                    <Search size={18} className="text-[#e2b17a]" />
+                    <h2 className="font-serif text-xl text-[#f5f2eb]">
+                      Search Thoughts {searchQuery ? `— "${searchQuery}"` : ""}
+                    </h2>
+                  </div>
+                  <span className="text-xs text-[#9e9990]">
+                    {displayedNotes.length} {displayedNotes.length === 1 ? "entry" : "entries"} found
+                  </span>
+                </div>
+                <RecentThoughtsFeed
+                  notes={displayedNotes}
+                  onDeleteNote={handleDeleteNote}
+                  onEditNote={(n) => {
+                    setEditingNote(n);
+                    setShowNoteModal(true);
+                  }}
+                  onPinNote={handlePin}
+                  onFavoriteNote={handleFavorite}
+                  onLockNote={handleLock}
+                  unlockedNoteIds={sessionUnlockedIds}
+                  onNewNote={() => {
+                    setEditingNote(null);
+                    setShowNoteModal(true);
+                  }}
                 />
               </div>
             ) : (

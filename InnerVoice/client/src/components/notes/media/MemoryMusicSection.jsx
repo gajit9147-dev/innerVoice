@@ -29,6 +29,7 @@ import {
   AlertCircle,
 } from "lucide-react";
 import { useAudioPlayer } from "../../../context/AudioPlayerContext";
+import { useToast } from "../../../context/ToastContext";
 import {
   uploadMediaFile,
   importAudioResource,
@@ -140,13 +141,15 @@ export default function MemoryMusicSection({
       if (isCurrentlyCached) {
         await removeMediaItemOffline(track.id);
         setOfflineMap((prev) => ({ ...prev, [track.id]: false }));
+        addToast("Audio removed from offline cache", "success");
       } else {
         await cacheMediaItemOffline(track);
         setOfflineMap((prev) => ({ ...prev, [track.id]: true }));
+        addToast("Audio saved for offline playback", "success");
       }
     } catch (err) {
       console.error("Offline toggle error:", err);
-      alert("Failed to update offline storage. Please check connection.");
+      addToast("Failed to update offline storage. Please check connection.", "error");
     } finally {
       setCachingTrackId(null);
     }
@@ -165,9 +168,10 @@ export default function MemoryMusicSection({
       if (activeTrackIndex >= updated.length) {
         setActiveTrackIndex(Math.max(0, updated.length - 1));
       }
+      addToast("Music track deleted", "success");
     } catch (err) {
       console.error("Delete track error:", err);
-      alert("Failed to delete music track.");
+      addToast("Failed to delete music track.", "error");
     }
   };
 

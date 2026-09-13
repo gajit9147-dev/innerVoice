@@ -11,6 +11,7 @@ import {
   RotateCcw,
   Volume2,
   Image as ImageIcon,
+  X,
 } from "lucide-react";
 import GlassSurface from "../glass/GlassSurface";
 import { useAudioPlayer } from "../../context/AudioPlayerContext";
@@ -30,6 +31,7 @@ export default function NoteCard({
   const { currentTrack, isPlaying, playTrack, togglePlay } = useAudioPlayer();
   const [showMenu, setShowMenu] = useState(false);
   const [isLocalAudioPlaying, setIsLocalAudioPlaying] = useState(false);
+  const [isLightboxOpen, setIsLightboxOpen] = useState(false);
 
   // Format date parts
   const noteDate = note?.created_at ? new Date(note.created_at) : new Date();
@@ -395,13 +397,57 @@ export default function NoteCard({
 
         {/* 3. Right Column: Attached Photo */}
         {attachedPhoto && (
-          <div className="w-full md:w-44 lg:w-52 h-36 sm:h-40 rounded-2xl overflow-hidden shrink-0 bg-black/40 border border-white/[0.08] relative group/photo">
-            <img
-              src={attachedPhoto}
-              alt="Memory moment"
-              className="w-full h-full object-cover group-hover/photo:scale-105 transition-transform duration-700"
-            />
-          </div>
+          <>
+            <div
+              onClick={(e) => {
+                e.stopPropagation();
+                setIsLightboxOpen(true);
+              }}
+              className="w-full md:w-44 lg:w-52 h-36 sm:h-40 rounded-2xl overflow-hidden shrink-0 bg-black/40 border border-white/[0.08] relative group/photo cursor-pointer"
+              title="Click to view full photo"
+            >
+              <img
+                src={attachedPhoto}
+                alt="Memory moment"
+                className="w-full h-full object-cover group-hover/photo:scale-105 transition-transform duration-700"
+              />
+              <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/photo:opacity-100 transition-opacity flex items-center justify-center">
+                <span className="text-[11px] font-medium text-white bg-black/60 px-2.5 py-1 rounded-full backdrop-blur-sm border border-white/20">
+                  View Photo
+                </span>
+              </div>
+            </div>
+
+            {/* Full-resolution photo lightbox modal */}
+            {isLightboxOpen && (
+              <div
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setIsLightboxOpen(false);
+                }}
+                className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-4 animate-fade-in"
+              >
+                <div
+                  className="relative max-w-4xl max-h-[90vh] overflow-hidden rounded-3xl border border-white/20 shadow-2xl bg-black/70 flex flex-col items-center"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <img
+                    src={attachedPhoto}
+                    alt="Memory full preview"
+                    className="max-h-[82vh] w-auto max-w-full object-contain rounded-2xl"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setIsLightboxOpen(false)}
+                    className="absolute top-4 right-4 p-2 rounded-full bg-black/70 text-white hover:bg-white/20 transition cursor-pointer"
+                    aria-label="Close photo preview"
+                  >
+                    <X size={18} />
+                  </button>
+                </div>
+              </div>
+            )}
+          </>
         )}
       </div>
     </GlassSurface>

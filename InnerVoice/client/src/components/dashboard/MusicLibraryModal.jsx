@@ -19,6 +19,7 @@ import {
   FileAudio,
 } from "lucide-react";
 import { useAudioPlayer } from "../../context/AudioPlayerContext";
+import { useToast } from "../../context/ToastContext";
 import {
   getAllOfflineMusicTracks,
   isMediaOfflineCached,
@@ -104,6 +105,7 @@ export default function MusicLibraryModal({
   initialAddMode = false,
 }) {
   const { currentTrack, isPlaying, playTrack, togglePlay } = useAudioPlayer();
+  const { addToast } = useToast();
 
   const [activeTab, setActiveTab] = useState("all"); // "all" | "arijit" | "custom" | "downloaded"
   const [tracks, setTracks] = useState(ARIJIT_SINGH_TRACKS);
@@ -148,8 +150,7 @@ export default function MusicLibraryModal({
       }
       setOfflineMap(oMap);
     } catch (err) {
-      console.error("Failed to load music library:", err);
-      setTracks(ARIJIT_SINGH_TRACKS);
+      console.error("Failed to load custom tracks:", err);
     } finally {
       setLoading(false);
     }
@@ -158,36 +159,50 @@ export default function MusicLibraryModal({
   useEffect(() => {
     if (isOpen) {
       loadLibrary();
-      if (initialAddMode) setIsAddOpen(true);
+      if (initialAddMode) {
+        setIsAddOpen(true);
+      }
     }
   }, [isOpen, initialAddMode]);
 
   if (!isOpen) return null;
 
-  // Handle local file selection for adding music
-  const handleFileChange = (e) => {
+  // Handle local audio file selection
+  const handleFileSelect = (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    setSelectedFile(file);
-    const cleanName = file.name.replace(/\.[^/.]+$/, "");
-    if (!newTitle) setNewTitle(cleanName);
-    if (!newArtist) setNewArtist("My Audio");
+    // Check file type
+    if (!file.type.startsWith("audio/")) {
+      addToast("Please select a valid audio file (MP3, WAV, AAC, etc.)", "error");
+      return;
+    }
 
-    // Extract audio duration using temporary Audio object
+    setSelectedFile(file);
+
+    // Default title from file name
+    if (!newTitle.trim()) {
+      const cleanName = file.name.replace(/\.[^/.]+$/, "").replace(/[-_]/g, " ");
+      setNewTitle(cleanName);
+    }
+    if (!newArtist) {
+      setNewArtist("My Audio");
+    }
+
+    // Get audio duration
     try {
-      const tempUrl = URL.createObjectURL(file);
-      const tempAudio = new Audio(tempUrl);
-      tempAudio.addEventListener("loadedmetadata", () => {
-        setFileDuration(Math.round(tempAudio.duration) || 0);
-      });
-    } catch (err) {
-      console.warn("Could not pre-read audio duration:", err);
+      const audio = new Audio();
+      audio.src = URL.createObjectURL(file);
+      audio.onloadedmetadata = () => {
+        setFileDuration(Math.round(audio.duration));
+      };
+    } catch {
+      setFileDuration(180);
     }
   };
 
-  // Submit new track to library
-  const handleAddTrack = async (e) => {
+  // Add custom track to local storage library
+  const handleAddCustomTrack = async (e) => {
     e.preventDefault();
     if (isProcessingAdd) return;
 
@@ -199,7 +214,7 @@ export default function MusicLibraryModal({
     try {
       if (addMode === "file") {
         if (!selectedFile) {
-          alert("Please select an audio file.");
+          addToast("Please select an audio file.", "error");
           setIsProcessingAdd(false);
           return;
         }
@@ -208,7 +223,7 @@ export default function MusicLibraryModal({
         trackUrl = URL.createObjectURL(selectedFile);
       } else {
         if (!newUrl.trim()) {
-          alert("Please enter a valid audio URL.");
+          addToast("Please enter a valid audio URL.", "error");
           setIsProcessingAdd(false);
           return;
         }
@@ -244,6 +259,7 @@ export default function MusicLibraryModal({
       // Update state
       setTracks([newTrackObj, ...tracks]);
       setAddSuccessMessage(`Added "${newTrackObj.title}" to your music library!`);
+      addToast(`Added "${newTrackObj.title}" to library`, "success");
 
       // Reset form
       setNewTitle("");
@@ -259,7 +275,7 @@ export default function MusicLibraryModal({
       }, 1500);
     } catch (err) {
       console.error("Failed to add music track:", err);
-      alert("Error adding track: " + err.message);
+      addToast("Error adding track: " + err.message, "error");
     } finally {
       setIsProcessingAdd(false);
     }

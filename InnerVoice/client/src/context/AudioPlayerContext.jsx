@@ -121,7 +121,7 @@ export function AudioPlayerProvider({ children }) {
 
     if (!sourceUrl) {
       setIsLoadingAudio(false);
-      alert("Audio is not available offline. Please connect to the internet to listen.");
+      console.warn("[AudioPlayer] Audio source is not available offline.");
       return;
     }
 
