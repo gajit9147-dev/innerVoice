@@ -144,27 +144,32 @@ export default function NoteForm({ onSave, onCancel, initialData }) {
       />
 
       {/* Top Header Bar */}
-      <div className="flex items-center justify-between pb-4 mb-3 border-b border-white/[0.08]">
-        <button
-          type="button"
-          onClick={onCancel}
-          className="flex items-center gap-2 text-xs font-medium text-[#9e9990] hover:text-[#f5f2eb] transition cursor-pointer p-1"
-        >
-          <ArrowLeft size={16} />
-          <span>Back</span>
-        </button>
-
+      <div className="flex items-center justify-between pb-3.5 mb-3 border-b border-white/[0.08]">
         <h2 className="font-serif text-xl sm:text-2xl text-[#f5f2eb] font-normal tracking-tight">
           {initialData ? "Edit Note" : "Create a Note"}
         </h2>
 
-        <button
-          type="button"
-          onClick={handleSubmit}
-          className="btn-champagne px-4 py-1.5 rounded-xl text-xs font-semibold cursor-pointer shadow-md"
-        >
-          Save
-        </button>
+        {/* Right Action Group: Save and Cross (Close) side-by-side */}
+        <div className="flex items-center gap-2 sm:gap-2.5">
+          <button
+            type="button"
+            onClick={handleSubmit}
+            className="btn-champagne px-3.5 sm:px-4 py-1.5 rounded-xl text-xs font-semibold cursor-pointer shadow-md flex items-center gap-1.5"
+          >
+            <Save size={13} />
+            <span>Save</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={onCancel}
+            className="w-8 h-8 rounded-xl flex items-center justify-center text-[#9e9990] hover:text-[#f5f2eb] hover:bg-white/[0.08] transition cursor-pointer"
+            aria-label="Close"
+            title="Discard and close"
+          >
+            <X size={17} />
+          </button>
+        </div>
       </div>
 
       {/* Error Feedback Banner */}

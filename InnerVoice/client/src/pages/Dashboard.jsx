@@ -685,7 +685,7 @@ export default function Dashboard({ initialTab = "today" }) {
       {/* MODALS */}
       {/* 1. Create / Edit Note Modal */}
       {showNoteModal && (
-        <Modal onClose={() => setShowNoteModal(false)} maxWidth="max-w-2xl">
+        <Modal onClose={() => setShowNoteModal(false)} maxWidth="max-w-2xl" showCloseButton={false}>
           <NoteForm
             initialData={editingNote}
             onCancel={() => {
@@ -736,7 +736,7 @@ export default function Dashboard({ initialTab = "today" }) {
 
       {/* 4. Memories Modal / Screen */}
       {showMemoriesModal && (
-        <Modal onClose={() => setShowMemoriesModal(false)} maxWidth="max-w-4xl">
+        <Modal onClose={() => setShowMemoriesModal(false)} maxWidth="max-w-4xl" showCloseButton={false}>
           <MemoriesView
             notes={notes}
             onClose={() => setShowMemoriesModal(false)}
