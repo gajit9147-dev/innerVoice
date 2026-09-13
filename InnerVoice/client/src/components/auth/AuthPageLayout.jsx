@@ -26,6 +26,33 @@ import {
 import { useAuth } from "../../context/AuthContext";
 import { linkAccountUser } from "../../api/auth";
 
+const formatAuthError = (err, isSignup = false) => {
+  if (err?.userMessage) return err.userMessage;
+  if (err?.response?.data?.message) return err.response.data.message;
+
+  const raw = err?.message || "";
+  const lower = raw.toLowerCase();
+  if (lower.includes("timeout") || err?.code === "ECONNABORTED") {
+    return "Connection timed out. Please check your internet connection and try again.";
+  }
+  if (lower.includes("network error") || err?.code === "ERR_NETWORK") {
+    return "Unable to connect to the server. Please check your internet connection.";
+  }
+  if (lower.includes("failed to fetch") || lower.includes("load failed")) {
+    return "Network request failed. Please check your network connection.";
+  }
+  if (err?.response?.status === 401) {
+    return isSignup ? "An account with this email may already exist." : "Email or password is incorrect.";
+  }
+  if (err?.response?.status === 404) {
+    return "Authentication service temporarily unavailable. Please try again shortly.";
+  }
+  if (err?.response?.status >= 500) {
+    return "Server encountered an error. Please try again in a few moments.";
+  }
+  return raw || (isSignup ? "Registration failed. Please try again." : "Email or password is incorrect.");
+};
+
 export default function AuthPageLayout({ initialMode = "signup" }) {
   const navigate = useNavigate();
   const location = useLocation();
@@ -141,7 +168,7 @@ export default function AuthPageLayout({ initialMode = "signup" }) {
   };
 
   const triggerGoogleAuth = (clientId) => {
-    if (!window.google?.accounts?.id) {
+    if (!window.google?.accounts) {
       setError("Google Sign-In SDK is loading. Please check your internet connection and try again.");
       return;
     }
@@ -150,137 +177,141 @@ export default function AuthPageLayout({ initialMode = "signup" }) {
     setAuthActionText("Connecting to Google...");
 
     try {
-      window.google.accounts.id.initialize({
-        client_id: clientId,
-        callback: async (response) => {
-          if (!response?.credential) {
-            setError("Google sign-in could not be completed. Please try again.");
-            setLoading(false);
-            return;
-          }
-
-          setAuthActionText("Verifying Google account...");
-
-          try {
-            const data = await loginWithGoogle(response.credential);
-
-            if (data?.requireLinking) {
-              setLinkingModal({
-                isOpen: true,
-                provider: "google",
-                email: data.email,
-                password: "",
-                oauthId: "",
-                idToken: response.credential,
-                loading: false,
-                error: "",
-              });
+      if (window.google.accounts.id) {
+        window.google.accounts.id.initialize({
+          client_id: clientId,
+          use_fedcm_for_prompt: false,
+          callback: async (response) => {
+            if (!response?.credential) {
+              setError("Google sign-in could not be completed. Please try again.");
               setLoading(false);
               return;
             }
 
-            setSuccessMsg("Signed in with Google! Redirecting...");
-            const destination = location.state?.from?.pathname || "/dashboard";
-            navigate(destination, { replace: true });
-          } catch (err) {
-            const resData = err.response?.data;
-            if (resData?.requireLinking) {
-              setLinkingModal({
-                isOpen: true,
-                provider: "google",
-                email: resData.email,
-                password: "",
-                oauthId: "",
-                idToken: response.credential,
-                loading: false,
-                error: "",
-              });
-            } else {
-              setError(resData?.message || err.message || "Google authentication failed.");
-            }
-          } finally {
-            setLoading(false);
-          }
-        },
-        auto_select: false,
-        cancel_on_tap_outside: true,
-      });
+            setAuthActionText("Verifying Google account...");
 
-      // Prompt the official Google account chooser
-      window.google.accounts.id.prompt((notification) => {
-        if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
-          // If One Tap was skipped or suppressed, fall back to OAuth token client
-          if (window.google?.accounts?.oauth2) {
-            const client = window.google.accounts.oauth2.initTokenClient({
-              client_id: clientId,
-              scope: "openid profile email",
-              callback: async (tokenResp) => {
-                if (tokenResp.error) {
-                  setError("Google sign-in was cancelled.");
+            try {
+              const data = await loginWithGoogle(response.credential);
+
+              if (data?.requireLinking) {
+                setLinkingModal({
+                  isOpen: true,
+                  provider: "google",
+                  email: data.email,
+                  password: "",
+                  oauthId: "",
+                  idToken: response.credential,
+                  loading: false,
+                  error: "",
+                });
+                setLoading(false);
+                return;
+              }
+
+              setSuccessMsg("Signed in with Google! Redirecting...");
+              const destination = location.state?.from?.pathname || "/dashboard";
+              navigate(destination, { replace: true });
+            } catch (err) {
+              const resData = err.response?.data;
+              if (resData?.requireLinking) {
+                setLinkingModal({
+                  isOpen: true,
+                  provider: "google",
+                  email: resData.email,
+                  password: "",
+                  oauthId: "",
+                  idToken: response.credential,
+                  loading: false,
+                  error: "",
+                });
+              } else {
+                setError(formatAuthError(err));
+              }
+            } finally {
+              setLoading(false);
+            }
+          },
+          auto_select: false,
+          cancel_on_tap_outside: true,
+        });
+      }
+
+      // If token client is available, trigger directly in user click stack so mobile browsers don't block popup
+      if (window.google?.accounts?.oauth2) {
+        const client = window.google.accounts.oauth2.initTokenClient({
+          client_id: clientId,
+          scope: "openid profile email",
+          callback: async (tokenResp) => {
+            if (tokenResp.error) {
+              setLoading(false);
+              if (tokenResp.error !== "popup_closed_by_user") {
+                setError("Google sign-in was cancelled or interrupted.");
+              }
+              return;
+            }
+            try {
+              setAuthActionText("Verifying Google account...");
+              const res = await fetch("https://www.googleapis.com/oauth2/v3/userinfo", {
+                headers: { Authorization: `Bearer ${tokenResp.access_token}` },
+              });
+              const userInfo = await res.json();
+              if (userInfo.email) {
+                const data = await loginWithGoogle(tokenResp.access_token, {
+                  access_token: tokenResp.access_token,
+                  userinfo: userInfo,
+                });
+
+                if (data?.requireLinking) {
+                  setLinkingModal({
+                    isOpen: true,
+                    provider: "google",
+                    email: data.email,
+                    password: "",
+                    oauthId: "",
+                    idToken: tokenResp.access_token,
+                    loading: false,
+                    error: "",
+                  });
                   setLoading(false);
                   return;
                 }
-                // Fetch ID token / userinfo
-                try {
-                  const res = await fetch("https://www.googleapis.com/oauth2/v3/userinfo", {
-                    headers: { Authorization: `Bearer ${tokenResp.access_token}` },
-                  });
-                  const userInfo = await res.json();
-                  if (userInfo.email) {
-                    const data = await loginWithGoogle(tokenResp.access_token, {
-                      access_token: tokenResp.access_token,
-                      userinfo: userInfo,
-                    });
 
-                    if (data?.requireLinking) {
-                      setLinkingModal({
-                        isOpen: true,
-                        provider: "google",
-                        email: data.email,
-                        password: "",
-                        oauthId: "",
-                        idToken: tokenResp.access_token,
-                        loading: false,
-                        error: "",
-                      });
-                      setLoading(false);
-                      return;
-                    }
-
-                    setSuccessMsg("Signed in with Google! Redirecting...");
-                    const destination = location.state?.from?.pathname || "/dashboard";
-                    navigate(destination, { replace: true });
-                  }
-                } catch (e) {
-                  const resData = e.response?.data;
-                  if (resData?.requireLinking) {
-                    setLinkingModal({
-                      isOpen: true,
-                      provider: "google",
-                      email: resData.email,
-                      password: "",
-                      oauthId: "",
-                      idToken: tokenResp.access_token,
-                      loading: false,
-                      error: "",
-                    });
-                  } else {
-                    setError(resData?.message || e.message || "Google sign-in failed.");
-                  }
-                } finally {
-                  setLoading(false);
-                }
-              },
-            });
-            client.requestAccessToken();
-          } else {
+                setSuccessMsg("Signed in with Google! Redirecting...");
+                const destination = location.state?.from?.pathname || "/dashboard";
+                navigate(destination, { replace: true });
+              }
+            } catch (e) {
+              const resData = e.response?.data;
+              if (resData?.requireLinking) {
+                setLinkingModal({
+                  isOpen: true,
+                  provider: "google",
+                  email: resData.email,
+                  password: "",
+                  oauthId: "",
+                  idToken: tokenResp.access_token,
+                  loading: false,
+                  error: "",
+                });
+              } else {
+                setError(formatAuthError(e));
+              }
+            } finally {
+              setLoading(false);
+            }
+          },
+        });
+        client.requestAccessToken({ prompt: "" });
+      } else if (window.google?.accounts?.id) {
+        window.google.accounts.id.prompt((notification) => {
+          if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
             setLoading(false);
           }
-        }
-      });
+        });
+      }
     } catch (err) {
       setLoading(false);
-      setError("Error launching Google Sign-In: " + err.message);
+      setError(formatAuthError(err));
     }
   };
 
@@ -385,7 +416,7 @@ export default function AuthPageLayout({ initialMode = "signup" }) {
             error: "",
           });
         } else {
-          setError(resData?.message || err.message || "Apple sign-in could not be completed.");
+          setError(formatAuthError(err));
         }
       }
     } finally {
@@ -438,11 +469,7 @@ export default function AuthPageLayout({ initialMode = "signup" }) {
         navigate(destination, { replace: true });
       }
     } catch (err) {
-      const msg =
-        err.response?.data?.message ||
-        err.message ||
-        (isSignup ? "Registration failed. Please try again." : "Email or password is incorrect.");
-      setError(msg);
+      setError(formatAuthError(err, isSignup));
     } finally {
       setLoading(false);
     }
@@ -482,7 +509,7 @@ export default function AuthPageLayout({ initialMode = "signup" }) {
       setLinkingModal((prev) => ({
         ...prev,
         loading: false,
-        error: err.response?.data?.message || err.message || "Incorrect password.",
+        error: formatAuthError(err),
       }));
     }
   };

@@ -40,29 +40,43 @@ if (process.env.CORS_ORIGIN) {
   });
 }
 
-app.use(
-  cors({
-    origin: (origin, callback) => {
-      // Allow requests with no origin (like mobile apps, curl, or Postman)
-      if (!origin) return callback(null, true);
+const corsOptions = {
+  origin: (origin, callback) => {
+    // Allow requests with no origin (like mobile apps, curl, or Postman)
+    if (!origin) return callback(null, true);
 
-      if (
-        explicitOrigins.includes(origin) ||
-        /^http:\/\/(localhost|127\.0\.0\.1|10\.\d+\.\d+\.\d+|192\.168\.\d+\.\d+|172\.(1[6-9]|2\d|3[01])\.\d+\.\d+)(:\d+)?$/.test(origin) ||
-        /\.pages\.dev$/.test(origin) ||
-        /(^|\.)innervoice4u\.in$/.test(origin)
-      ) {
-        return callback(null, true);
-      }
+    if (
+      explicitOrigins.includes(origin) ||
+      /^http:\/\/(localhost|127\.0\.0\.1|10\.\d+\.\d+\.\d+|192\.168\.\d+\.\d+|172\.(1[6-9]|2\d|3[01])\.\d+\.\d+)(:\d+)?$/.test(
+        origin,
+      ) ||
+      /\.pages\.dev$/.test(origin) ||
+      /(^|\.)innervoice4u\.in$/.test(origin)
+    ) {
+      return callback(null, true);
+    }
 
-      callback(null, false);
-    },
-    credentials: true,
-    methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"],
-  }),
-);
+    callback(null, false);
+  },
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+  allowedHeaders: [
+    "Content-Type",
+    "Authorization",
+    "X-Requested-With",
+    "Accept",
+    "Origin",
+    "Cache-Control",
+    "Pragma",
+    "Access-Control-Request-Method",
+    "Access-Control-Request-Headers",
+  ],
+  optionsSuccessStatus: 200,
+  maxAge: 86400, // Cache preflight response for 24h
+};
 
+app.use(cors(corsOptions));
+app.options(/.*/, cors(corsOptions));
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -96,6 +110,11 @@ app.get("/", (req, res) => {
   res.json({
     message: "Hey Ajeet You are connected to the server",
   });
+});
+
+// Hosting and reverse-proxy health check. Keep this independent of the database.
+app.get("/health", (req, res) => {
+  res.status(200).json({ status: "ok" });
 });
 
 // =========================
