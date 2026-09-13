@@ -220,6 +220,10 @@ export default function Dashboard({ initialTab = "today" }) {
         feeling: data.feeling || "Peaceful",
         is_pinned: data.is_pinned || 0,
         is_locked: data.is_locked ? 1 : 0,
+        photo_url: data.photo_url || (data.photos && data.photos[0]?.file_url) || null,
+        photos: data.photos || (data.photo_url ? [{ file_url: data.photo_url }] : []),
+        attached_music: data.attached_music || data.music?.[0] || null,
+        voice_memo: data.voice_memo || data.voice?.[0] || null,
       };
 
       const res = await createNote(payload);
@@ -231,31 +235,61 @@ export default function Dashboard({ initialTab = "today" }) {
 
       setNotes((prev) => [created, ...prev]);
       setShowNoteModal(false);
+      setEditingNote(null);
       fetchNotes();
+      addToast("Note created with attachments", "success");
     } catch (err) {
       console.error("Create note error:", err);
       const fallback = {
         id: `local-${Date.now()}`,
         ...data,
+        photo_url: data.photo_url || (data.photos && data.photos[0]?.file_url) || null,
+        photos: data.photos || (data.photo_url ? [{ file_url: data.photo_url }] : []),
         created_at: new Date().toISOString(),
       };
       setNotes((prev) => [fallback, ...prev]);
       setShowNoteModal(false);
+      setEditingNote(null);
     }
   };
 
   const handleEditNote = async (data) => {
     try {
       if (!editingNote) return;
+      const payload = {
+        title: data.title,
+        content: data.content,
+        category: data.category,
+        feeling: data.feeling,
+        is_pinned: data.is_pinned !== undefined ? (data.is_pinned ? 1 : 0) : editingNote.is_pinned,
+        is_locked: data.is_locked ? 1 : 0,
+        photo_url: data.photo_url !== undefined ? data.photo_url : (data.photos && data.photos[0]?.file_url) || editingNote.photo_url,
+        photos: data.photos !== undefined ? data.photos : (data.photo_url ? [{ file_url: data.photo_url }] : editingNote.photos || []),
+        attached_music: data.attached_music !== undefined ? data.attached_music : data.music?.[0] || editingNote.attached_music,
+        voice_memo: data.voice_memo !== undefined ? data.voice_memo : data.voice?.[0] || editingNote.voice_memo,
+      };
+
       if (editingNote.id && !String(editingNote.id).startsWith("demo-") && !String(editingNote.id).startsWith("local-")) {
-        await updateNote(editingNote.id, data);
+        const res = await updateNote(editingNote.id, payload);
+        if (res.data?.note) {
+          setNotes((prev) =>
+            prev.map((n) => (n.id === editingNote.id ? res.data.note : n))
+          );
+        } else {
+          setNotes((prev) =>
+            prev.map((n) => (n.id === editingNote.id ? { ...n, ...payload } : n))
+          );
+        }
+      } else {
+        setNotes((prev) =>
+          prev.map((n) => (n.id === editingNote.id ? { ...n, ...payload } : n))
+        );
       }
 
-      setNotes((prev) =>
-        prev.map((n) => (n.id === editingNote.id ? { ...n, ...data } : n))
-      );
       setEditingNote(null);
       setShowNoteModal(false);
+      fetchNotes();
+      addToast("Note updated successfully", "success");
     } catch (err) {
       console.error("Update note error:", err);
       setNotes((prev) =>
@@ -376,40 +410,44 @@ export default function Dashboard({ initialTab = "today" }) {
     setShowProtectNoteModal(true);
   };
 
-  // Photo quick upload
+  // Photo quick upload: Creates an instant, permanent photo card fixed in the feed
   const handlePhotoSelect = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    const formData = new FormData();
-    formData.append("file", file);
-    formData.append("media_type", "photo");
-    formData.append("title", file.name.replace(/\.[^/.]+$/, ""));
+    // Reset input so the user can select the same file again if needed
+    e.target.value = "";
 
-    try {
-      const res = await uploadMediaFile(formData);
-      const photoUrl = res.data?.media?.file_url || URL.createObjectURL(file);
+    const reader = new FileReader();
+    reader.onload = async (event) => {
+      const dataUrl = event.target.result;
+      let finalPhotoUrl = dataUrl;
 
-      // Create a photo reflection note
+      try {
+        const formData = new FormData();
+        formData.append("file", file);
+        formData.append("media_type", "photo");
+        formData.append("title", file.name.replace(/\.[^/.]+$/, ""));
+
+        const res = await uploadMediaFile(formData);
+        if (res.data?.media?.file_url) {
+          finalPhotoUrl = res.data.media.file_url;
+        }
+      } catch (uploadErr) {
+        console.warn("Media cloud upload fallback to persistent Data URL:", uploadErr);
+      }
+
+      // Create a fixed photo card with the photo attached
       await handleCreateNote({
-        title: `Captured Memory: ${file.name.replace(/\.[^/.]+$/, "")}`,
-        content: "A quiet moment captured in time.",
+        title: `Captured Moment: ${file.name.replace(/\.[^/.]+$/, "")}`,
+        content: "A visual memory preserved in serenity.",
         category: "Memories",
         feeling: "Grateful",
-        photo_url: photoUrl,
-        photos: [{ file_url: photoUrl }],
+        photo_url: finalPhotoUrl,
+        photos: [{ file_url: finalPhotoUrl, title: file.name }],
       });
-    } catch (err) {
-      const localUrl = URL.createObjectURL(file);
-      await handleCreateNote({
-        title: `Captured Moment`,
-        content: "A quiet snapshot of today.",
-        category: "Memories",
-        feeling: "Grateful",
-        photo_url: localUrl,
-        photos: [{ file_url: localUrl }],
-      });
-    }
+    };
+    reader.readAsDataURL(file);
   };
 
   // AI Reflection Handlers

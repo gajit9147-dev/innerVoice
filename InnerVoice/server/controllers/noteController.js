@@ -3,9 +3,62 @@ import bcrypt from "bcryptjs";
 import { analyzeNoteById } from "../services/noteAIService.js";
 import asyncHandler from "../utils/asyncHandler.js";
 
+// Helper: Attach photos, music, and voice memos to notes from note_media table
+export const attachMediaToNotes = async (notes) => {
+  if (!notes || notes.length === 0) return notes;
+  try {
+    const noteIds = notes.map((n) => n.id).filter(Boolean);
+    if (noteIds.length === 0) return notes;
+
+    const [mediaRows] = await pool.query(
+      `SELECT * FROM note_media WHERE note_id IN (?) ORDER BY created_at ASC`,
+      [noteIds]
+    );
+
+    const mediaByNote = {};
+    for (const m of mediaRows) {
+      if (!mediaByNote[m.note_id]) {
+        mediaByNote[m.note_id] = { photos: [], music: [], voice: [] };
+      }
+      if (m.media_type === "photo") {
+        mediaByNote[m.note_id].photos.push(m);
+      } else if (m.media_type === "music") {
+        mediaByNote[m.note_id].music.push(m);
+      } else if (m.media_type === "voice") {
+        mediaByNote[m.note_id].voice.push(m);
+      }
+    }
+
+    for (const note of notes) {
+      const attached = mediaByNote[note.id];
+      note.photos = attached?.photos || [];
+      note.photo_url = attached?.photos?.[0]?.file_url || null;
+      note.music = attached?.music || [];
+      note.attached_music = attached?.music?.[0] || null;
+      note.voice = attached?.voice || [];
+      note.voice_memo = attached?.voice?.[0] || null;
+    }
+  } catch (err) {
+    console.warn("Could not attach media to notes:", err.message);
+  }
+  return notes;
+};
+
 // Create Note
 export const createNote = asyncHandler(async (req, res) => {
-  const { title, content, category, feeling, is_locked } = req.body;
+  const {
+    title,
+    content,
+    category,
+    feeling,
+    is_locked,
+    photo_url,
+    photos,
+    attached_music,
+    music,
+    voice_memo,
+    voice,
+  } = req.body;
   const userId = req.user.id;
 
   if (!title || !content) {
@@ -39,6 +92,61 @@ export const createNote = asyncHandler(async (req, res) => {
 
   const noteId = result.insertId;
 
+  // 1. Attach Photo if provided
+  const incomingPhoto = photo_url || (photos && photos.length > 0 ? (photos[0].file_url || photos[0].url || photos[0]) : null);
+  if (incomingPhoto && typeof incomingPhoto === "string") {
+    try {
+      await pool.query(
+        `INSERT INTO note_media (user_id, note_id, media_type, title, file_url, storage_key, mime_type)
+         VALUES (?, ?, 'photo', ?, ?, 'note_photo', 'image/jpeg')`,
+        [userId, noteId, title || "Note Photo", incomingPhoto]
+      );
+    } catch (err) {
+      console.warn("Failed to store note photo attachment:", err.message);
+    }
+  }
+
+  // 2. Attach Music if provided
+  const incomingMusic = attached_music || (music && music.length > 0 ? music[0] : null);
+  if (incomingMusic) {
+    const musicUrl = typeof incomingMusic === "string" ? incomingMusic : (incomingMusic.file_url || incomingMusic.url);
+    if (musicUrl) {
+      try {
+        await pool.query(
+          `INSERT INTO note_media (user_id, note_id, media_type, title, artist, file_url, storage_key, mime_type, duration_seconds)
+           VALUES (?, ?, 'music', ?, ?, ?, 'note_music', 'audio/mpeg', ?)`,
+          [
+            userId,
+            noteId,
+            incomingMusic.title || "Attached Music",
+            incomingMusic.artist || "Arijit Singh",
+            musicUrl,
+            incomingMusic.duration || 180,
+          ]
+        );
+      } catch (err) {
+        console.warn("Failed to store note music attachment:", err.message);
+      }
+    }
+  }
+
+  // 3. Attach Voice Memo if provided
+  const incomingVoice = voice_memo || (voice && voice.length > 0 ? voice[0] : null);
+  if (incomingVoice) {
+    const voiceUrl = typeof incomingVoice === "string" ? incomingVoice : (incomingVoice.file_url || incomingVoice.audio_url || incomingVoice.url);
+    if (voiceUrl) {
+      try {
+        await pool.query(
+          `INSERT INTO note_media (user_id, note_id, media_type, title, file_url, storage_key, mime_type, duration_seconds)
+           VALUES (?, ?, 'voice', ?, ?, 'note_voice', 'audio/webm', ?)`,
+          [userId, noteId, incomingVoice.title || "Voice Memo", voiceUrl, incomingVoice.duration || 60]
+        );
+      } catch (err) {
+        console.warn("Failed to store note voice attachment:", err.message);
+      }
+    }
+  }
+
   // Run AI analysis automatically
   analyzeNoteById(noteId, userId)
     .then(() => {
@@ -48,16 +156,18 @@ export const createNote = asyncHandler(async (req, res) => {
       console.error(`❌ AI analysis failed for note ${noteId}`, err);
     });
 
-  // Fetch the original note so the user gets a successful response
+  // Fetch the created note with attached media
   const [rows] = await pool.query(
     "SELECT * FROM notes WHERE id = ?",
     [noteId]
   );
 
+  const enrichedNotes = await attachMediaToNotes(rows);
+
   return res.status(201).json({
     success: true,
     message: "Note created successfully.",
-    note: rows[0],
+    note: enrichedNotes[0],
   });
 });
 
@@ -75,9 +185,11 @@ export const getNotes = async (req, res) => {
       [userId]
     );
 
+    const enrichedNotes = await attachMediaToNotes(notes);
+
     res.status(200).json({
       success: true,
-      notes,
+      notes: enrichedNotes,
     });
   } catch (error) {
     console.error("Get Notes Error:", error);
@@ -103,9 +215,11 @@ export const getTrashNotes = async (req, res) => {
       [userId]
     );
 
+    const enrichedNotes = await attachMediaToNotes(notes);
+
     res.status(200).json({
       success: true,
-      notes,
+      notes: enrichedNotes,
     });
   } catch (error) {
     console.error("Get Trash Notes Error:", error);
@@ -142,9 +256,11 @@ export const searchNotes = async (req, res) => {
       [userId, search, search, search, search]
     );
 
+    const enrichedNotes = await attachMediaToNotes(notes);
+
     res.status(200).json({
       success: true,
-      notes,
+      notes: enrichedNotes,
     });
 
   } catch (error) {
@@ -175,9 +291,11 @@ export const getNoteById = async (req, res) => {
       });
     }
 
+    const enriched = await attachMediaToNotes(notes);
+
     res.status(200).json({
       success: true,
-      note: notes[0],
+      note: enriched[0],
     });
   } catch (error) {
     console.error(error);
@@ -192,7 +310,7 @@ export const getNoteById = async (req, res) => {
 // Update Note
 export const updateNote = async (req, res) => {
   try {
-    const { title, content, category, feeling, is_locked } = req.body;
+    const { title, content, category, feeling, is_locked, photo_url, photos, attached_music, voice_memo } = req.body;
     const { id } = req.params;
     const userId = req.user.id;
 
@@ -244,6 +362,85 @@ export const updateNote = async (req, res) => {
 
     const [result] = await pool.query(sql, queryParams);
 
+    // If photos are provided, update note_media
+    if (photos !== undefined || photo_url !== undefined) {
+      const photoList = Array.isArray(photos) && photos.length > 0
+        ? photos
+        : (photo_url ? [{ file_url: photo_url, title: "Photo attachment" }] : []);
+
+      // If explicit photos provided or photo_url provided, sync them
+      if (photoList.length > 0 || Array.isArray(photos)) {
+        await pool.query(
+          "DELETE FROM note_media WHERE note_id = ? AND user_id = ? AND media_type = 'photo'",
+          [id, userId]
+        );
+        for (const p of photoList) {
+          const pUrl = typeof p === "string" ? p : (p.file_url || p.url);
+          if (pUrl) {
+            await pool.query(
+              `INSERT INTO note_media (user_id, note_id, media_type, title, file_url, storage_key, mime_type)
+               VALUES (?, ?, 'photo', ?, ?, ?, ?)`,
+              [
+                userId,
+                id,
+                p.title || "Photo attachment",
+                pUrl,
+                p.storage_key || `note-${id}-photo-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+                p.mime_type || "image/jpeg"
+              ]
+            );
+          }
+        }
+      }
+    }
+
+    // If attached music provided
+    if (attached_music !== undefined) {
+      await pool.query(
+        "DELETE FROM note_media WHERE note_id = ? AND user_id = ? AND media_type = 'music'",
+        [id, userId]
+      );
+      if (attached_music && (attached_music.file_url || attached_music.url)) {
+        await pool.query(
+          `INSERT INTO note_media (user_id, note_id, media_type, title, artist, file_url, storage_key, mime_type, duration_seconds)
+           VALUES (?, ?, 'music', ?, ?, ?, ?, ?, ?)`,
+          [
+            userId,
+            id,
+            attached_music.title || "Note soundtrack",
+            attached_music.artist || "Ambient",
+            attached_music.file_url || attached_music.url,
+            attached_music.storage_key || `note-${id}-music-${Date.now()}`,
+            attached_music.mime_type || "audio/mpeg",
+            attached_music.duration || attached_music.duration_seconds || 0
+          ]
+        );
+      }
+    }
+
+    // If voice memo provided
+    if (voice_memo !== undefined) {
+      await pool.query(
+        "DELETE FROM note_media WHERE note_id = ? AND user_id = ? AND media_type = 'voice'",
+        [id, userId]
+      );
+      if (voice_memo && (voice_memo.file_url || voice_memo.url)) {
+        await pool.query(
+          `INSERT INTO note_media (user_id, note_id, media_type, title, file_url, storage_key, mime_type, duration_seconds)
+           VALUES (?, ?, 'voice', ?, ?, ?, ?, ?)`,
+          [
+            userId,
+            id,
+            voice_memo.title || "Voice note",
+            voice_memo.file_url || voice_memo.url,
+            voice_memo.storage_key || `note-${id}-voice-${Date.now()}`,
+            voice_memo.mime_type || "audio/webm",
+            voice_memo.duration || voice_memo.duration_seconds || 0
+          ]
+        );
+      }
+    }
+
     let updatedNote;
 
     try {
@@ -263,10 +460,12 @@ export const updateNote = async (req, res) => {
       updatedNote = rows[0];
     }
 
+    const [enrichedUpdatedNote] = await attachMediaToNotes([updatedNote]);
+
     return res.json({
       success: true,
       message: "Note updated successfully.",
-      note: updatedNote,
+      note: enrichedUpdatedNote || updatedNote,
     });
   } catch (error) {
     console.error(error);

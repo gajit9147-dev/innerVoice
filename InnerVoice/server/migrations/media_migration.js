@@ -21,7 +21,7 @@ export const runMediaMigration = async () => {
         title VARCHAR(255) NOT NULL,
         artist VARCHAR(255) DEFAULT NULL,
         album VARCHAR(255) DEFAULT NULL,
-        file_url TEXT NOT NULL,
+        file_url LONGTEXT NOT NULL,
         storage_key VARCHAR(255) NOT NULL,
         mime_type VARCHAR(100) NOT NULL,
         file_size INT NOT NULL DEFAULT 0,
@@ -37,6 +37,13 @@ export const runMediaMigration = async () => {
         FOREIGN KEY (note_id) REFERENCES notes(id) ON DELETE CASCADE
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
     `);
+
+    // Ensure file_url is LONGTEXT in existing table
+    try {
+      await connection.query(`ALTER TABLE note_media MODIFY file_url LONGTEXT NOT NULL;`);
+    } catch (e) {
+      // Ignore if already LONGTEXT
+    }
 
     logger.info("✅ note_media table created or verified successfully");
   } catch (error) {
