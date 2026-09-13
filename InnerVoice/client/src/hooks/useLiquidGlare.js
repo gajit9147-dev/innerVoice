@@ -24,6 +24,13 @@ export function useLiquidGlare() {
       document.body.appendChild(overlay);
     }
 
+    // Setup overlay styles once
+    overlay.style.pointerEvents = "none";
+    overlay.style.position = "fixed";
+    overlay.style.inset = "0";
+    overlay.style.zIndex = "1";
+    overlay.style.opacity = "0.05";
+
     // Track mouse — store as percentage of viewport
     const handleMouseMove = (e) => {
       targetPos.current = {
@@ -35,21 +42,19 @@ export function useLiquidGlare() {
     window.addEventListener("mousemove", handleMouseMove);
 
     // rAF loop — lerp current toward target at ~10% per frame
-    // This creates the viscous 100ms lag feel
     const lerp = (a, b, t) => a + (b - a) * t;
-    const LERP_FACTOR = 0.06; // lower = more lag (thicker liquid)
+    const LERP_FACTOR = 0.06;
 
     const animate = () => {
       currentPos.current.x = lerp(currentPos.current.x, targetPos.current.x, LERP_FACTOR);
       currentPos.current.y = lerp(currentPos.current.y, targetPos.current.y, LERP_FACTOR);
 
-      // Apply a radial gradient using CSS custom property color palette
+      // Delicate frosted glass specular highlight
       overlay.style.background = `
         radial-gradient(
-          600px circle at ${currentPos.current.x}% ${currentPos.current.y}%,
-          var(--glass-primary),
-          var(--glass-secondary) 40%,
-          transparent 70%
+          500px circle at ${currentPos.current.x}% ${currentPos.current.y}%,
+          rgba(255, 255, 255, 0.2),
+          transparent 60%
         )
       `;
 

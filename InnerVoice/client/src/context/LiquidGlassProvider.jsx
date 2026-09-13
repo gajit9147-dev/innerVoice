@@ -12,27 +12,27 @@ import { useTheme } from "./ThemeContext";
 import { useLiquidGlare } from "../hooks/useLiquidGlare";
 import MeshBackground from "../components/glass/MeshBackground";
 
-// Default theme configuration containing configurations for both modes
+// Default theme configuration containing dark obsidian glass & warm champagne accent
 const DEFAULT_THEME = {
   dark: {
-    primary:   "#06b6d4", // Electric cyan
-    secondary: "#14b8a6", // Vibrant teal
-    accent:    "#38bdf8", // Sky cyan
-    glassBg:   "rgba(11, 19, 31, 0.72)",
-    glassBorder: "rgba(255, 255, 255, 0.08)",
-    glassInset: "inset 0 1px 0 rgba(255, 255, 255, 0.12), inset 0 -1px 0 rgba(0, 0, 0, 0.3)"
+    primary:     "rgba(20, 22, 24, 0.48)", // Translucent dark glass
+    secondary:   "rgba(26, 28, 34, 0.55)", // Inner glass
+    accent:      "#d8b27a",               // Warm champagne accent
+    glassBg:     "rgba(20, 22, 24, 0.48)",
+    glassBorder: "rgba(255, 255, 255, 0.12)",
+    glassInset:  "inset 0 1px 0 rgba(255, 255, 255, 0.10), inset 0 -1px 0 rgba(0, 0, 0, 0.4)"
   },
   light: {
-    primary:   "#0284c7",
-    secondary: "#0d9488",
-    accent:    "#06b6d4",
-    glassBg:   "rgba(255, 255, 255, 0.75)",
-    glassBorder: "rgba(255, 255, 255, 0.4)",
-    glassInset: "inset 0 1px 0 rgba(255, 255, 255, 0.5), inset 0 -1px 0 rgba(0, 0, 0, 0.03)"
+    primary:     "rgba(255, 255, 255, 0.75)",
+    secondary:   "rgba(245, 245, 245, 0.85)",
+    accent:      "#c49856",
+    glassBg:     "rgba(255, 255, 255, 0.75)",
+    glassBorder: "rgba(0, 0, 0, 0.08)",
+    glassInset:  "inset 0 1px 0 rgba(255, 255, 255, 0.9), inset 0 -1px 0 rgba(0, 0, 0, 0.03)"
   }
 };
 
-const LiquidGlassContext = createContext(DEFAULT_THEME.light);
+const LiquidGlassContext = createContext(DEFAULT_THEME.dark);
 
 // Hook for child components to read the active configuration properties
 export function useLiquidGlass() {
@@ -60,7 +60,7 @@ export function LiquidGlassProvider({ children }) {
   }, []);
 
   // Get configuration corresponding to the active mode
-  const activeTheme = themes[activeMode] || themes.light;
+  const activeTheme = themes[activeMode] || themes.dark;
 
   // ── Step 2: Inject active theme values into root variables ──
   useEffect(() => {
@@ -71,6 +71,7 @@ export function LiquidGlassProvider({ children }) {
     root.style.setProperty("--glass-bg",        activeTheme.glassBg);
     root.style.setProperty("--glass-border",    activeTheme.glassBorder);
     root.style.setProperty("--glass-inset",     activeTheme.glassInset);
+    root.style.setProperty("--accent",          activeTheme.accent);
   }, [activeTheme]);
 
   // ── Step 3: Activate mouse glare overlay tracking ──

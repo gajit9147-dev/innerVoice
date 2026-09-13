@@ -99,30 +99,28 @@ app.get("/", (req, res) => {
 
 // =========================
 // LIQUID GLASS THEME API
-// Returns an iridescent color palette.
-// The frontend (LiquidGlassProvider) fetches this on load
-// and injects the colors into CSS custom properties.
+// Returns dark translucent glass theme with warm champagne accent
 // GET /api/glass-theme
 // =========================
 app.get("/api/glass-theme", (req, res) => {
   res.json({
     dark: {
-      primary: "#06b6d4", // vibrant cyan
-      secondary: "#14b8a6", // vibrant teal
-      accent: "#38bdf8", // vibrant sky cyan
-      glassBg: "rgba(11, 19, 31, 0.72)", // dark obsidian glass background
-      glassBorder: "rgba(255, 255, 255, 0.08)",
+      primary: "rgba(20, 22, 24, 0.48)", // dark translucent glass
+      secondary: "rgba(26, 28, 34, 0.55)", // inner glass
+      accent: "#d8b27a", // warm champagne accent
+      glassBg: "rgba(20, 22, 24, 0.48)", // dark translucent glass
+      glassBorder: "rgba(255, 255, 255, 0.12)",
       glassInset:
-        "inset 0 1px 0 rgba(255, 255, 255, 0.12), inset 0 -1px 0 rgba(0, 0, 0, 0.3)",
+        "inset 0 1px 0 rgba(255, 255, 255, 0.10), inset 0 -1px 0 rgba(0, 0, 0, 0.4)",
     },
     light: {
-      primary: "#d8b4fe", // soft pastel lavender
-      secondary: "#a5f3fc", // soft pastel sky cyan
-      accent: "#fbcfe8", // soft pastel pink
-      glassBg: "rgba(255, 255, 255, 0.4)", // light mode glass background
-      glassBorder: "rgba(255, 255, 255, 0.4)",
+      primary: "rgba(255, 255, 255, 0.75)",
+      secondary: "rgba(245, 245, 245, 0.85)",
+      accent: "#c49856",
+      glassBg: "rgba(255, 255, 255, 0.75)",
+      glassBorder: "rgba(0, 0, 0, 0.08)",
       glassInset:
-        "inset 0 1px 0 rgba(255, 255, 255, 0.5), inset 0 -1px 0 rgba(0, 0, 0, 0.03)",
+        "inset 0 1px 0 rgba(255, 255, 255, 0.9), inset 0 -1px 0 rgba(0, 0, 0, 0.03)",
     },
   });
 });

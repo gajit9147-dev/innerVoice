@@ -12,14 +12,14 @@ import { useState } from "react";
 
 const VARIANTS = {
   primary: {
-    base:  "text-white",
-    bg:    "rgba(192, 132, 252, 0.25)",  // glass-primary tint
-    bgHov: "rgba(192, 132, 252, 0.4)",
+    base:  "text-[#f5f1e8]",
+    bg:    "rgba(216, 178, 122, 0.18)",  // subtle warm champagne glass tint
+    bgHov: "rgba(216, 178, 122, 0.30)",
   },
   ghost: {
-    base:  "text-white/80",
-    bg:    "rgba(255,255,255,0.08)",
-    bgHov: "rgba(255,255,255,0.18)",
+    base:  "text-[#f5f1e8]/80",
+    bg:    "rgba(255,255,255,0.06)",
+    bgHov: "rgba(255,255,255,0.12)",
   },
   danger: {
     base:  "text-red-300",
@@ -80,9 +80,9 @@ function GlassButton({
           : hovered
           ? "2rem"
           : "1.25rem",
-        // Iridescent glow border on hover
+        // Subtle warm glow border on hover
         boxShadow: hovered
-          ? `0 0 20px var(--glass-primary), inset 0 1px 0 rgba(255,255,255,0.25)`
+          ? `0 0 20px rgba(216, 178, 122, 0.3), inset 0 1px 0 rgba(255,255,255,0.25)`
           : `inset 0 1px 0 rgba(255,255,255,0.15)`,
         // Elastic bounce scale
         transform: pressed

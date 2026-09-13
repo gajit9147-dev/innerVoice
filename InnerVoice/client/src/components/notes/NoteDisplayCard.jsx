@@ -167,9 +167,9 @@ export default function NoteDisplayCard({
         return (
           <div
             key={idx}
-            className="mt-5 p-3 sm:p-3.5 rounded-2xl bg-cyan-950/20 border border-cyan-500/20 text-slate-200 text-xs sm:text-sm md:text-base leading-relaxed break-words"
+            className="mt-5 p-3 sm:p-3.5 rounded-2xl bg-white/[0.04] border border-white/10 text-slate-200 text-xs sm:text-sm md:text-base leading-relaxed break-words"
           >
-            <span className="font-bold text-white">**Action Item:**</span>
+            <span className="font-bold text-[#e2b17a]">**Action Item:**</span>
             <span className="ml-1 text-slate-200">
               {trimmed.replace("**Action Item:**", "").trim()}
             </span>
@@ -185,7 +185,7 @@ export default function NoteDisplayCard({
             key={idx}
             className="flex items-start gap-2.5 my-2 text-slate-300 text-xs sm:text-sm md:text-base leading-relaxed pl-1 break-words"
           >
-            <span className="text-cyan-400 mt-1 shrink-0">•</span>
+            <span className="text-[#e2b17a] mt-1 shrink-0">•</span>
             <span className="break-words min-w-0">{text}</span>
           </div>
         );
@@ -211,13 +211,13 @@ export default function NoteDisplayCard({
   return (
     <div className="glass-panel rounded-2xl sm:rounded-3xl p-4 sm:p-6 relative overflow-hidden text-white transition-all shadow-[0_20px_50px_rgba(0,0,0,0.55)] h-auto min-h-0 flex flex-col justify-start min-w-0">
       {/* Top subtle glow */}
-      <div className="absolute top-0 left-0 w-64 h-64 bg-cyan-500/5 rounded-full blur-3xl pointer-events-none"></div>
+      <div className="absolute top-0 left-0 w-64 h-64 bg-[#e2b17a]/5 rounded-full blur-3xl pointer-events-none"></div>
 
       {/* Card Header & Controls */}
       <div className="relative z-10 min-w-0">
         <div className="flex items-center justify-between gap-2 mb-3 pb-2.5 border-b border-white/5 flex-wrap">
           <div className="flex items-center gap-2 min-w-0">
-            <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-cyan-400 truncate">
+            <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-[#e2b17a] truncate">
               <Sparkles size={14} className="shrink-0" />
               <span className="truncate">{note?.category || "Journal Entry"}</span>
             </div>
@@ -247,7 +247,7 @@ export default function NoteDisplayCard({
                 aria-label="Toggle offline note"
               >
                 {cachingNote ? (
-                  <Loader2 size={13} className="animate-spin text-cyan-400" />
+                  <Loader2 size={13} className="animate-spin text-[#e2b17a]" />
                 ) : isOfflineCached ? (
                   <Check size={13} className="text-emerald-400" />
                 ) : (
@@ -260,7 +260,7 @@ export default function NoteDisplayCard({
             {isEditing ? (
               <button
                 onClick={handleSave}
-                className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-cyan-500/20 text-cyan-300 border border-cyan-400 text-xs font-medium hover:bg-cyan-500/30 transition cursor-pointer shadow-[0_0_10px_rgba(6,182,212,0.3)] min-h-[38px]"
+                className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl btn-champagne text-xs font-medium transition cursor-pointer min-h-[38px]"
                 aria-label="Save note changes"
               >
                 <Check size={13} />
@@ -269,7 +269,7 @@ export default function NoteDisplayCard({
             ) : (
               <button
                 onClick={() => setIsEditing(true)}
-                className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-white/5 text-slate-300 hover:text-cyan-300 hover:bg-white/10 text-xs font-medium transition cursor-pointer min-h-[38px]"
+                className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-white/5 text-slate-300 hover:text-[#e2b17a] hover:bg-white/10 text-xs font-medium transition cursor-pointer min-h-[38px]"
                 title="Quick edit note"
                 aria-label="Quick edit note"
               >
@@ -302,7 +302,7 @@ export default function NoteDisplayCard({
                 type="text"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
-                className="w-full bg-[#070e17]/80 border border-cyan-500/30 rounded-xl px-3.5 py-2 text-white font-semibold text-sm focus:outline-none focus:ring-1 focus:ring-cyan-400"
+                className="w-full bg-[#111315]/80 border border-white/15 focus:border-[#e2b17a] rounded-xl px-3.5 py-2 text-white font-semibold text-sm focus:outline-none"
                 placeholder="Entry title..."
               />
             </div>
@@ -314,7 +314,7 @@ export default function NoteDisplayCard({
                 value={content}
                 onChange={(e) => setContent(e.target.value)}
                 rows={8}
-                className="w-full bg-[#070e17]/80 border border-cyan-500/30 rounded-2xl p-3.5 sm:p-4 text-slate-100 font-mono text-xs sm:text-sm leading-relaxed focus:outline-none focus:ring-1 focus:ring-cyan-400 resize-none"
+                className="w-full bg-[#111315]/80 border border-white/15 focus:border-[#e2b17a] rounded-2xl p-3.5 sm:p-4 text-slate-100 font-mono text-xs sm:text-sm leading-relaxed focus:outline-none resize-none"
                 placeholder="Write your thoughts..."
               />
             </div>

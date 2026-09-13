@@ -292,8 +292,8 @@ export default function MemoryMusicSection({
     <div className="mt-6 pt-5 border-t border-white/10">
       {/* Header */}
       <div className="flex items-center justify-between gap-2 mb-3">
-        <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-slate-300">
-          <Music size={15} className="text-cyan-400 shrink-0" />
+        <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-[#d1cdc7]">
+          <Music size={15} className="text-[#e2b17a] shrink-0" />
           <span>Memory Music ({musicTracks.length})</span>
         </div>
 
@@ -303,7 +303,7 @@ export default function MemoryMusicSection({
               resetModalState();
               setShowAddModal(true);
             }}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-cyan-500/15 hover:bg-cyan-500/25 border border-cyan-400/30 text-cyan-300 text-xs font-medium transition cursor-pointer"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] border border-white/10 hover:border-[#e2b17a]/30 text-[#d1cdc7] hover:text-[#f5f1e8] text-xs font-medium transition cursor-pointer"
             aria-label="Add music track to note"
           >
             <Plus size={13} />
@@ -314,17 +314,17 @@ export default function MemoryMusicSection({
 
       {/* Main Music Player Card if tracks exist */}
       {musicTracks.length > 0 && activeTrack ? (
-        <div className="mb-4 rounded-2xl bg-gradient-to-br from-cyan-950/40 via-[#071322]/80 to-slate-950/80 border border-cyan-500/25 p-4 sm:p-5 shadow-[0_15px_40px_rgba(0,0,0,0.5)] relative overflow-hidden">
+        <div className="mb-4 rounded-2xl glass-inner p-4 sm:p-5 shadow-[0_15px_40px_rgba(0,0,0,0.5)] relative overflow-hidden">
           {/* Subtle Ambient Radial Glow */}
-          <div className="absolute -top-12 -right-12 w-48 h-48 bg-cyan-500/10 rounded-full blur-3xl pointer-events-none" />
+          <div className="absolute -top-12 -right-12 w-48 h-48 bg-[#e2b17a]/5 rounded-full blur-3xl pointer-events-none" />
 
           {/* Track Header & Waveform */}
           <div className="flex items-start justify-between gap-3 mb-3">
             <div className="flex items-center gap-3 min-w-0">
-              <div className="w-12 h-12 rounded-xl bg-gradient-to-tr from-cyan-900/60 to-purple-900/40 border border-cyan-400/30 flex items-center justify-center shrink-0 shadow-[0_0_15px_rgba(6,182,212,0.2)]">
+              <div className="w-12 h-12 rounded-xl bg-[#111315] border border-white/10 flex items-center justify-center shrink-0 shadow-sm">
                 <Disc3
                   size={24}
-                  className={`text-cyan-300 ${isThisTrackActive && isPlaying ? "animate-spin" : ""}`}
+                  className={`text-[#e2b17a] ${isThisTrackActive && isPlaying ? "animate-spin" : ""}`}
                   style={{ animationDuration: "5s" }}
                 />
               </div>
@@ -333,7 +333,7 @@ export default function MemoryMusicSection({
                 <h3 className="text-sm sm:text-base font-bold text-white truncate tracking-tight">
                   {activeTrack.title || "Memory Audio"}
                 </h3>
-                <p className="text-xs text-slate-400 truncate">
+                <p className="text-xs text-[#9e9990] truncate">
                   {activeTrack.artist || "Personal Recording"}
                 </p>
               </div>
@@ -394,10 +394,10 @@ export default function MemoryMusicSection({
                 }
               }}
               disabled={!isThisTrackActive}
-              className="w-full h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-cyan-400 disabled:opacity-50"
+              className="w-full h-1.5 bg-white/10 rounded-lg appearance-none cursor-pointer accent-[#e2b17a] disabled:opacity-50"
             />
 
-            <div className="flex items-center justify-between text-[11px] font-mono text-slate-400">
+            <div className="flex items-center justify-between text-[11px] font-mono text-[#9e9990]">
               <span>{isThisTrackActive ? formatTime(currentTime) : "0:00"}</span>
               <span>
                 {isThisTrackActive
@@ -414,8 +414,8 @@ export default function MemoryMusicSection({
               onClick={toggleRepeat}
               className={`p-2 rounded-xl border transition cursor-pointer ${
                 isRepeating
-                  ? "bg-cyan-500/20 border-cyan-400/40 text-cyan-300"
-                  : "bg-white/5 border-white/10 text-slate-400 hover:text-white"
+                  ? "bg-[#e2b17a]/20 border-[#e2b17a]/40 text-[#e2b17a]"
+                  : "bg-white/5 border-white/10 text-[#9e9990] hover:text-white"
               }`}
               title={isRepeating ? "Repeat enabled" : "Enable repeat"}
               aria-label="Repeat music"
@@ -426,20 +426,20 @@ export default function MemoryMusicSection({
             {/* Play / Pause Main Button */}
             <button
               onClick={() => handlePlaySelected(activeTrack, activeTrackIndex)}
-              className="w-12 h-12 rounded-full bg-gradient-to-r from-pink-500 via-purple-500 to-cyan-400 hover:scale-105 active:scale-95 text-white flex items-center justify-center transition shadow-[0_0_20px_rgba(6,182,212,0.4)] cursor-pointer"
+              className="w-12 h-12 rounded-full btn-champagne flex items-center justify-center transition cursor-pointer"
               aria-label={isThisTrackActive && isPlaying ? "Pause music" : "Play music"}
             >
               {isLoadingAudio ? (
-                <Loader2 size={18} className="animate-spin" />
+                <Loader2 size={18} className="animate-spin text-[#1a140d]" />
               ) : isThisTrackActive && isPlaying ? (
-                <Pause size={18} />
+                <Pause size={18} className="text-[#1a140d]" />
               ) : (
-                <Play size={18} className="ml-0.5" />
+                <Play size={18} className="ml-0.5 text-[#1a140d]" />
               )}
             </button>
 
             {/* Volume */}
-            <div className="flex items-center gap-1.5 text-slate-400">
+            <div className="flex items-center gap-1.5 text-[#9e9990]">
               <button
                 onClick={() => setVolume(volume > 0 ? 0 : 0.8)}
                 className="p-1.5 hover:text-white transition cursor-pointer"
@@ -454,7 +454,7 @@ export default function MemoryMusicSection({
                 step={0.05}
                 value={volume}
                 onChange={(e) => setVolume(parseFloat(e.target.value))}
-                className="w-16 h-1 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-cyan-400"
+                className="w-16 h-1 bg-white/10 rounded-lg appearance-none cursor-pointer accent-[#e2b17a]"
                 aria-label="Volume slider"
               />
             </div>
@@ -464,7 +464,7 @@ export default function MemoryMusicSection({
 
       {/* Track List */}
       {musicTracks.length === 0 ? (
-        <div className="rounded-2xl p-4 border border-dashed border-white/10 bg-white/[0.02] text-center text-xs text-slate-400">
+        <div className="rounded-2xl p-4 border border-dashed border-white/10 bg-white/[0.02] text-center text-xs text-[#9e9990]">
           No music attached to this note. Click &quot;Add Music&quot; to attach personal soundtrack memories.
         </div>
       ) : (
@@ -479,16 +479,16 @@ export default function MemoryMusicSection({
                 onClick={() => handlePlaySelected(track, idx)}
                 className={`group flex items-center justify-between gap-3 p-2.5 sm:p-3 rounded-xl border transition cursor-pointer ${
                   activeTrackIndex === idx
-                    ? "bg-cyan-500/10 border-cyan-500/30 text-white"
-                    : "bg-white/[0.02] hover:bg-white/[0.06] border-white/5 text-slate-300"
+                    ? "bg-white/[0.06] border-white/20 text-white"
+                    : "bg-white/[0.02] hover:bg-white/[0.06] border-white/5 text-[#d1cdc7]"
                 }`}
               >
                 <div className="flex items-center gap-3 min-w-0">
                   <div
                     className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 border ${
                       isPlayingThis
-                        ? "bg-cyan-500/20 border-cyan-400/40 text-cyan-300"
-                        : "bg-white/5 border-white/10 text-slate-400 group-hover:text-cyan-400"
+                        ? "bg-[#e2b17a]/20 border-[#e2b17a]/40 text-[#e2b17a]"
+                        : "bg-white/5 border-white/10 text-[#9e9990] group-hover:text-white"
                     }`}
                   >
                     {isPlayingThis ? <Pause size={13} /> : <Play size={13} className="ml-0.5" />}
@@ -555,18 +555,18 @@ export default function MemoryMusicSection({
           onClick={() => setShowAddModal(false)}
         >
           <div
-            className="w-full max-w-md rounded-3xl bg-[#071322] border border-cyan-500/30 p-5 sm:p-6 shadow-2xl text-white relative"
+            className="w-full max-w-md rounded-3xl glass-floating p-5 sm:p-6 shadow-2xl text-white relative border border-white/15"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Modal Header */}
             <div className="flex items-center justify-between pb-3 mb-4 border-b border-white/10">
               <div className="flex items-center gap-2">
-                <Music size={18} className="text-cyan-400" />
-                <h3 className="text-base sm:text-lg font-bold">Add Memory Music</h3>
+                <Music size={18} className="text-[#e2b17a]" />
+                <h3 className="text-base sm:text-lg font-bold text-[#f5f1e8]">Add Memory Music</h3>
               </div>
               <button
                 onClick={() => setShowAddModal(false)}
-                className="p-1 rounded-lg hover:bg-white/10 text-slate-400 transition cursor-pointer"
+                className="p-1 rounded-lg hover:bg-white/10 text-[#9e9990] transition cursor-pointer"
                 aria-label="Close modal"
               >
                 <X size={18} />
@@ -582,14 +582,14 @@ export default function MemoryMusicSection({
             )}
 
             {/* Mode Switcher Tabs */}
-            <div className="grid grid-cols-2 gap-2 mb-4 p-1 rounded-xl bg-slate-900 border border-white/10">
+            <div className="grid grid-cols-2 gap-2 mb-4 p-1 rounded-xl bg-[#111315] border border-white/10">
               <button
                 type="button"
                 onClick={() => setAddMode("upload")}
                 className={`py-2 text-xs font-semibold rounded-lg transition cursor-pointer flex items-center justify-center gap-1.5 ${
                   addMode === "upload"
-                    ? "bg-cyan-500/20 text-cyan-300 border border-cyan-400/40 shadow-sm"
-                    : "text-slate-400 hover:text-white"
+                    ? "bg-[#e2b17a]/20 text-[#e2b17a] border border-[#e2b17a]/40 shadow-sm"
+                    : "text-[#9e9990] hover:text-white"
                 }`}
               >
                 <UploadCloud size={14} />
@@ -601,8 +601,8 @@ export default function MemoryMusicSection({
                 onClick={() => setAddMode("url")}
                 className={`py-2 text-xs font-semibold rounded-lg transition cursor-pointer flex items-center justify-center gap-1.5 ${
                   addMode === "url"
-                    ? "bg-cyan-500/20 text-cyan-300 border border-cyan-400/40 shadow-sm"
-                    : "text-slate-400 hover:text-white"
+                    ? "bg-[#e2b17a]/20 text-[#e2b17a] border border-[#e2b17a]/40 shadow-sm"
+                    : "text-[#9e9990] hover:text-white"
                 }`}
               >
                 <Link2 size={14} />
@@ -614,7 +614,7 @@ export default function MemoryMusicSection({
             <form onSubmit={handleAddMusicSubmit} className="space-y-3.5">
               {addMode === "upload" ? (
                 <div>
-                  <label className="text-[11px] font-medium text-slate-300 block mb-1">
+                  <label className="text-[11px] font-medium text-[#d1cdc7] block mb-1">
                     Select Audio File (MP3, M4A, WAV, OGG, WebM — Max 25MB)
                   </label>
                   <input
@@ -630,12 +630,12 @@ export default function MemoryMusicSection({
                       }
                     }}
                     accept="audio/*,audio/mpeg,audio/mp3,audio/x-m4a,audio/m4a,audio/aac,audio/wav,audio/ogg,audio/webm"
-                    className="w-full text-xs text-slate-300 bg-slate-900/80 border border-white/15 rounded-xl p-2.5 file:mr-3 file:py-1 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-cyan-500/20 file:text-cyan-300 hover:file:bg-cyan-500/30 cursor-pointer"
+                    className="w-full text-xs text-[#d1cdc7] bg-[#111315]/80 border border-white/15 rounded-xl p-2.5 file:mr-3 file:py-1 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-[#e2b17a]/20 file:text-[#e2b17a] hover:file:bg-[#e2b17a]/30 cursor-pointer"
                   />
                 </div>
               ) : (
                 <div>
-                  <label className="text-[11px] font-medium text-slate-300 block mb-1">
+                  <label className="text-[11px] font-medium text-[#d1cdc7] block mb-1">
                     Direct Audio Resource URL
                   </label>
                   <input
@@ -643,10 +643,10 @@ export default function MemoryMusicSection({
                     value={directUrl}
                     onChange={(e) => setDirectUrl(e.target.value)}
                     placeholder="https://example.com/audio/focus-track.mp3"
-                    className="w-full bg-slate-900/80 border border-white/15 focus:border-cyan-400 rounded-xl px-3 py-2 text-xs text-white outline-none font-mono"
+                    className="w-full bg-[#111315]/80 border border-white/15 focus:border-[#e2b17a] rounded-xl px-3 py-2 text-xs text-white outline-none font-mono"
                     required
                   />
-                  <p className="text-[10px] text-slate-400 mt-1">
+                  <p className="text-[10px] text-[#9e9990] mt-1">
                     Must be a direct, public audio resource file. Protected streaming video sites are not supported.
                   </p>
                 </div>
@@ -654,7 +654,7 @@ export default function MemoryMusicSection({
 
               {/* Title input */}
               <div>
-                <label className="text-[11px] font-medium text-slate-300 block mb-1">
+                <label className="text-[11px] font-medium text-[#d1cdc7] block mb-1">
                   Track Title
                 </label>
                 <input
@@ -662,13 +662,13 @@ export default function MemoryMusicSection({
                   value={trackTitle}
                   onChange={(e) => setTrackTitle(e.target.value)}
                   placeholder="e.g. Evening Reflection Track"
-                  className="w-full bg-slate-900/80 border border-white/15 focus:border-cyan-400 rounded-xl px-3 py-2 text-xs text-white outline-none"
+                  className="w-full bg-[#111315]/80 border border-white/15 focus:border-[#e2b17a] rounded-xl px-3 py-2 text-xs text-white outline-none"
                 />
               </div>
 
               {/* Artist input */}
               <div>
-                <label className="text-[11px] font-medium text-slate-300 block mb-1">
+                <label className="text-[11px] font-medium text-[#d1cdc7] block mb-1">
                   Artist or Memory Tag (Optional)
                 </label>
                 <input
@@ -676,7 +676,7 @@ export default function MemoryMusicSection({
                   value={trackArtist}
                   onChange={(e) => setTrackArtist(e.target.value)}
                   placeholder="e.g. Focus Session or Composer"
-                  className="w-full bg-slate-900/80 border border-white/15 focus:border-cyan-400 rounded-xl px-3 py-2 text-xs text-white outline-none"
+                  className="w-full bg-[#111315]/80 border border-white/15 focus:border-[#e2b17a] rounded-xl px-3 py-2 text-xs text-white outline-none"
                 />
               </div>
 
@@ -686,18 +686,18 @@ export default function MemoryMusicSection({
                   type="button"
                   onClick={() => setShowAddModal(false)}
                   disabled={isSubmitting}
-                  className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-400 hover:text-white transition cursor-pointer"
+                  className="px-4 py-2 rounded-xl text-xs font-semibold text-[#9e9990] hover:text-white transition cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-pink-500 via-purple-500 to-cyan-400 text-white font-bold text-xs tracking-wider uppercase transition shadow-[0_0_15px_rgba(6,182,212,0.4)] hover:shadow-[0_0_20px_rgba(6,182,212,0.6)] disabled:opacity-50 cursor-pointer flex items-center gap-1.5"
+                  className="btn-champagne px-5 py-2.5 rounded-xl font-bold text-xs tracking-wider uppercase transition cursor-pointer flex items-center gap-1.5 disabled:opacity-50"
                 >
                   {isSubmitting ? (
                     <>
-                      <Loader2 size={14} className="animate-spin" />
+                      <Loader2 size={14} className="animate-spin text-[#1a140d]" />
                       <span>Processing...</span>
                     </>
                   ) : (

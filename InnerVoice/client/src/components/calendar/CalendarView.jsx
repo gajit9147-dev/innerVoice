@@ -170,14 +170,14 @@ export default function CalendarView({
       {/* Top Header & Month Switcher */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 glass-panel p-4 sm:p-5 rounded-2xl">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-cyan-500/20 text-cyan-300 border border-cyan-400/50 flex items-center justify-center shadow-[0_0_15px_rgba(6,182,212,0.3)]">
+          <div className="w-10 h-10 rounded-xl bg-[#e2b17a]/15 text-[#e2b17a] border border-[#e2b17a]/30 flex items-center justify-center">
             <CalendarIcon size={20} />
           </div>
           <div>
-            <h2 className="text-xl sm:text-2xl font-extrabold text-white tracking-tight flex items-center gap-2">
+            <h2 className="text-xl sm:text-2xl font-serif text-[#f5f1e8] tracking-tight flex items-center gap-2">
               <span>{monthTitle}</span>
             </h2>
-            <p className="text-xs text-slate-400">
+            <p className="text-xs text-[#9e9990]">
               Browse your journal entries by actual creation date
             </p>
           </div>
@@ -188,16 +188,16 @@ export default function CalendarView({
           <button
             type="button"
             onClick={handleJumpToday}
-            className="px-3 py-1.5 rounded-xl bg-slate-900/80 hover:bg-slate-800 text-slate-200 hover:text-cyan-300 border border-white/10 text-xs font-semibold transition cursor-pointer"
+            className="px-3 py-1.5 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] text-[#d1cdc7] hover:text-[#f5f1e8] border border-white/10 text-xs font-semibold transition cursor-pointer"
             title="Go to Today"
           >
             Today
           </button>
-          <div className="flex items-center gap-1 bg-slate-900/80 rounded-xl border border-white/10 p-0.5">
+          <div className="flex items-center gap-1 bg-white/[0.04] rounded-xl border border-white/10 p-0.5">
             <button
               type="button"
               onClick={handlePrevMonth}
-              className="p-2 text-slate-400 hover:text-white hover:bg-white/10 rounded-lg transition cursor-pointer"
+              className="p-2 text-[#9e9990] hover:text-white hover:bg-white/10 rounded-lg transition cursor-pointer"
               title="Previous Month"
               aria-label="Previous Month"
             >
@@ -206,7 +206,7 @@ export default function CalendarView({
             <button
               type="button"
               onClick={handleNextMonth}
-              className="p-2 text-slate-400 hover:text-white hover:bg-white/10 rounded-lg transition cursor-pointer"
+              className="p-2 text-[#9e9990] hover:text-white hover:bg-white/10 rounded-lg transition cursor-pointer"
               title="Next Month"
               aria-label="Next Month"
             >
@@ -219,8 +219,8 @@ export default function CalendarView({
       {/* Loading State */}
       {isLoading && (
         <div className="p-8 text-center glass-panel rounded-2xl">
-          <div className="w-8 h-8 rounded-full border-2 border-cyan-500/20 border-t-cyan-400 animate-spin mx-auto mb-3" />
-          <p className="text-xs text-slate-400">Loading your notes calendar...</p>
+          <div className="w-8 h-8 rounded-full border-2 border-[#e2b17a]/20 border-t-[#e2b17a] animate-spin mx-auto mb-3" />
+          <p className="text-xs text-[#9e9990]">Loading your notes calendar...</p>
         </div>
       )}
 
@@ -253,7 +253,7 @@ export default function CalendarView({
             {weekDays.map((day, idx) => (
               <div
                 key={`${day}-${idx}`}
-                className="text-center text-[10px] sm:text-xs font-semibold text-slate-400 py-1 uppercase tracking-wider"
+                className="text-center text-[10px] sm:text-xs font-semibold text-[#9e9990] py-1 uppercase tracking-wider"
               >
                 <span className="hidden sm:inline">{day}</span>
                 <span className="sm:hidden">{day.charAt(0)}</span>
@@ -278,10 +278,10 @@ export default function CalendarView({
                     !cell.isCurrentMonth
                       ? "opacity-30 hover:opacity-70 bg-white/[0.01]"
                       : isSelected
-                      ? "bg-cyan-500/20 border border-cyan-400 shadow-[0_0_15px_rgba(6,182,212,0.35)]"
+                      ? "bg-[#e2b17a]/20 border border-[#e2b17a]/50 shadow-sm"
                       : isToday
-                      ? "bg-white/[0.05] border border-cyan-400/50 hover:bg-white/10"
-                      : "bg-slate-900/40 border border-white/5 hover:border-white/20 hover:bg-white/5"
+                      ? "bg-white/[0.05] border border-[#e2b17a]/40 hover:bg-white/10"
+                      : "bg-[#111315]/40 border border-white/5 hover:border-white/20 hover:bg-white/5"
                   }`}
                   aria-label={`${formatDisplayDate(cell.date)}, ${cellNotes.length} notes`}
                 >
@@ -289,12 +289,12 @@ export default function CalendarView({
                     <span
                       className={`text-xs sm:text-sm font-semibold ${
                         isSelected
-                          ? "text-cyan-200"
+                          ? "text-[#f5f1e8]"
                           : isToday
-                          ? "text-cyan-400 font-bold"
+                          ? "text-[#e2b17a] font-bold"
                           : cell.isCurrentMonth
-                          ? "text-slate-200"
-                          : "text-slate-500"
+                          ? "text-[#d1cdc7]"
+                          : "text-[#9e9990]/50"
                       }`}
                     >
                       {cell.dayNumber}
@@ -302,7 +302,7 @@ export default function CalendarView({
 
                     {/* Today indicator badge */}
                     {isToday && (
-                      <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 shadow-[0_0_6px_rgba(6,182,212,1)]" />
+                      <span className="w-1.5 h-1.5 rounded-full bg-[#e2b17a]" />
                     )}
                   </div>
 
@@ -312,12 +312,12 @@ export default function CalendarView({
                       <div
                         className={`w-full flex items-center justify-center gap-1 py-0.5 px-0.5 sm:px-1 rounded-md text-[10px] font-mono transition ${
                           isSelected
-                            ? "bg-cyan-400/30 text-cyan-100 font-bold"
-                            : "bg-cyan-950/70 text-cyan-300 border border-cyan-500/30"
+                            ? "bg-[#e2b17a]/30 text-[#f5f1e8] font-bold"
+                            : "bg-white/10 text-[#d1cdc7] border border-white/10"
                         }`}
                         title={`${cellNotes.length} note${cellNotes.length > 1 ? "s" : ""}`}
                       >
-                        <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 shrink-0" />
+                        <span className="w-1.5 h-1.5 rounded-full bg-[#e2b17a] shrink-0" />
                         <span className="truncate">
                           {cellNotes.length}
                           <span className="hidden sm:inline ml-0.5">
@@ -337,14 +337,14 @@ export default function CalendarView({
         <div className="lg:col-span-5 xl:col-span-4 glass-panel p-4 sm:p-6 rounded-2xl space-y-5">
           {/* Header of Selected Date */}
           <div className="border-b border-white/10 pb-4">
-            <span className="text-[11px] font-semibold uppercase tracking-wider text-cyan-400">
+            <span className="text-[11px] font-semibold uppercase tracking-wider text-[#e2b17a]">
               Selected Day
             </span>
-            <h3 className="text-base sm:text-lg font-bold text-white mt-0.5">
+            <h3 className="text-base sm:text-lg font-bold text-[#f5f1e8] mt-0.5">
               {formatDisplayDate(selectedDate)}
             </h3>
-            <p className="text-xs text-slate-400 mt-1 flex items-center gap-2">
-              <BookOpen size={13} className="text-cyan-400" />
+            <p className="text-xs text-[#9e9990] mt-1 flex items-center gap-2">
+              <BookOpen size={13} className="text-[#e2b17a]" />
               <span>
                 {selectedDayNotes.length === 0
                   ? "No notes created on this date"
@@ -357,14 +357,14 @@ export default function CalendarView({
           <div className="space-y-2.5 max-h-[480px] overflow-y-auto pr-1">
             {selectedDayNotes.length === 0 ? (
               <div className="py-8 px-4 text-center rounded-xl bg-white/[0.02] border border-white/5 space-y-3">
-                <p className="text-xs text-slate-400">
+                <p className="text-xs text-[#9e9990]">
                   You haven't written any reflections on this day.
                 </p>
                 {onNewNote && (
                   <button
                     type="button"
                     onClick={onNewNote}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-300 border border-cyan-400/50 text-xs font-semibold transition cursor-pointer"
+                    className="btn-champagne inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold cursor-pointer"
                   >
                     <Plus size={13} />
                     <span>Create a Note</span>
@@ -376,7 +376,7 @@ export default function CalendarView({
                 <div
                   key={note.id}
                   onClick={() => onSelectNote && onSelectNote(note)}
-                  className="group p-3.5 rounded-xl bg-slate-900/60 hover:bg-cyan-950/30 border border-white/5 hover:border-cyan-400/50 transition-all cursor-pointer space-y-2 shadow-sm"
+                  className="group p-3.5 rounded-xl bg-[#111315]/60 hover:bg-white/[0.06] border border-white/5 hover:border-white/15 transition-all cursor-pointer space-y-2 shadow-sm"
                   role="button"
                   tabIndex={0}
                   onKeyDown={(e) => {
@@ -388,26 +388,26 @@ export default function CalendarView({
                   aria-label={`Open note: ${note.title || "Untitled"}`}
                 >
                   <div className="flex items-center justify-between gap-2 text-xs">
-                    <span className="font-mono text-cyan-400 flex items-center gap-1 font-semibold">
+                    <span className="font-mono text-[#e2b17a] flex items-center gap-1 font-semibold">
                       <Clock size={12} />
                       {formatTime(note.created_at)}
                     </span>
-                    <span className="text-[10px] px-2 py-0.5 rounded-full bg-white/5 border border-white/10 text-slate-300">
+                    <span className="text-[10px] px-2 py-0.5 rounded-full bg-white/5 border border-white/10 text-[#d1cdc7]">
                       {note.category || "General"}
                     </span>
                   </div>
 
-                  <h4 className="text-sm font-bold text-white group-hover:text-cyan-200 transition truncate">
+                  <h4 className="text-sm font-bold text-[#f5f1e8] group-hover:text-white transition truncate">
                     {note.title || "Untitled Note"}
                   </h4>
 
                   {note.content && (
-                    <p className="text-xs text-slate-400 line-clamp-2 leading-relaxed">
+                    <p className="text-xs text-[#9e9990] line-clamp-2 leading-relaxed">
                       {note.content.replace(/[#*`_]/g, "").slice(0, 120)}
                     </p>
                   )}
 
-                  <div className="pt-1 flex items-center justify-between text-[11px] text-slate-500 group-hover:text-cyan-400 transition">
+                  <div className="pt-1 flex items-center justify-between text-[11px] text-[#9e9990] group-hover:text-[#f5f1e8] transition">
                     <span>Click to open in editor</span>
                     <ArrowRight size={13} className="group-hover:translate-x-1 transition-transform" />
                   </div>

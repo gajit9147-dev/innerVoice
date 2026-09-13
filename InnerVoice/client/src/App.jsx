@@ -34,8 +34,8 @@ function RootRedirect() {
 
   if (loading) {
     return (
-      <div className="min-h-screen w-full flex flex-col items-center justify-center bg-[#040614] text-white">
-        <div className="w-12 h-12 rounded-full border-2 border-cyan-500/20 border-t-cyan-400 animate-spin" />
+      <div className="min-h-screen w-full flex flex-col items-center justify-center bg-[#08090a] text-white">
+        <div className="w-12 h-12 rounded-full border-2 border-[#e2b17a]/20 border-t-[#e2b17a] animate-spin" />
       </div>
     );
   }
