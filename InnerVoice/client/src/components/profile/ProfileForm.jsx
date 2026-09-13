@@ -1,63 +1,69 @@
 import { useState, useEffect } from "react";
 import { useToast } from "../../context/ToastContext";
-import { Save, User, Mail, AtSign, Phone, FileText } from "lucide-react";
+import { Save, User, AtSign, Phone, FileText, Loader2 } from "lucide-react";
 import { updateProfileInfo } from "../../api/profile";
+import GlassSurface from "../glass/GlassSurface";
 
 function ProfileForm({ user, onUpdate }) {
   const { addToast } = useToast();
   const [isSaving, setIsSaving] = useState(false);
   const [formData, setFormData] = useState({
-    fullName: user?.full_name || "",
+    fullName: user?.full_name || user?.name || "",
     username: user?.username || "",
     phone: user?.phone || "",
     bio: user?.bio || "",
-    email: user?.email || "",
   });
 
   useEffect(() => {
     if (user) {
       setFormData({
-        fullName: user.full_name || "",
+        fullName: user.full_name || user.name || "",
         username: user.username || "",
         phone: user.phone || "",
         bio: user.bio || "",
-        email: user.email || "",
       });
     }
   }, [user]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData({ ...formData, [name]: value });
+    // Cap bio at 200 characters if bio
+    if (name === "bio" && value.length > 200) return;
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsSaving(true);
-    
+
     try {
       const payload = {
         full_name: formData.fullName,
         username: formData.username,
         phone: formData.phone,
-        bio: formData.bio
+        bio: formData.bio,
       };
+
       const res = await updateProfileInfo(payload);
-      
+
       const savedUser = JSON.parse(localStorage.getItem("user") || "{}");
-      localStorage.setItem("user", JSON.stringify({
-        ...savedUser,
-        full_name: formData.fullName,
-        username: formData.username,
-        phone: formData.phone,
-        bio: formData.bio
-      }));
+      localStorage.setItem(
+        "user",
+        JSON.stringify({
+          ...savedUser,
+          full_name: formData.fullName,
+          name: formData.fullName,
+          username: formData.username,
+          phone: formData.phone,
+          bio: formData.bio,
+        })
+      );
 
       // Dispatch storage event so header/sidebar updates dynamically
       window.dispatchEvent(new Event("storage"));
-      
-      addToast(res.data.message || "Profile updated successfully!", "success");
-      
+
+      addToast(res.data.message || "Personal information updated successfully!", "success");
+
       if (onUpdate) onUpdate();
     } catch (err) {
       addToast(err.response?.data?.message || "Failed to update profile.", "error");
@@ -67,111 +73,129 @@ function ProfileForm({ user, onUpdate }) {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="bg-white dark:bg-slate-800 rounded-2xl shadow-md p-6 lg:p-8 border border-gray-100 dark:border-slate-700 transition-colors">
-      <h3 className="text-xl font-bold text-gray-800 dark:text-white mb-6">
-        Personal Information
-      </h3>
+    <GlassSurface
+      level={1}
+      className="p-6 sm:p-7 rounded-3xl relative overflow-hidden transition-all duration-300 border border-white/[0.09] shadow-[0_20px_50px_rgba(0,0,0,0.55)]"
+    >
+      {/* Header */}
+      <div className="flex items-start justify-between pb-5 mb-5 border-b border-white/[0.07]">
+        <div>
+          <div className="flex items-center gap-2">
+            <User size={17} className="text-[#e2b17a]" />
+            <h2 className="font-serif text-lg text-[#f5f2eb] font-normal tracking-wide">
+              Personal Information
+            </h2>
+          </div>
+          <p className="text-xs text-[#9e9990] mt-0.5 font-sans">
+            Keep your details up to date.
+          </p>
+        </div>
+      </div>
 
-      <div className="space-y-5">
+      <form onSubmit={handleSubmit} className="space-y-4">
         {/* Full Name */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+          <label className="block text-xs font-medium text-[#d1cdc7] mb-1.5">
             Full Name
           </label>
-          <div className="relative">
-            <User className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+          <div className="relative flex items-center">
+            <div className="absolute left-3.5 text-[#9e9990] pointer-events-none">
+              <User size={16} />
+            </div>
             <input
               type="text"
               name="fullName"
               value={formData.fullName}
               onChange={handleChange}
-              className="w-full bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-600 rounded-xl py-3 pl-11 pr-4 outline-none focus:ring-2 focus:ring-blue-500 text-gray-800 dark:text-gray-100 transition-colors"
+              placeholder="Your full name"
+              required
+              className="w-full h-12 bg-[#0e131d]/90 border border-white/[0.09] rounded-xl pl-10 pr-4 text-sm text-[#f5f2eb] placeholder-[#6f6b64] font-sans focus:border-[#d8b27a]/70 focus:ring-1 focus:ring-[#d8b27a]/30 focus:outline-none transition-colors"
             />
           </div>
         </div>
 
         {/* Username */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+          <label className="block text-xs font-medium text-[#d1cdc7] mb-1.5">
             Username
           </label>
-          <div className="relative">
-            <AtSign className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+          <div className="relative flex items-center">
+            <div className="absolute left-3.5 text-[#9e9990] pointer-events-none">
+              <AtSign size={16} />
+            </div>
             <input
               type="text"
               name="username"
               value={formData.username}
               onChange={handleChange}
-              className="w-full bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-600 rounded-xl py-3 pl-11 pr-4 outline-none focus:ring-2 focus:ring-blue-500 text-gray-800 dark:text-gray-100 transition-colors"
+              placeholder="username"
+              className="w-full h-12 bg-[#0e131d]/90 border border-white/[0.09] rounded-xl pl-10 pr-4 text-sm text-[#f5f2eb] placeholder-[#6f6b64] font-sans focus:border-[#d8b27a]/70 focus:ring-1 focus:ring-[#d8b27a]/30 focus:outline-none transition-colors"
             />
           </div>
         </div>
 
-        {/* Phone */}
+        {/* Phone Number */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+          <label className="block text-xs font-medium text-[#d1cdc7] mb-1.5">
             Phone Number
           </label>
-          <div className="relative">
-            <Phone className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+          <div className="relative flex items-center">
+            <div className="absolute left-3.5 text-[#9e9990] pointer-events-none">
+              <Phone size={16} />
+            </div>
             <input
-              type="text"
+              type="tel"
               name="phone"
               value={formData.phone}
               onChange={handleChange}
-              className="w-full bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-600 rounded-xl py-3 pl-11 pr-4 outline-none focus:ring-2 focus:ring-blue-500 text-gray-800 dark:text-gray-100 transition-colors"
+              placeholder="+1 (555) 000-0000"
+              className="w-full h-12 bg-[#0e131d]/90 border border-white/[0.09] rounded-xl pl-10 pr-4 text-sm text-[#f5f2eb] placeholder-[#6f6b64] font-sans focus:border-[#d8b27a]/70 focus:ring-1 focus:ring-[#d8b27a]/30 focus:outline-none transition-colors"
             />
           </div>
         </div>
 
         {/* Bio */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-            Bio
-          </label>
+          <div className="flex items-center justify-between mb-1.5">
+            <label className="block text-xs font-medium text-[#d1cdc7]">
+              Bio
+            </label>
+            <span className="text-[11px] font-mono text-[#9e9990]">
+              {formData.bio.length}/200
+            </span>
+          </div>
           <div className="relative">
-            <FileText className="absolute left-4 top-4 text-gray-400" size={18} />
+            <div className="absolute left-3.5 top-3.5 text-[#9e9990] pointer-events-none">
+              <FileText size={16} />
+            </div>
             <textarea
               name="bio"
               value={formData.bio}
               onChange={handleChange}
-              rows={3}
-              className="w-full bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-600 rounded-xl py-3 pl-11 pr-4 outline-none focus:ring-2 focus:ring-blue-500 text-gray-800 dark:text-gray-100 transition-colors resize-none"
-              placeholder="Tell us something about yourself..."
+              rows={4}
+              placeholder="Tell us something about your journey..."
+              className="w-full bg-[#0e131d]/90 border border-white/[0.09] rounded-xl pl-10 pr-4 py-3 text-sm text-[#f5f2eb] placeholder-[#6f6b64] font-sans focus:border-[#d8b27a]/70 focus:ring-1 focus:ring-[#d8b27a]/30 focus:outline-none transition-colors resize-none leading-relaxed"
             />
           </div>
         </div>
 
-        {/* Email */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-            Email Address
-          </label>
-          <div className="relative">
-            <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
-            <input
-              type="email"
-              name="email"
-              value={formData.email}
-              disabled
-              className="w-full bg-gray-50 dark:bg-slate-900/50 border border-gray-200 dark:border-slate-700 rounded-xl py-3 pl-11 pr-4 text-gray-500 dark:text-gray-400 cursor-not-allowed transition-colors"
-            />
-          </div>
-          <p className="text-xs text-gray-400 mt-2">Email address cannot be changed currently.</p>
+        {/* Save Changes Button */}
+        <div className="pt-2">
+          <button
+            type="submit"
+            disabled={isSaving}
+            className="btn-champagne w-full py-2.5 px-5 rounded-xl text-xs font-semibold flex items-center justify-center gap-2 cursor-pointer shadow-md disabled:opacity-60"
+          >
+            {isSaving ? (
+              <Loader2 size={16} className="animate-spin text-[#1a140d]" />
+            ) : (
+              <Save size={16} className="text-[#1a140d]" />
+            )}
+            <span>{isSaving ? "Saving Changes..." : "Save Changes"}</span>
+          </button>
         </div>
-      </div>
-
-      <div className="mt-8 flex justify-end">
-        <button
-          type="submit"
-          disabled={isSaving}
-          className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-xl font-semibold transition-colors disabled:opacity-70 cursor-pointer"
-        >
-          <Save size={18} />
-          {isSaving ? "Saving..." : "Save Changes"}
-        </button>
-      </div>
-    </form>
+      </form>
+    </GlassSurface>
   );
 }
 

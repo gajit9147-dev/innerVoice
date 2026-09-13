@@ -1,7 +1,8 @@
 import { useNavigate } from "react-router-dom";
-import { AlertTriangle } from "lucide-react";
+import { AlertTriangle, Trash2 } from "lucide-react";
 import { useToast } from "../../context/ToastContext";
 import { deleteAccount } from "../../api/profile";
+import GlassSurface from "../glass/GlassSurface";
 
 function DangerZoneCard() {
   const navigate = useNavigate();
@@ -26,22 +27,37 @@ function DangerZoneCard() {
   };
 
   return (
-    <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-md p-6 lg:p-8 border border-red-150 dark:border-red-900/30 transition-colors">
-      <h3 className="text-lg font-bold text-red-600 dark:text-red-500 mb-2 flex items-center gap-2">
-        <AlertTriangle size={20} />
-        Danger Zone
-      </h3>
-      <p className="text-gray-500 dark:text-gray-400 text-sm mb-4">
-        Permanently delete your account and all your notes. This action cannot be undone.
+    <GlassSurface
+      level={1}
+      className="p-6 sm:p-7 rounded-3xl relative overflow-hidden transition-all duration-300 border border-red-500/20 shadow-[0_20px_50px_rgba(0,0,0,0.55)]"
+    >
+      <div className="flex items-start justify-between pb-5 mb-5 border-b border-red-500/15">
+        <div>
+          <div className="flex items-center gap-2 text-rose-400">
+            <AlertTriangle size={17} />
+            <h2 className="font-serif text-lg text-rose-300 font-normal tracking-wide">
+              Danger Zone
+            </h2>
+          </div>
+          <p className="text-xs text-[#9e9990] mt-0.5 font-sans">
+            Permanent account deletion.
+          </p>
+        </div>
+      </div>
+
+      <p className="text-xs text-[#d1cdc7] leading-relaxed mb-5">
+        Permanently delete your account and all your associated thoughts, music memories, and reflections. This action cannot be reversed.
       </p>
+
       <button
         type="button"
         onClick={handleDeleteAccount}
-        className="px-6 py-2.5 bg-red-50 hover:bg-red-100 text-red-600 dark:bg-red-900/20 dark:hover:bg-red-900/40 dark:text-red-400 rounded-lg font-medium transition-colors cursor-pointer"
+        className="w-full py-2.5 px-4 bg-red-500/15 hover:bg-red-500/25 text-rose-300 border border-red-500/30 hover:border-red-500/50 rounded-xl text-xs font-semibold flex items-center justify-center gap-2 transition-all cursor-pointer shadow-md"
       >
-        Delete Account
+        <Trash2 size={15} />
+        <span>Delete My Account</span>
       </button>
-    </div>
+    </GlassSurface>
   );
 }
 

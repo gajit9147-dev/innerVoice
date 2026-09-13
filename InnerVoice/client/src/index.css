@@ -177,6 +177,29 @@ body {
   border-color: rgba(255, 255, 255, 0.14);
 }
 
+/* Translucent amber glass button (for Profile Settings, View Photo, Update actions) */
+.btn-amber-glass {
+  background: rgba(216, 178, 122, 0.12);
+  color: #f5f2eb;
+  border: 1px solid rgba(216, 178, 122, 0.32);
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.35), 0 0 14px rgba(216, 178, 122, 0.08);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.btn-amber-glass:hover {
+  background: rgba(216, 178, 122, 0.22);
+  border-color: rgba(216, 178, 122, 0.55);
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.45), 0 0 20px rgba(216, 178, 122, 0.24);
+  color: #ffffff;
+  transform: translateY(-1px);
+}
+
+.btn-amber-glass:active {
+  transform: translateY(0) scale(0.98);
+}
+
 /* Filter pills */
 .pill-filter {
   padding: 0.375rem 1rem;

@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import Sidebar from "./Sidebar";
 import Header from "./Header";
 
-function Layout({ children }) {
+function Layout({ children, headerSubtitle }) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   // Mobile drawer Escape key handler
@@ -49,7 +49,10 @@ function Layout({ children }) {
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col h-screen overflow-hidden min-w-0">
         <div className="p-2.5 sm:p-4 lg:p-6 pb-0 min-w-0">
-          <Header onMenuClick={() => setIsSidebarOpen((prev) => !prev)} />
+          <Header
+            onMenuClick={() => setIsSidebarOpen((prev) => !prev)}
+            subtitle={headerSubtitle}
+          />
         </div>
         <div className="flex-1 overflow-y-auto p-3 sm:p-4 lg:p-6 min-w-0">
           {children}

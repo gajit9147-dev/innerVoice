@@ -21,6 +21,7 @@ export default function Header({
   notes = [],
   onSelectNote,
   onAIAssist,
+  subtitle,
 }) {
   const navigate = useNavigate();
   const { user, logout } = useAuth();
@@ -112,7 +113,7 @@ export default function Header({
             <span className="text-xl sm:text-2xl text-[#e2b17a]">🌙</span>
           </div>
           <p className="text-xs sm:text-sm text-[#9e9990] mt-0.5 font-sans">
-            How are you feeling today?
+            {subtitle || "How are you feeling today?"}
           </p>
         </div>
 

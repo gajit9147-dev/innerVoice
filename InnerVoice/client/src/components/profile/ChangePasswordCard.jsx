@@ -1,13 +1,20 @@
 import { useState } from "react";
-import { Lock } from "lucide-react";
+import { Lock, Eye, EyeOff, Loader2 } from "lucide-react";
 import { useToast } from "../../context/ToastContext";
 import { changePassword } from "../../api/profile";
+import GlassSurface from "../glass/GlassSurface";
 
 function ChangePasswordCard() {
   const { addToast } = useToast();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showCurrent, setShowCurrent] = useState(false);
+  const [showNew, setShowNew] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
+
   const [formData, setFormData] = useState({
     currentPassword: "",
     newPassword: "",
+    confirmPassword: "",
   });
 
   const handleChange = (e) => {
@@ -19,84 +26,165 @@ function ChangePasswordCard() {
     e.preventDefault();
 
     if (!formData.currentPassword || !formData.newPassword) {
-      addToast("Please fill in both password fields.", "error");
+      addToast("Please fill in both current and new password.", "error");
+      return;
+    }
+
+    if (formData.confirmPassword && formData.newPassword !== formData.confirmPassword) {
+      addToast("New password and confirm password do not match.", "error");
+      return;
+    }
+
+    if (formData.newPassword.length < 6) {
+      addToast("Password must be at least 6 characters long.", "error");
       return;
     }
 
     try {
+      setIsSubmitting(true);
       const res = await changePassword({
         currentPassword: formData.currentPassword,
         newPassword: formData.newPassword,
       });
 
-      addToast(res.data.message || "Password changed successfully!", "success");
+      addToast(res.data.message || "Password updated successfully!", "success");
 
       setFormData({
         currentPassword: "",
         newPassword: "",
+        confirmPassword: "",
       });
     } catch (error) {
-      addToast(error.response?.data?.message || "Something went wrong.", "error");
+      addToast(error.response?.data?.message || "Failed to update password.", "error");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   return (
-    <form
-      onSubmit={handlePasswordChange}
-      className="bg-white dark:bg-slate-800 rounded-2xl shadow-md p-6 lg:p-8 border border-gray-100 dark:border-slate-700 transition-colors"
+    <GlassSurface
+      level={1}
+      className="p-6 sm:p-7 rounded-3xl relative overflow-hidden transition-all duration-300 border border-white/[0.09] shadow-[0_20px_50px_rgba(0,0,0,0.55)]"
     >
-      <h3 className="text-xl font-bold text-gray-800 dark:text-white mb-6">
-        Change Password
-      </h3>
+      {/* Header */}
+      <div className="flex items-start justify-between pb-5 mb-5 border-b border-white/[0.07]">
+        <div>
+          <div className="flex items-center gap-2">
+            <Lock size={17} className="text-[#e2b17a]" />
+            <h2 className="font-serif text-lg text-[#f5f2eb] font-normal tracking-wide">
+              Change Password
+            </h2>
+          </div>
+          <p className="text-xs text-[#9e9990] mt-0.5 font-sans">
+            Keep your account secure.
+          </p>
+        </div>
+      </div>
 
-      <div className="space-y-5">
+      <form onSubmit={handlePasswordChange} className="space-y-4">
         {/* Current Password */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+          <label className="block text-xs font-medium text-[#d1cdc7] mb-1.5">
             Current Password
           </label>
-          <div className="relative">
-            <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+          <div className="relative flex items-center">
+            <div className="absolute left-3.5 text-[#9e9990] pointer-events-none">
+              <Lock size={16} />
+            </div>
             <input
-              type="password"
+              type={showCurrent ? "text" : "password"}
               name="currentPassword"
               value={formData.currentPassword}
               onChange={handleChange}
               placeholder="Enter current password"
-              className="w-full bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-600 rounded-xl py-3 pl-11 pr-4 outline-none focus:ring-2 focus:ring-blue-500 text-gray-800 dark:text-gray-100 transition-colors placeholder-gray-400 dark:placeholder-gray-500"
+              required
+              className="w-full h-12 bg-[#0e131d]/90 border border-white/[0.09] rounded-xl pl-10 pr-11 text-sm text-[#f5f2eb] placeholder-[#6f6b64] font-sans focus:border-[#d8b27a]/70 focus:ring-1 focus:ring-[#d8b27a]/30 focus:outline-none transition-colors"
             />
+            <button
+              type="button"
+              onClick={() => setShowCurrent(!showCurrent)}
+              className="absolute right-3.5 text-[#9e9990] hover:text-[#f5f2eb] transition"
+              aria-label="Toggle current password visibility"
+            >
+              {showCurrent ? <EyeOff size={16} /> : <Eye size={16} />}
+            </button>
           </div>
         </div>
 
         {/* New Password */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+          <label className="block text-xs font-medium text-[#d1cdc7] mb-1.5">
             New Password
           </label>
-          <div className="relative">
-            <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+          <div className="relative flex items-center">
+            <div className="absolute left-3.5 text-[#9e9990] pointer-events-none">
+              <Lock size={16} />
+            </div>
             <input
-              type="password"
+              type={showNew ? "text" : "password"}
               name="newPassword"
               value={formData.newPassword}
               onChange={handleChange}
-              placeholder="Enter new password"
-              className="w-full bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-600 rounded-xl py-3 pl-11 pr-4 outline-none focus:ring-2 focus:ring-blue-500 text-gray-800 dark:text-gray-100 transition-colors placeholder-gray-400 dark:placeholder-gray-500"
+              placeholder="Enter new password (min. 6 chars)"
+              required
+              className="w-full h-12 bg-[#0e131d]/90 border border-white/[0.09] rounded-xl pl-10 pr-11 text-sm text-[#f5f2eb] placeholder-[#6f6b64] font-sans focus:border-[#d8b27a]/70 focus:ring-1 focus:ring-[#d8b27a]/30 focus:outline-none transition-colors"
             />
+            <button
+              type="button"
+              onClick={() => setShowNew(!showNew)}
+              className="absolute right-3.5 text-[#9e9990] hover:text-[#f5f2eb] transition"
+              aria-label="Toggle new password visibility"
+            >
+              {showNew ? <EyeOff size={16} /> : <Eye size={16} />}
+            </button>
           </div>
         </div>
-      </div>
 
-      <div className="mt-6 flex justify-end">
-        <button
-          type="submit"
-          className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-xl font-semibold transition-colors cursor-pointer"
-        >
-          <Lock size={18} />
-          Change Password
-        </button>
-      </div>
-    </form>
+        {/* Confirm New Password */}
+        <div>
+          <label className="block text-xs font-medium text-[#d1cdc7] mb-1.5">
+            Confirm New Password
+          </label>
+          <div className="relative flex items-center">
+            <div className="absolute left-3.5 text-[#9e9990] pointer-events-none">
+              <Lock size={16} />
+            </div>
+            <input
+              type={showConfirm ? "text" : "password"}
+              name="confirmPassword"
+              value={formData.confirmPassword}
+              onChange={handleChange}
+              placeholder="Confirm new password"
+              className="w-full h-12 bg-[#0e131d]/90 border border-white/[0.09] rounded-xl pl-10 pr-11 text-sm text-[#f5f2eb] placeholder-[#6f6b64] font-sans focus:border-[#d8b27a]/70 focus:ring-1 focus:ring-[#d8b27a]/30 focus:outline-none transition-colors"
+            />
+            <button
+              type="button"
+              onClick={() => setShowConfirm(!showConfirm)}
+              className="absolute right-3.5 text-[#9e9990] hover:text-[#f5f2eb] transition"
+              aria-label="Toggle confirm password visibility"
+            >
+              {showConfirm ? <EyeOff size={16} /> : <Eye size={16} />}
+            </button>
+          </div>
+        </div>
+
+        {/* Update Password Button (Replaces bright green button with amber glass button) */}
+        <div className="pt-2">
+          <button
+            type="submit"
+            disabled={isSubmitting}
+            className="btn-champagne w-full py-2.5 px-5 rounded-xl text-xs font-semibold flex items-center justify-center gap-2 cursor-pointer shadow-md disabled:opacity-60"
+          >
+            {isSubmitting ? (
+              <Loader2 size={16} className="animate-spin text-[#1a140d]" />
+            ) : (
+              <Lock size={16} className="text-[#1a140d]" />
+            )}
+            <span>{isSubmitting ? "Updating..." : "Update Password"}</span>
+          </button>
+        </div>
+      </form>
+    </GlassSurface>
   );
 }
 

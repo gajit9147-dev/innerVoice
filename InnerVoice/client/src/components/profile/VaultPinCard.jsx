@@ -1,73 +1,106 @@
 import { useState } from "react";
-import { Lock } from "lucide-react";
+import { Lock, Shield, Loader2, Check } from "lucide-react";
 import { setVaultPin } from "../../api/auth";
+import { useToast } from "../../context/ToastContext";
+import GlassSurface from "../glass/GlassSurface";
 
 function VaultPinCard() {
+  const { addToast } = useToast();
   const [pin, setPin] = useState("");
   const [confirmPin, setConfirmPin] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const handleSave = async () => {
+  const handleSave = async (e) => {
+    if (e) e.preventDefault();
+
     if (!/^\d{4}$/.test(pin)) {
-      return alert("PIN must be exactly 4 digits.");
+      addToast("PIN must be exactly 4 digits.", "error");
+      return;
     }
 
     if (pin !== confirmPin) {
-      return alert("PINs do not match.");
+      addToast("PINs do not match.", "error");
+      return;
     }
 
     try {
       setLoading(true);
-
       await setVaultPin(pin);
-
-      alert("Vault PIN saved successfully!");
-
+      addToast("Vault security PIN updated successfully!", "success");
       setPin("");
       setConfirmPin("");
     } catch (err) {
       console.error(err);
-      alert("Unable to save Vault PIN.");
+      addToast("Unable to update Vault PIN.", "error");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="bg-white dark:bg-slate-900 rounded-xl shadow-md border border-gray-200 dark:border-slate-700 p-6">
-      <div className="flex items-center gap-3 mb-5">
-        <Lock className="text-red-500" size={24} />
-        <h2 className="text-xl font-bold">Vault Security</h2>
+    <GlassSurface
+      level={1}
+      className="p-6 sm:p-7 rounded-3xl relative overflow-hidden transition-all duration-300 border border-white/[0.09] shadow-[0_20px_50px_rgba(0,0,0,0.55)]"
+    >
+      <div className="flex items-start justify-between pb-5 mb-5 border-b border-white/[0.07]">
+        <div>
+          <div className="flex items-center gap-2">
+            <Shield size={17} className="text-[#e2b17a]" />
+            <h2 className="font-serif text-lg text-[#f5f2eb] font-normal tracking-wide">
+              Vault Security PIN
+            </h2>
+          </div>
+          <p className="text-xs text-[#9e9990] mt-0.5 font-sans">
+            Protect private notes with a 4-digit PIN.
+          </p>
+        </div>
       </div>
 
-      <div className="space-y-4">
-        <input
-          type="password"
-          maxLength={4}
-          value={pin}
-          onChange={(e) => setPin(e.target.value)}
-          placeholder="Enter 4-digit PIN"
-          className="w-full border rounded-lg p-3"
-        />
+      <form onSubmit={handleSave} className="space-y-4">
+        <div>
+          <label className="block text-xs font-medium text-[#d1cdc7] mb-1.5">
+            4-Digit PIN
+          </label>
+          <input
+            type="password"
+            maxLength={4}
+            value={pin}
+            onChange={(e) => setPin(e.target.value.replace(/\D/g, ""))}
+            placeholder="••••"
+            className="w-full h-12 bg-[#0e131d]/90 border border-white/[0.09] rounded-xl px-4 text-center tracking-[0.5em] text-lg text-[#f5f2eb] placeholder-[#6f6b64] font-mono focus:border-[#d8b27a]/70 focus:ring-1 focus:ring-[#d8b27a]/30 focus:outline-none transition-colors"
+          />
+        </div>
 
-        <input
-          type="password"
-          maxLength={4}
-          value={confirmPin}
-          onChange={(e) => setConfirmPin(e.target.value)}
-          placeholder="Confirm PIN"
-          className="w-full border rounded-lg p-3"
-        />
+        <div>
+          <label className="block text-xs font-medium text-[#d1cdc7] mb-1.5">
+            Confirm PIN
+          </label>
+          <input
+            type="password"
+            maxLength={4}
+            value={confirmPin}
+            onChange={(e) => setConfirmPin(e.target.value.replace(/\D/g, ""))}
+            placeholder="••••"
+            className="w-full h-12 bg-[#0e131d]/90 border border-white/[0.09] rounded-xl px-4 text-center tracking-[0.5em] text-lg text-[#f5f2eb] placeholder-[#6f6b64] font-mono focus:border-[#d8b27a]/70 focus:ring-1 focus:ring-[#d8b27a]/30 focus:outline-none transition-colors"
+          />
+        </div>
 
-        <button
-          onClick={handleSave}
-          disabled={loading}
-          className="w-full bg-red-600 hover:bg-red-700 text-white rounded-lg py-3"
-        >
-          {loading ? "Saving..." : "Save Vault PIN"}
-        </button>
-      </div>
-    </div>
+        <div className="pt-2">
+          <button
+            type="submit"
+            disabled={loading}
+            className="btn-amber-glass w-full py-2.5 px-5 rounded-xl text-xs font-semibold flex items-center justify-center gap-2 cursor-pointer shadow-md disabled:opacity-60"
+          >
+            {loading ? (
+              <Loader2 size={16} className="animate-spin text-[#e2b17a]" />
+            ) : (
+              <Lock size={16} className="text-[#e2b17a]" />
+            )}
+            <span>{loading ? "Saving PIN..." : "Save Vault PIN"}</span>
+          </button>
+        </div>
+      </form>
+    </GlassSurface>
   );
 }
 
