@@ -5,6 +5,7 @@ import tailwindcss from "@tailwindcss/vite";
 export default defineConfig({
   plugins: [react(), tailwindcss()],
   server: {
+    host: true, // Listen on all local IP addresses (0.0.0.0) for mobile browser access
     port: 5173,
     strictPort: true,
     proxy: {

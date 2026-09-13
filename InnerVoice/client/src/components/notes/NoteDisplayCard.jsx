@@ -63,36 +63,34 @@ export default function NoteDisplayCard({
       const cached = await isNoteOfflineCached(note.id);
       if (active) setIsOfflineCached(cached);
 
-      const isOffline = typeof navigator !== "undefined" && !navigator.onLine;
+      try {
+        const isOffline = typeof navigator !== "undefined" && !navigator.onLine;
 
-      if (isOffline) {
-        // Load from IndexedDB
-        const offlineItems = await getOfflineMediaForNote(note.id);
-        if (active) {
-          setPhotos(offlineItems.filter((m) => m.media_type === "photo"));
-          setMusicTracks(offlineItems.filter((m) => m.media_type === "music"));
-        }
-      } else {
-        // Fetch from backend
-        try {
-          const res = await getNoteMedia(note.id);
-          const allMedia = res.data?.media || [];
-          if (active) {
-            setPhotos(allMedia.filter((m) => m.media_type === "photo"));
-            setMusicTracks(allMedia.filter((m) => m.media_type === "music"));
+        if (isOffline) {
+          // Load from IndexedDB
+          const offlineItems = await getOfflineMediaForNote(note.id);
+          if (active && offlineItems) {
+            setPhotos(offlineItems.filter((m) => m.media_type === "photo"));
+            setMusicTracks(offlineItems.filter((m) => m.media_type === "music"));
           }
-        } catch {
-          // Fallback to local offline cache if network error
-          if (res.data?.media && active) {
-            const ph = res.data.media.filter((m) => m.media_type === "photo");
-            const mu = res.data.media.filter((m) => m.media_type === "music");
-            setPhotos(ph);
-            setMusicTracks(mu);
+        } else {
+          // Fetch from backend
+          try {
+            const res = await getNoteMedia(note.id);
+            const allMedia = res.data?.media || [];
+            if (active) {
+              setPhotos(allMedia.filter((m) => m.media_type === "photo"));
+              setMusicTracks(allMedia.filter((m) => m.media_type === "music"));
+            }
+          } catch {
+            // Fallback to local offline cache if network error
+            const offlineItems = await getOfflineMediaForNote(note.id);
+            if (active && offlineItems) {
+              setPhotos(offlineItems.filter((m) => m.media_type === "photo"));
+              setMusicTracks(offlineItems.filter((m) => m.media_type === "music"));
+            }
           }
         }
-
-        const cached = await isNoteOfflineCached(note.id);
-        if (active) setIsOfflineCached(cached);
       } catch (err) {
         console.warn("Could not load note media:", err);
       }

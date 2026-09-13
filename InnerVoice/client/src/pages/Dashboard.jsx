@@ -12,6 +12,7 @@ import MusicLibraryModal from "../components/dashboard/MusicLibraryModal";
 import MemoriesView from "../components/dashboard/MemoriesView";
 import AudioVoiceMemo from "../components/notes/AudioVoiceMemo";
 import CalendarView from "../components/calendar/CalendarView";
+import { useToast } from "../context/ToastContext";
 
 // Security modals
 import UnlockNoteModal from "../components/notes/UnlockNoteModal";
@@ -125,6 +126,7 @@ export default function Dashboard({ initialTab = "today" }) {
   const [loading, setLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const { addToast } = useToast();
 
   // Modals
   const [showNoteModal, setShowNoteModal] = useState(false);
@@ -269,11 +271,25 @@ export default function Dashboard({ initialTab = "today" }) {
       if (!String(id).startsWith("demo-") && !String(id).startsWith("local-")) {
         await moveToTrash(id);
       }
-      setNotes((prev) => prev.filter((n) => n.id !== id));
+      setNotes((prev) =>
+        prev.filter(
+          (n) =>
+            String(n.id) !== String(id) &&
+            String(n._id) !== String(id)
+        )
+      );
       fetchTrash();
+      addToast("Note moved to trash", "success");
     } catch (err) {
       console.error("Delete note error:", err);
-      setNotes((prev) => prev.filter((n) => n.id !== id));
+      setNotes((prev) =>
+        prev.filter(
+          (n) =>
+            String(n.id) !== String(id) &&
+            String(n._id) !== String(id)
+        )
+      );
+      addToast("Note removed from view", "success");
     }
   };
 

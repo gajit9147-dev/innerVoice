@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   Play,
   Pause,
@@ -32,6 +32,27 @@ export default function NoteCard({
   const [showMenu, setShowMenu] = useState(false);
   const [isLocalAudioPlaying, setIsLocalAudioPlaying] = useState(false);
   const [isLightboxOpen, setIsLightboxOpen] = useState(false);
+  const menuRef = useRef(null);
+
+  const noteId = note?.id ?? note?._id;
+
+  // Dismiss context menu when clicking outside
+  useEffect(() => {
+    if (!showMenu) return;
+
+    const handleOutsideClick = (e) => {
+      if (menuRef.current && !menuRef.current.contains(e.target)) {
+        setShowMenu(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleOutsideClick);
+    document.addEventListener("touchstart", handleOutsideClick);
+    return () => {
+      document.removeEventListener("mousedown", handleOutsideClick);
+      document.removeEventListener("touchstart", handleOutsideClick);
+    };
+  }, [showMenu]);
 
   // Format date parts
   const noteDate = note?.created_at ? new Date(note.created_at) : new Date();
@@ -43,6 +64,7 @@ export default function NoteCard({
   // 1. Photos
   const attachedPhoto =
     note?.photos?.[0]?.file_url ||
+    note?.photos?.[0]?.url ||
     note?.photo_url ||
     (note?.id === "demo-journal-1" ? "/assets/sunset_skyline.jpg" : null) ||
     (note?.id === "demo-journal-2" ? "/assets/coffee_notebook.jpg" : null);
@@ -102,29 +124,45 @@ export default function NoteCard({
     setIsLocalAudioPlaying((prev) => !prev);
   };
 
+  const handleDeleteClick = (e) => {
+    e.stopPropagation();
+    setShowMenu(false);
+    if (onDelete && noteId) {
+      onDelete(noteId);
+    }
+  };
+
   return (
     <GlassSurface
       level={1}
-      className="p-5 sm:p-6 rounded-3xl relative overflow-hidden transition-all duration-300 hover:border-white/[0.14] hover:shadow-[0_24px_56px_rgba(0,0,0,0.7)] group"
+      className="p-4 sm:p-6 rounded-3xl relative transition-all duration-300 hover:border-white/[0.14] hover:shadow-[0_24px_56px_rgba(0,0,0,0.7)] group w-full min-w-0"
     >
       {/* Top Right Context Menu */}
-      <div className="absolute top-4 right-4 z-20">
+      <div ref={menuRef} className="absolute top-3.5 right-3.5 sm:top-4 sm:right-4 z-30">
         <button
           type="button"
           onClick={(e) => {
             e.stopPropagation();
             setShowMenu(!showMenu);
           }}
-          className="p-1.5 rounded-lg text-[#9e9990] hover:text-[#f5f2eb] hover:bg-white/[0.06] transition"
+          className={`p-1.5 rounded-xl transition cursor-pointer ${
+            showMenu
+              ? "bg-white/[0.12] text-[#f5f2eb]"
+              : "text-[#9e9990] hover:text-[#f5f2eb] hover:bg-white/[0.08]"
+          }`}
           aria-label="Note options"
         >
-          <MoreVertical size={16} />
+          <MoreVertical size={17} />
         </button>
 
         {showMenu && (
           <GlassSurface
             level={3}
-            className="absolute right-0 top-8 w-40 py-1.5 z-30 shadow-2xl rounded-xl text-xs"
+            className="absolute right-0 top-9 w-44 py-1.5 z-50 shadow-2xl rounded-2xl border border-white/[0.12] text-xs backdrop-blur-2xl animate-scale-up"
+            style={{
+              background: "rgba(20, 22, 28, 0.96)",
+              boxShadow: "0 18px 45px rgba(0, 0, 0, 0.7), 0 0 1px rgba(255, 255, 255, 0.2)",
+            }}
           >
             {!isTrash ? (
               <>
@@ -136,9 +174,9 @@ export default function NoteCard({
                       setShowMenu(false);
                       onEdit(note);
                     }}
-                    className="w-full flex items-center gap-2 px-3 py-2 text-[#d1cdc7] hover:text-white hover:bg-white/[0.06] transition"
+                    className="w-full flex items-center gap-2.5 px-3.5 py-2 text-[#d1cdc7] hover:text-white hover:bg-white/[0.06] transition text-left cursor-pointer"
                   >
-                    <Pencil size={13} />
+                    <Pencil size={14} className="text-[#9e9990]" />
                     <span>Edit Note</span>
                   </button>
                 )}
@@ -149,13 +187,13 @@ export default function NoteCard({
                     onClick={(e) => {
                       e.stopPropagation();
                       setShowMenu(false);
-                      onFavorite(note.id);
+                      onFavorite(noteId);
                     }}
-                    className="w-full flex items-center gap-2 px-3 py-2 text-[#d1cdc7] hover:text-white hover:bg-white/[0.06] transition"
+                    className="w-full flex items-center gap-2.5 px-3.5 py-2 text-[#d1cdc7] hover:text-white hover:bg-white/[0.06] transition text-left cursor-pointer"
                   >
                     <Star
-                      size={13}
-                      className={note?.is_favorite ? "text-[#e2b17a] fill-[#e2b17a]" : ""}
+                      size={14}
+                      className={note?.is_favorite ? "text-[#e2b17a] fill-[#e2b17a]" : "text-[#9e9990]"}
                     />
                     <span>{note?.is_favorite ? "Unfavorite" : "Favorite"}</span>
                   </button>
@@ -167,13 +205,13 @@ export default function NoteCard({
                     onClick={(e) => {
                       e.stopPropagation();
                       setShowMenu(false);
-                      onPin(note.id);
+                      onPin(noteId);
                     }}
-                    className="w-full flex items-center gap-2 px-3 py-2 text-[#d1cdc7] hover:text-white hover:bg-white/[0.06] transition"
+                    className="w-full flex items-center gap-2.5 px-3.5 py-2 text-[#d1cdc7] hover:text-white hover:bg-white/[0.06] transition text-left cursor-pointer"
                   >
                     <Pin
-                      size={13}
-                      className={note?.is_pinned ? "text-[#e2b17a] fill-[#e2b17a]" : ""}
+                      size={14}
+                      className={note?.is_pinned ? "text-[#e2b17a] fill-[#e2b17a]" : "text-[#9e9990]"}
                     />
                     <span>{note?.is_pinned ? "Unpin Note" : "Pin Note"}</span>
                   </button>
@@ -187,27 +225,25 @@ export default function NoteCard({
                       setShowMenu(false);
                       onLock(note);
                     }}
-                    className="w-full flex items-center gap-2 px-3 py-2 text-[#d1cdc7] hover:text-white hover:bg-white/[0.06] transition"
+                    className="w-full flex items-center gap-2.5 px-3.5 py-2 text-[#d1cdc7] hover:text-white hover:bg-white/[0.06] transition text-left cursor-pointer"
                   >
-                    <Lock size={13} />
-                    <span>{note?.is_locked ? "Unlock" : "Protect"}</span>
+                    <Lock size={14} className="text-[#9e9990]" />
+                    <span>{note?.is_locked ? "Unlock Note" : "Protect Note"}</span>
                   </button>
                 )}
 
-                {onDelete && (
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setShowMenu(false);
-                      onDelete(note.id);
-                    }}
-                    className="w-full flex items-center gap-2 px-3 py-2 text-rose-400 hover:bg-rose-500/10 transition"
-                  >
-                    <Trash2 size={13} />
-                    <span>Move to Trash</span>
-                  </button>
-                )}
+                {/* Divider */}
+                <div className="h-px bg-white/[0.08] my-1 mx-2" />
+
+                {/* Prominent Delete Option */}
+                <button
+                  type="button"
+                  onClick={handleDeleteClick}
+                  className="w-full flex items-center gap-2.5 px-3.5 py-2 text-rose-400 hover:text-rose-300 hover:bg-rose-500/15 transition text-left cursor-pointer font-medium"
+                >
+                  <Trash2 size={14} className="text-rose-400" />
+                  <span>Delete Note</span>
+                </button>
               </>
             ) : (
               <>
@@ -217,11 +253,11 @@ export default function NoteCard({
                     onClick={(e) => {
                       e.stopPropagation();
                       setShowMenu(false);
-                      onRestore(note.id);
+                      onRestore(noteId);
                     }}
-                    className="w-full flex items-center gap-2 px-3 py-2 text-emerald-400 hover:bg-emerald-500/10 transition"
+                    className="w-full flex items-center gap-2.5 px-3.5 py-2 text-emerald-400 hover:bg-emerald-500/15 transition text-left cursor-pointer"
                   >
-                    <RotateCcw size={13} />
+                    <RotateCcw size={14} />
                     <span>Restore Note</span>
                   </button>
                 )}
@@ -231,11 +267,11 @@ export default function NoteCard({
                     onClick={(e) => {
                       e.stopPropagation();
                       setShowMenu(false);
-                      onDeleteForever(note.id);
+                      onDeleteForever(noteId);
                     }}
-                    className="w-full flex items-center gap-2 px-3 py-2 text-rose-400 hover:bg-rose-500/10 transition"
+                    className="w-full flex items-center gap-2.5 px-3.5 py-2 text-rose-400 hover:bg-rose-500/15 transition text-left cursor-pointer font-medium"
                   >
-                    <Trash2 size={13} />
+                    <Trash2 size={14} />
                     <span>Delete Forever</span>
                   </button>
                 )}
@@ -246,34 +282,34 @@ export default function NoteCard({
       </div>
 
       {/* Main Grid: Date Column | Content & Media Player | Photo Attachment */}
-      <div className="flex flex-col md:flex-row items-start gap-4 sm:gap-6 pr-6">
+      <div className="flex flex-col md:flex-row items-start gap-4 sm:gap-6 pr-6 w-full min-w-0">
         {/* 1. Left Vertical Date Block */}
-        <div className="shrink-0 flex md:flex-col items-baseline md:items-start gap-1.5 md:gap-0 min-w-[65px] pt-1">
-          <div className="font-serif text-3xl sm:text-4xl text-[#f5f2eb] font-normal leading-none">
+        <div className="shrink-0 flex md:flex-col items-baseline md:items-start gap-1.5 md:gap-0 min-w-[55px] sm:min-w-[65px] pt-1">
+          <div className="font-serif text-2xl sm:text-4xl text-[#f5f2eb] font-normal leading-none">
             {dayNumber}
           </div>
-          <div className="text-xs font-serif text-[#9e9990] mt-1">
+          <div className="text-xs font-serif text-[#9e9990] mt-0.5 sm:mt-1">
             {monthYear}
           </div>
-          <div className="text-[11px] font-sans uppercase tracking-wider text-[#9e9990]/80">
+          <div className="text-[10px] sm:text-[11px] font-sans uppercase tracking-wider text-[#9e9990]/80">
             {dayOfWeek}
           </div>
           {note?.is_pinned ? (
-            <span className="mt-2 text-[#e2b17a]" title="Pinned note">
+            <span className="mt-1.5 sm:mt-2 text-[#e2b17a]" title="Pinned note">
               <Pin size={12} fill="currentColor" />
             </span>
           ) : null}
         </div>
 
         {/* 2. Middle Column: Title, Body Text, Embedded Player, Handwritten sign-off */}
-        <div className="flex-1 min-w-0 flex flex-col justify-between">
-          <div>
-            {/* Note Title (Serif Italic) */}
-            <h2 className="font-serif italic text-lg sm:text-xl text-[#f5f2eb] tracking-tight leading-snug break-words">
+        <div className="flex-1 min-w-0 w-full flex flex-col justify-between overflow-hidden">
+          <div className="min-w-0 w-full">
+            {/* Note Title (Serif Italic) with bulletproof word wrap */}
+            <h2 className="font-serif italic text-base sm:text-lg md:text-xl text-[#f5f2eb] tracking-tight leading-snug break-words [overflow-wrap:anywhere]">
               {note?.title || "Untitled Reflection"}
             </h2>
 
-            {/* Note Content */}
+            {/* Note Content with overflow wrapping */}
             {note?.is_locked && !isUnlocked ? (
               <div
                 onClick={(e) => {
@@ -288,7 +324,7 @@ export default function NoteCard({
                 </span>
               </div>
             ) : (
-              <p className="text-xs sm:text-sm text-[#9e9990] mt-2 leading-relaxed line-clamp-3 break-words font-sans">
+              <p className="text-xs sm:text-sm text-[#9e9990] mt-2 leading-relaxed line-clamp-3 break-words [overflow-wrap:anywhere] font-sans">
                 {note?.content || "No thoughts recorded yet..."}
               </p>
             )}
@@ -297,10 +333,10 @@ export default function NoteCard({
             {musicTrack && (
               <GlassSurface
                 level={2}
-                className="mt-4 p-3 rounded-2xl flex items-center gap-3.5 max-w-md"
+                className="mt-3.5 sm:mt-4 p-2.5 sm:p-3 rounded-2xl flex items-center gap-2.5 sm:gap-3.5 w-full max-w-full overflow-hidden"
               >
                 {/* Album artwork */}
-                <div className="w-11 h-11 rounded-xl overflow-hidden bg-black/40 shrink-0 relative">
+                <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-xl overflow-hidden bg-black/40 shrink-0 relative">
                   <img
                     src={musicTrack.artwork_url || "/assets/sunset_skyline.jpg"}
                     alt={musicTrack.title}
@@ -309,7 +345,7 @@ export default function NoteCard({
                 </div>
 
                 {/* Track Details */}
-                <div className="flex-1 min-w-0">
+                <div className="flex-1 min-w-0 overflow-hidden">
                   <div className="text-xs font-semibold text-[#f5f2eb] truncate">
                     {musicTrack.title || "Night Changes"}
                   </div>
@@ -318,14 +354,14 @@ export default function NoteCard({
                   </div>
 
                   {/* Progress slider bar */}
-                  <div className="flex items-center gap-2 mt-1">
-                    <div className="flex-1 h-1 bg-white/10 rounded-full overflow-hidden">
+                  <div className="flex items-center gap-2 mt-1 min-w-0">
+                    <div className="flex-1 h-1 bg-white/10 rounded-full overflow-hidden min-w-[40px]">
                       <div
                         className="h-full bg-[#e2b17a] rounded-full transition-all"
                         style={{ width: isThisMusicPlaying ? "70%" : "45%" }}
                       />
                     </div>
-                    <span className="text-[10px] text-[#9e9990] font-mono shrink-0">
+                    <span className="text-[9px] sm:text-[10px] text-[#9e9990] font-mono shrink-0">
                       {musicTrack.currentTimeFormatted || "02:41"} / {musicTrack.durationFormatted || "03:58"}
                     </span>
                   </div>
@@ -335,10 +371,10 @@ export default function NoteCard({
                 <button
                   type="button"
                   onClick={handleMusicPlay}
-                  className="w-8 h-8 rounded-full bg-[#f5f2eb] text-[#1a140d] hover:bg-[#e2b17a] transition flex items-center justify-center shrink-0 cursor-pointer shadow-md"
+                  className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-[#f5f2eb] text-[#1a140d] hover:bg-[#e2b17a] transition flex items-center justify-center shrink-0 cursor-pointer shadow-md"
                   aria-label="Play music"
                 >
-                  {isThisMusicPlaying ? <Pause size={14} /> : <Play size={14} className="ml-0.5" />}
+                  {isThisMusicPlaying ? <Pause size={13} /> : <Play size={13} className="ml-0.5" />}
                 </button>
               </GlassSurface>
             )}
@@ -347,25 +383,25 @@ export default function NoteCard({
             {voiceMemo && (
               <GlassSurface
                 level={2}
-                className="mt-4 p-3 rounded-2xl flex items-center gap-3.5 max-w-md"
+                className="mt-3.5 sm:mt-4 p-2.5 sm:p-3 rounded-2xl flex items-center gap-2.5 sm:gap-3.5 w-full max-w-full overflow-hidden"
               >
                 {/* Play / Pause */}
                 <button
                   type="button"
                   onClick={handleVoicePlay}
-                  className="w-8 h-8 rounded-full bg-[#f5f2eb] text-[#1a140d] hover:bg-[#e2b17a] transition flex items-center justify-center shrink-0 cursor-pointer shadow-md"
+                  className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-[#f5f2eb] text-[#1a140d] hover:bg-[#e2b17a] transition flex items-center justify-center shrink-0 cursor-pointer shadow-md"
                   aria-label="Play voice memo"
                 >
-                  {isLocalAudioPlaying ? <Pause size={14} /> : <Play size={14} className="ml-0.5" />}
+                  {isLocalAudioPlaying ? <Pause size={13} /> : <Play size={13} className="ml-0.5" />}
                 </button>
 
-                {/* Waveform graphic bars */}
-                <div className="flex-1 flex items-center gap-0.5 h-6">
+                {/* Waveform graphic bars with overflow protection */}
+                <div className="flex-1 flex items-center gap-0.5 h-6 overflow-hidden min-w-0">
                   {[4, 8, 12, 18, 14, 22, 16, 24, 18, 10, 14, 20, 16, 8, 12, 22, 14, 10, 6, 14, 18, 12, 8, 4].map(
                     (height, idx) => (
                       <span
                         key={idx}
-                        className={`w-1 rounded-full transition-all ${
+                        className={`w-1 rounded-full transition-all shrink-0 ${
                           isLocalAudioPlaying
                             ? "bg-[#e2b17a] wave-bar-active"
                             : "bg-[#9e9990]/60"
@@ -380,7 +416,7 @@ export default function NoteCard({
                 </div>
 
                 {/* Duration */}
-                <span className="text-[10px] text-[#9e9990] font-mono shrink-0">
+                <span className="text-[9px] sm:text-[10px] text-[#9e9990] font-mono shrink-0">
                   {voiceMemo.currentTimeFormatted || "01:24"} / {voiceMemo.durationFormatted || "04:18"}
                 </span>
               </GlassSurface>
@@ -388,7 +424,7 @@ export default function NoteCard({
           </div>
 
           {/* Bottom Handwritten Sign-off */}
-          <div className="mt-4 pt-1 flex justify-end">
+          <div className="mt-3 sm:mt-4 pt-1 flex justify-end">
             <span className="font-handwriting text-base sm:text-lg text-[#d1cdc7]/80 tracking-wide">
               {handwrittenPhrase}
             </span>
@@ -403,7 +439,7 @@ export default function NoteCard({
                 e.stopPropagation();
                 setIsLightboxOpen(true);
               }}
-              className="w-full md:w-44 lg:w-52 h-36 sm:h-40 rounded-2xl overflow-hidden shrink-0 bg-black/40 border border-white/[0.08] relative group/photo cursor-pointer"
+              className="w-full md:w-44 lg:w-48 h-40 sm:h-44 md:h-36 lg:h-40 rounded-2xl overflow-hidden shrink-0 bg-black/40 border border-white/[0.08] relative group/photo cursor-pointer max-w-full"
               title="Click to view full photo"
             >
               <img
@@ -453,3 +489,4 @@ export default function NoteCard({
     </GlassSurface>
   );
 }
+

@@ -1,11 +1,19 @@
 import axios from "axios";
 
 const getBaseURL = () => {
-  // If running in browser on localhost or 127.0.0.1, use local backend port 5000
   if (typeof window !== "undefined") {
     const host = window.location.hostname;
-    if (host === "localhost" || host === "127.0.0.1" || host === "0.0.0.0") {
-      return "http://localhost:5000/api";
+    // Localhost, loopback, or LAN IP (e.g. 10.x.x.x, 192.168.x.x, 172.16-31.x.x)
+    const isLocalNetwork =
+      host === "localhost" ||
+      host === "127.0.0.1" ||
+      host === "0.0.0.0" ||
+      /^10\.\d+\.\d+\.\d+$/.test(host) ||
+      /^192\.168\.\d+\.\d+$/.test(host) ||
+      /^172\.(1[6-9]|2\d|3[01])\.\d+\.\d+$/.test(host);
+
+    if (isLocalNetwork) {
+      return `http://${host}:5000/api`;
     }
   }
 
