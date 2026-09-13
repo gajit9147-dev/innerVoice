@@ -4,6 +4,7 @@ import env from "./config/env.js";
 import logger from "./utils/logger.js";
 import { runAuthMigration } from "./migrations/auth_migration.js";
 import { runMediaMigration } from "./migrations/media_migration.js";
+import { runNotesMigration } from "./migrations/notes_migration.js";
 
 if (dns.setDefaultResultOrder) {
   dns.setDefaultResultOrder("ipv4first");
@@ -19,6 +20,10 @@ runAuthMigration()
 runMediaMigration()
   .then(() => logger.info("✅ Media database schema is up to date"))
   .catch((err) => logger.warn("⚠️ Media migration startup check: " + err.message));
+
+runNotesMigration()
+  .then(() => logger.info("✅ Notes database schema is up to date"))
+  .catch((err) => logger.warn("⚠️ Notes migration startup check: " + err.message));
 
 // Server start listener
 const server = app.listen(PORT, "0.0.0.0", () => {
