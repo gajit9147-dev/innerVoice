@@ -48,9 +48,9 @@ export function LiquidGlassProvider({ children }) {
     const rawApi = (import.meta.env.VITE_API_URL || "https://api.innervoice4u.in").trim().replace(/\/+$/, "");
     const apiBase = rawApi.endsWith("/api") ? rawApi.replace(/\/api$/, "") : rawApi;
     fetch(`${apiBase}/api/glass-theme`)
-      .then((res) => res.json())
+      .then((res) => (res.ok ? res.json() : null))
       .then((data) => {
-        if (data.dark && data.light) {
+        if (data && data.dark && data.light) {
           setThemes(data);
         }
       })

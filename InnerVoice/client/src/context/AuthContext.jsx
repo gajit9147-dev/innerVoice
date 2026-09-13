@@ -85,7 +85,15 @@ export function AuthProvider({ children }) {
   }, []);
 
   useEffect(() => {
-    refreshUser();
+    const safetyTimer = setTimeout(() => {
+      setLoading(false);
+    }, 4000);
+
+    refreshUser().finally(() => {
+      clearTimeout(safetyTimer);
+    });
+
+    return () => clearTimeout(safetyTimer);
   }, [refreshUser]);
 
   // Login with Email + Password
