@@ -3,12 +3,14 @@ CREATE TABLE IF NOT EXISTS users (
   full_name     VARCHAR(255) NOT NULL,
   username      VARCHAR(100) UNIQUE,
   email         VARCHAR(255) UNIQUE NOT NULL,
+  auth_provider VARCHAR(50) NOT NULL DEFAULT 'local',
   phone         VARCHAR(20),
   bio           TEXT,
   password      VARCHAR(255) NOT NULL,
   vault_pin     VARCHAR(255),
   role          VARCHAR(20) NOT NULL DEFAULT 'user',
   profile_image VARCHAR(500),
+  email_verified TINYINT(1) NOT NULL DEFAULT 0,
   created_at    TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
