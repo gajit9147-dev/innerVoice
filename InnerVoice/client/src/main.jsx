@@ -25,6 +25,8 @@ if ("serviceWorker" in navigator && !window.location.hostname.includes("localhos
     navigator.serviceWorker
       .register("/sw.js")
       .then((reg) => {
+        // Trigger immediate check for new service worker
+        reg.update().catch(() => {});
         // Check for service worker updates
         reg.addEventListener("updatefound", () => {
           const newWorker = reg.installing;
