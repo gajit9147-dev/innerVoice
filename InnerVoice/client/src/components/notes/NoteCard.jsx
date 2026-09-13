@@ -49,13 +49,14 @@ export default function NoteCard({
   const musicTrack = note?.music?.[0] || note?.attached_music || (
     note?.id === "demo-journal-1"
       ? {
-          id: "demo-track-1",
-          title: "Night Changes",
-          artist: "One Direction",
-          artwork_url: "/assets/sunset_skyline.jpg",
-          duration: 238,
-          durationFormatted: "03:58",
-          currentTimeFormatted: "02:41",
+          id: "arijit-tum-hi-ho",
+          title: "Tum Hi Ho",
+          artist: "Arijit Singh",
+          file_url: "/assets/music/tum_hi_ho.mp3",
+          artwork_url: "/assets/music/cover_tum_hi_ho.jpg",
+          duration: 262,
+          durationFormatted: "04:22",
+          currentTimeFormatted: "01:15",
         }
       : null
   );

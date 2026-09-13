@@ -65,13 +65,14 @@ const DEMO_REFERENCE_NOTES = [
     photo_url: "/assets/sunset_skyline.jpg",
     photos: [{ file_url: "/assets/sunset_skyline.jpg" }],
     attached_music: {
-      id: "demo-track-1",
-      title: "Night Changes",
-      artist: "One Direction",
-      artwork_url: "/assets/sunset_skyline.jpg",
-      duration: 238,
-      durationFormatted: "03:58",
-      currentTimeFormatted: "02:41",
+      id: "arijit-tum-hi-ho",
+      title: "Tum Hi Ho",
+      artist: "Arijit Singh • Aashiqui 2",
+      artwork_url: "/assets/music/cover_tum_hi_ho.jpg",
+      file_url: "/assets/music/tum_hi_ho.mp3",
+      duration: 267,
+      durationFormatted: "04:27",
+      currentTimeFormatted: "01:15",
     },
     handwritten_note: "Good things take time. ♡",
     is_pinned: 1,
@@ -87,6 +88,16 @@ const DEMO_REFERENCE_NOTES = [
       "Sometimes I just need a place to say what I feel. Grateful for small moments, good music and clearer thoughts.",
     photo_url: "/assets/coffee_notebook.jpg",
     photos: [{ file_url: "/assets/coffee_notebook.jpg" }],
+    attached_music: {
+      id: "arijit-kesariya",
+      title: "Kesariya",
+      artist: "Arijit Singh • Brahmāstra",
+      artwork_url: "/assets/music/cover_kesariya.jpg",
+      file_url: "/assets/music/kesariya.mp3",
+      duration: 268,
+      durationFormatted: "04:28",
+      currentTimeFormatted: "00:45",
+    },
     voice_memo: {
       id: "demo-voice-1",
       title: "Evening Clarity",
@@ -119,6 +130,7 @@ export default function Dashboard({ initialTab = "today" }) {
   const [showNoteModal, setShowNoteModal] = useState(false);
   const [editingNote, setEditingNote] = useState(null);
   const [showMusicModal, setShowMusicModal] = useState(false);
+  const [musicModalInitialAdd, setMusicModalInitialAdd] = useState(false);
   const [showVoiceModal, setShowVoiceModal] = useState(false);
   const [showMemoriesModal, setShowMemoriesModal] = useState(false);
 
@@ -519,7 +531,10 @@ export default function Dashboard({ initialTab = "today" }) {
                   onSaveNote={handleCreateNote}
                   onOpenPhotoPicker={() => photoFileInputRef.current?.click()}
                   onOpenVoiceRecorder={() => setShowVoiceModal(true)}
-                  onOpenMusicPicker={() => setShowMusicModal(true)}
+                  onOpenMusicPicker={() => {
+                    setMusicModalInitialAdd(false);
+                    setShowMusicModal(true);
+                  }}
                   activeNotebook="My Journal"
                 />
 
@@ -553,7 +568,10 @@ export default function Dashboard({ initialTab = "today" }) {
           }}
           onAddPhoto={() => photoFileInputRef.current?.click()}
           onRecordVoice={() => setShowVoiceModal(true)}
-          onAddMusic={() => setShowMusicModal(true)}
+          onAddMusic={() => {
+            setMusicModalInitialAdd(true);
+            setShowMusicModal(true);
+          }}
         />
       </div>
 
@@ -637,7 +655,11 @@ export default function Dashboard({ initialTab = "today" }) {
       {showMusicModal && (
         <MusicLibraryModal
           isOpen={showMusicModal}
-          onClose={() => setShowMusicModal(false)}
+          initialAddMode={musicModalInitialAdd}
+          onClose={() => {
+            setShowMusicModal(false);
+            setMusicModalInitialAdd(false);
+          }}
         />
       )}
 
