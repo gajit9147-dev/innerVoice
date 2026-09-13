@@ -42,7 +42,9 @@ const formatAuthError = (err, isSignup = false) => {
     return "Network request failed. Please check your network connection.";
   }
   if (err?.response?.status === 401) {
-    return isSignup ? "An account with this email may already exist." : "Email or password is incorrect.";
+    return isSignup
+      ? "An account with this email may already exist."
+      : "Email or password is incorrect.";
   }
   if (err?.response?.status === 404) {
     return "Authentication service temporarily unavailable. Please try again shortly.";
@@ -50,7 +52,12 @@ const formatAuthError = (err, isSignup = false) => {
   if (err?.response?.status >= 500) {
     return "Server encountered an error. Please try again in a few moments.";
   }
-  return raw || (isSignup ? "Registration failed. Please try again." : "Email or password is incorrect.");
+  return (
+    raw ||
+    (isSignup
+      ? "Registration failed. Please try again."
+      : "Email or password is incorrect.")
+  );
 };
 
 export default function AuthPageLayout({ initialMode = "signup" }) {
@@ -134,8 +141,12 @@ export default function AuthPageLayout({ initialMode = "signup" }) {
 
   const getStrengthLabel = (score) => {
     if (score < 40) return { label: "Weak", color: "from-rose-500 to-red-600" };
-    if (score < 70) return { label: "Fair", color: "from-amber-500 to-yellow-400" };
-    return { label: "Strong", color: "from-pink-500 via-purple-500 to-cyan-400" };
+    if (score < 70)
+      return { label: "Fair", color: "from-amber-500 to-yellow-400" };
+    return {
+      label: "Strong",
+      color: "from-pink-500 via-purple-500 to-cyan-400",
+    };
   };
 
   const strengthMeta = getStrengthLabel(strength);
@@ -147,10 +158,10 @@ export default function AuthPageLayout({ initialMode = "signup" }) {
     setError("");
     setSuccessMsg("");
 
-    const DEFAULT_GOOGLE_CLIENT_ID = "104942402554-buppqtd0bio5um986ibvq2sq669raf85.apps.googleusercontent.com";
+    const DEFAULT_GOOGLE_CLIENT_ID =
+      "104942402554-buppqtd0bio5um986ibvq2sq669raf85.apps.googleusercontent.com";
     const rawClientId =
-      import.meta.env.VITE_GOOGLE_CLIENT_ID ||
-      DEFAULT_GOOGLE_CLIENT_ID;
+      import.meta.env.VITE_GOOGLE_CLIENT_ID || DEFAULT_GOOGLE_CLIENT_ID;
 
     const googleClientId = (rawClientId || DEFAULT_GOOGLE_CLIENT_ID).trim();
 
@@ -169,7 +180,9 @@ export default function AuthPageLayout({ initialMode = "signup" }) {
 
   const triggerGoogleAuth = (clientId) => {
     if (!window.google?.accounts) {
-      setError("Google Sign-In SDK is loading. Please check your internet connection and try again.");
+      setError(
+        "Google Sign-In SDK is loading. Please check your internet connection and try again.",
+      );
       return;
     }
 
@@ -177,13 +190,17 @@ export default function AuthPageLayout({ initialMode = "signup" }) {
     setAuthActionText("Connecting to Google...");
 
     try {
-      if (window.google.accounts.id) {
+      // Prefer the OAuth popup on mobile and in browsers where One Tap is blocked.
+      // Initializing both GIS flows for one click can leave the login state stuck.
+      if (!window.google?.accounts?.oauth2 && window.google.accounts.id) {
         window.google.accounts.id.initialize({
           client_id: clientId,
           use_fedcm_for_prompt: false,
           callback: async (response) => {
             if (!response?.credential) {
-              setError("Google sign-in could not be completed. Please try again.");
+              setError(
+                "Google sign-in could not be completed. Please try again.",
+              );
               setLoading(false);
               return;
             }
@@ -209,7 +226,8 @@ export default function AuthPageLayout({ initialMode = "signup" }) {
               }
 
               setSuccessMsg("Signed in with Google! Redirecting...");
-              const destination = location.state?.from?.pathname || "/dashboard";
+              const destination =
+                location.state?.from?.pathname || "/dashboard";
               navigate(destination, { replace: true });
             } catch (err) {
               const resData = err.response?.data;
@@ -245,15 +263,23 @@ export default function AuthPageLayout({ initialMode = "signup" }) {
             if (tokenResp.error) {
               setLoading(false);
               if (tokenResp.error !== "popup_closed_by_user") {
-                setError("Google sign-in was cancelled or interrupted.");
+                setError(
+                  tokenResp.error_description ||
+                    "Google sign-in was cancelled or interrupted.",
+                );
               }
               return;
             }
             try {
               setAuthActionText("Verifying Google account...");
-              const res = await fetch("https://www.googleapis.com/oauth2/v3/userinfo", {
-                headers: { Authorization: `Bearer ${tokenResp.access_token}` },
-              });
+              const res = await fetch(
+                "https://www.googleapis.com/oauth2/v3/userinfo",
+                {
+                  headers: {
+                    Authorization: `Bearer ${tokenResp.access_token}`,
+                  },
+                },
+              );
               const userInfo = await res.json();
               if (userInfo.email) {
                 const data = await loginWithGoogle(tokenResp.access_token, {
@@ -277,7 +303,8 @@ export default function AuthPageLayout({ initialMode = "signup" }) {
                 }
 
                 setSuccessMsg("Signed in with Google! Redirecting...");
-                const destination = location.state?.from?.pathname || "/dashboard";
+                const destination =
+                  location.state?.from?.pathname || "/dashboard";
                 navigate(destination, { replace: true });
               }
             } catch (e) {
@@ -301,7 +328,7 @@ export default function AuthPageLayout({ initialMode = "signup" }) {
             }
           },
         });
-        client.requestAccessToken({ prompt: "" });
+        client.requestAccessToken({ prompt: "select_account" });
       } else if (window.google?.accounts?.id) {
         window.google.accounts.id.prompt((notification) => {
           if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
@@ -348,7 +375,9 @@ export default function AuthPageLayout({ initialMode = "signup" }) {
         document.head.appendChild(s);
       });
       if (!loaded || !window.AppleID?.auth) {
-        setError("Apple Sign-In SDK is loading or unavailable. Please check your internet connection.");
+        setError(
+          "Apple Sign-In SDK is loading or unavailable. Please check your internet connection.",
+        );
         return;
       }
     }
@@ -433,7 +462,9 @@ export default function AuthPageLayout({ initialMode = "signup" }) {
     setSuccessMsg("");
 
     if (isSignup && !agreeTerms) {
-      setError("Please agree to the Terms of Service & Privacy Policy to proceed.");
+      setError(
+        "Please agree to the Terms of Service & Privacy Policy to proceed.",
+      );
       return;
     }
 
@@ -459,7 +490,9 @@ export default function AuthPageLayout({ initialMode = "signup" }) {
           confirmPassword: formData.confirmPassword,
         });
 
-        setSuccessMsg(res?.message || "Account created successfully! Redirecting...");
+        setSuccessMsg(
+          res?.message || "Account created successfully! Redirecting...",
+        );
         const destination = location.state?.from?.pathname || "/dashboard";
         navigate(destination, { replace: true });
       } else {
@@ -481,7 +514,10 @@ export default function AuthPageLayout({ initialMode = "signup" }) {
   const handleConfirmLink = async (e) => {
     e.preventDefault();
     if (!linkingModal.password) {
-      setLinkingModal((prev) => ({ ...prev, error: "Please enter your password." }));
+      setLinkingModal((prev) => ({
+        ...prev,
+        error: "Please enter your password.",
+      }));
       return;
     }
 
@@ -519,7 +555,10 @@ export default function AuthPageLayout({ initialMode = "signup" }) {
     e.preventDefault();
     const input = configModal.clientIdInput.trim();
     if (!input) {
-      setConfigModal((prev) => ({ ...prev, error: "Please provide a valid Client ID." }));
+      setConfigModal((prev) => ({
+        ...prev,
+        error: "Please provide a valid Client ID.",
+      }));
       return;
     }
 
@@ -644,7 +683,10 @@ export default function AuthPageLayout({ initialMode = "signup" }) {
                 onClick={handleAppleClick}
                 className="w-full py-2.5 min-h-[42px] px-4 rounded-xl bg-white/[0.05] hover:bg-white/[0.1] border border-white/[0.08] hover:border-white/[0.2] text-white text-xs font-medium tracking-wide transition flex items-center justify-center gap-3 cursor-pointer disabled:opacity-50"
               >
-                <svg className="w-4 h-4 shrink-0 fill-current" viewBox="0 0 24 24">
+                <svg
+                  className="w-4 h-4 shrink-0 fill-current"
+                  viewBox="0 0 24 24"
+                >
                   <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M15.97 6.37c.62-.75 1.04-1.8 0.92-2.85-.9.04-1.98.6-2.61 1.35-.55.63-1.03 1.68-.9 2.7 1 .08 2.02-.51 2.59-1.2" />
                 </svg>
                 <span>Continue with Apple</span>
@@ -710,7 +752,11 @@ export default function AuthPageLayout({ initialMode = "signup" }) {
                     id="input-password"
                     value={formData.password}
                     onChange={handleChange}
-                    placeholder={isSignup ? "Minimum 8 characters (letters & numbers)" : "Your account password"}
+                    placeholder={
+                      isSignup
+                        ? "Minimum 8 characters (letters & numbers)"
+                        : "Your account password"
+                    }
                     required
                     className="w-full bg-slate-900/60 border border-white/15 focus:border-cyan-400 rounded-xl px-3.5 py-3 sm:py-2.5 pr-11 text-sm sm:text-xs text-white outline-none font-mono transition"
                   />
@@ -744,11 +790,19 @@ export default function AuthPageLayout({ initialMode = "signup" }) {
                     />
                     <button
                       type="button"
-                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                      onClick={() =>
+                        setShowConfirmPassword(!showConfirmPassword)
+                      }
                       className="absolute right-2.5 p-1.5 text-slate-400 hover:text-white transition cursor-pointer"
-                      title={showConfirmPassword ? "Hide password" : "Show password"}
+                      title={
+                        showConfirmPassword ? "Hide password" : "Show password"
+                      }
                     >
-                      {showConfirmPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                      {showConfirmPassword ? (
+                        <EyeOff size={16} />
+                      ) : (
+                        <Eye size={16} />
+                      )}
                     </button>
                   </div>
                 </div>
@@ -764,7 +818,8 @@ export default function AuthPageLayout({ initialMode = "signup" }) {
                     />
                   </div>
                   <span className="text-[11px] font-medium text-slate-400">
-                    Strength: <span className="text-white">{strengthMeta.label}</span>
+                    Strength:{" "}
+                    <span className="text-white">{strengthMeta.label}</span>
                   </span>
                 </div>
               )}
@@ -779,7 +834,10 @@ export default function AuthPageLayout({ initialMode = "signup" }) {
                 >
                   {loading ? (
                     <>
-                      <Loader2 size={16} className="animate-spin text-[#1a140d]" />
+                      <Loader2
+                        size={16}
+                        className="animate-spin text-[#1a140d]"
+                      />
                       <span>{authActionText || "Processing..."}</span>
                     </>
                   ) : (
@@ -814,7 +872,9 @@ export default function AuthPageLayout({ initialMode = "signup" }) {
 
                 <button
                   type="button"
-                  onClick={() => handleToggleMode(isSignup ? "login" : "signup")}
+                  onClick={() =>
+                    handleToggleMode(isSignup ? "login" : "signup")
+                  }
                   className="text-[#e2b17a] hover:text-[#f2c794] transition hover:underline cursor-pointer py-1"
                 >
                   {isSignup ? "Already have an account?" : "Need an account?"}
@@ -844,7 +904,9 @@ export default function AuthPageLayout({ initialMode = "signup" }) {
             {/* Frosted Quote Card with Delicate Leaves */}
             <div className="p-5 sm:p-6 rounded-2xl bg-white/[0.03] border border-white/[0.06] backdrop-blur-xl text-[#d1cdc7] space-y-4">
               <p className="font-serif italic text-sm leading-relaxed text-[#f5f2eb]/90">
-                “ The clearer the mind, the deeper we venture. InnerVoice is your private space to reflect, unburden, and capture the thoughts that matter most. ”
+                “ The clearer the mind, the deeper we venture. InnerVoice is
+                your private space to reflect, unburden, and capture the
+                thoughts that matter most. ”
               </p>
               <div className="font-handwriting text-2xl text-[#e2b17a] text-right pt-2">
                 Your story matters.
@@ -867,7 +929,9 @@ export default function AuthPageLayout({ initialMode = "signup" }) {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-200">
           <div className="relative w-full max-w-md rounded-3xl p-6 sm:p-8 bg-[#09101d] border border-cyan-500/40 shadow-[0_25px_80px_rgba(0,0,0,0.9),0_0_50px_rgba(6,182,212,0.25)] text-white space-y-5">
             <button
-              onClick={() => setLinkingModal((prev) => ({ ...prev, isOpen: false }))}
+              onClick={() =>
+                setLinkingModal((prev) => ({ ...prev, isOpen: false }))
+              }
               className="absolute top-5 right-5 p-1.5 rounded-full bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white transition cursor-pointer"
             >
               <X size={16} />
@@ -878,16 +942,23 @@ export default function AuthPageLayout({ initialMode = "signup" }) {
                 <Link2 size={22} />
               </div>
               <div>
-                <h3 className="text-lg font-bold text-white">Link Your Account</h3>
+                <h3 className="text-lg font-bold text-white">
+                  Link Your Account
+                </h3>
                 <p className="text-xs text-slate-400">
-                  Existing account detected: <strong className="text-white">{linkingModal.email}</strong>
+                  Existing account detected:{" "}
+                  <strong className="text-white">{linkingModal.email}</strong>
                 </p>
               </div>
             </div>
 
             <p className="text-xs text-slate-300 leading-relaxed">
-              This email is already associated with an account. Enter your password to securely link{" "}
-              <strong className="text-cyan-400 capitalize">{linkingModal.provider}</strong> to your account.
+              This email is already associated with an account. Enter your
+              password to securely link{" "}
+              <strong className="text-cyan-400 capitalize">
+                {linkingModal.provider}
+              </strong>{" "}
+              to your account.
             </p>
 
             {linkingModal.error && (
@@ -905,7 +976,11 @@ export default function AuthPageLayout({ initialMode = "signup" }) {
                   type="password"
                   value={linkingModal.password}
                   onChange={(e) =>
-                    setLinkingModal((prev) => ({ ...prev, password: e.target.value, error: "" }))
+                    setLinkingModal((prev) => ({
+                      ...prev,
+                      password: e.target.value,
+                      error: "",
+                    }))
                   }
                   placeholder="Enter your existing account password"
                   required
@@ -940,7 +1015,9 @@ export default function AuthPageLayout({ initialMode = "signup" }) {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md animate-in fade-in duration-200">
           <div className="relative w-full max-w-lg rounded-3xl p-6 sm:p-8 bg-[#09101d] border border-cyan-500/40 shadow-[0_25px_80px_rgba(0,0,0,0.9),0_0_50px_rgba(6,182,212,0.25)] text-white space-y-6">
             <button
-              onClick={() => setConfigModal((prev) => ({ ...prev, isOpen: false }))}
+              onClick={() =>
+                setConfigModal((prev) => ({ ...prev, isOpen: false }))
+              }
               className="absolute top-5 right-5 p-1.5 rounded-full bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white transition cursor-pointer"
             >
               <X size={16} />
@@ -975,7 +1052,9 @@ export default function AuthPageLayout({ initialMode = "signup" }) {
               </div>
               <div>
                 <h3 className="text-lg font-bold text-white capitalize">
-                  Connect {configModal.provider === "google" ? "Google" : "Apple"} Sign-In
+                  Connect{" "}
+                  {configModal.provider === "google" ? "Google" : "Apple"}{" "}
+                  Sign-In
                 </h3>
                 <p className="text-xs text-slate-400">
                   {configModal.provider === "google"
@@ -998,7 +1077,11 @@ export default function AuthPageLayout({ initialMode = "signup" }) {
                   <span>Client ID Setup</span>
                 </div>
                 <p className="text-xs text-slate-300 leading-relaxed">
-                  Paste your {configModal.provider === "google" ? "Google Cloud" : "Apple Services"} Client ID below to launch live authentication.
+                  Paste your{" "}
+                  {configModal.provider === "google"
+                    ? "Google Cloud"
+                    : "Apple Services"}{" "}
+                  Client ID below to launch live authentication.
                 </p>
 
                 <div className="pt-1">
@@ -1006,7 +1089,11 @@ export default function AuthPageLayout({ initialMode = "signup" }) {
                     type="text"
                     value={configModal.clientIdInput}
                     onChange={(e) =>
-                      setConfigModal((prev) => ({ ...prev, clientIdInput: e.target.value, error: "" }))
+                      setConfigModal((prev) => ({
+                        ...prev,
+                        clientIdInput: e.target.value,
+                        error: "",
+                      }))
                     }
                     placeholder={
                       configModal.provider === "google"
@@ -1023,7 +1110,11 @@ export default function AuthPageLayout({ initialMode = "signup" }) {
                 type="submit"
                 className="w-full py-2.5 px-4 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 font-semibold text-xs text-white transition flex items-center justify-center gap-2 cursor-pointer shadow-md"
               >
-                <span>Save & Launch {configModal.provider === "google" ? "Google" : "Apple"} Sign-In</span>
+                <span>
+                  Save & Launch{" "}
+                  {configModal.provider === "google" ? "Google" : "Apple"}{" "}
+                  Sign-In
+                </span>
                 <ArrowRight size={14} />
               </button>
 
@@ -1033,17 +1124,60 @@ export default function AuthPageLayout({ initialMode = "signup" }) {
                 </span>
                 {configModal.provider === "google" ? (
                   <ol className="list-decimal list-inside space-y-1 text-slate-300 leading-relaxed">
-                    <li>Visit Google Cloud Console &gt; APIs &amp; Services &gt; Credentials.</li>
-                    <li>Create OAuth 2.0 Client ID (Application type: Web application).</li>
-                    <li>Add Authorized JavaScript origin: <code className="text-cyan-300 bg-white/5 px-1 py-0.5 rounded">http://localhost:5173</code></li>
-                    <li>Paste above or set in <code className="text-pink-300">client/.env</code> as <code className="text-pink-300">VITE_GOOGLE_CLIENT_ID</code> and <code className="text-pink-300">server/.env</code> as <code className="text-pink-300">GOOGLE_CLIENT_ID</code>.</li>
+                    <li>
+                      Visit Google Cloud Console &gt; APIs &amp; Services &gt;
+                      Credentials.
+                    </li>
+                    <li>
+                      Create OAuth 2.0 Client ID (Application type: Web
+                      application).
+                    </li>
+                    <li>
+                      Add Authorized JavaScript origin:{" "}
+                      <code className="text-cyan-300 bg-white/5 px-1 py-0.5 rounded">
+                        http://localhost:5173
+                      </code>
+                    </li>
+                    <li>
+                      Paste above or set in{" "}
+                      <code className="text-pink-300">client/.env</code> as{" "}
+                      <code className="text-pink-300">
+                        VITE_GOOGLE_CLIENT_ID
+                      </code>{" "}
+                      and <code className="text-pink-300">server/.env</code> as{" "}
+                      <code className="text-pink-300">GOOGLE_CLIENT_ID</code>.
+                    </li>
                   </ol>
                 ) : (
                   <ol className="list-decimal list-inside space-y-1 text-slate-300 leading-relaxed">
-                    <li>Visit Apple Developer &gt; Certificates, Identifiers &amp; Profiles &gt; Identifiers.</li>
-                    <li>Create a Services ID (e.g. <code className="text-cyan-300">com.innervoice.app.web</code>).</li>
-                    <li>Set Web Domain to <code className="text-cyan-300">localhost:5173</code> and Return URL to <code className="text-cyan-300">http://localhost:5173/login</code>.</li>
-                    <li>Paste above or set in <code className="text-pink-300">client/.env</code> as <code className="text-pink-300">VITE_APPLE_CLIENT_ID</code>.</li>
+                    <li>
+                      Visit Apple Developer &gt; Certificates, Identifiers &amp;
+                      Profiles &gt; Identifiers.
+                    </li>
+                    <li>
+                      Create a Services ID (e.g.{" "}
+                      <code className="text-cyan-300">
+                        com.innervoice.app.web
+                      </code>
+                      ).
+                    </li>
+                    <li>
+                      Set Web Domain to{" "}
+                      <code className="text-cyan-300">localhost:5173</code> and
+                      Return URL to{" "}
+                      <code className="text-cyan-300">
+                        http://localhost:5173/login
+                      </code>
+                      .
+                    </li>
+                    <li>
+                      Paste above or set in{" "}
+                      <code className="text-pink-300">client/.env</code> as{" "}
+                      <code className="text-pink-300">
+                        VITE_APPLE_CLIENT_ID
+                      </code>
+                      .
+                    </li>
                   </ol>
                 )}
               </div>
