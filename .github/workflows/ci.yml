@@ -53,6 +53,23 @@ jobs:
         run: |
           mysql -h 127.0.0.1 -P 3306 -u root -pCITestPass123 innervoice < ../docker/init.sql
 
+      # init.sql is the base schema; the app adds auth columns (auth_provider, google_id,
+      # email_verified, ...) through this idempotent migration on startup. Apply it here too.
+      - name: 🗄️ Apply auth migration
+        env:
+          NODE_ENV: test
+          DB_HOST: 127.0.0.1
+          DB_PORT: 3306
+          DB_USER: root
+          DB_PASSWORD: CITestPass123
+          DB_NAME: innervoice
+          JWT_SECRET: 'ci-test-secure-jwt-secret-key-12345'
+          GEMINI_API_KEY: 'ci-test-gemini-key'
+          CLOUDINARY_CLOUD_NAME: 'ci-test-cloudinary-cloud-name'
+          CLOUDINARY_API_KEY: 'ci-test-cloudinary-api-key'
+          CLOUDINARY_API_SECRET: 'ci-test-cloudinary-api-secret'
+        run: node migrations/auth_migration.js
+
       - name: ✅ Run tests
         env:
           PORT: 5000
