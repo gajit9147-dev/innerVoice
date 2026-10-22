@@ -1,31 +1,16 @@
-import {
-  PieChart,
-  Pie,
-  Cell,
-  Tooltip,
-  ResponsiveContainer,
-  Legend,
-} from "recharts";
+import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Legend } from "recharts";
+import ChartPanel from "./ChartPanel";
 
-const COLORS = [
-  "#3B82F6",
-  "#10B981",
-  "#F59E0B",
-  "#EF4444",
-  "#8B5CF6",
-  "#EC4899",
-  "#14B8A6",
-  "#F97316",
-];
+const COLORS = ["#e2b17a", "#7fb8a4", "#a78bda", "#d98c8c", "#7aa7e2", "#c9d97a", "#e2a0c4", "#9e9990"];
 
-function MoodChart({ data }) {
+function MoodChart({ data = [] }) {
   return (
-    <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-md border border-gray-200 dark:border-slate-700 p-6 flex-1">
-      <h2 className="text-xl font-bold mb-6 text-gray-900 dark:text-white">
-        😊 Mood Distribution
-      </h2>
-
-      <div className="h-80">
+    <ChartPanel
+      title="Mood Distribution"
+      empty={data.length === 0}
+      emptyText="Add a feeling to your notes to see your mood mix."
+    >
+      <div className="h-64 sm:h-80">
         <ResponsiveContainer width="100%" height="100%">
           <PieChart>
             <Pie
@@ -33,24 +18,23 @@ function MoodChart({ data }) {
               dataKey="count"
               nameKey="feeling"
               cx="50%"
-              cy="50%"
-              outerRadius={100}
-              label
+              cy="45%"
+              outerRadius="70%"
+              stroke="rgba(0,0,0,0.3)"
             >
               {data.map((entry, index) => (
-                <Cell
-                  key={index}
-                  fill={COLORS[index % COLORS.length]}
-                />
+                <Cell key={index} fill={COLORS[index % COLORS.length]} />
               ))}
             </Pie>
-
-            <Tooltip />
-            <Legend />
+            <Tooltip
+              contentStyle={{ background: "#14151a", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 12, color: "#f5f2eb" }}
+              itemStyle={{ color: "#f5f2eb" }}
+            />
+            <Legend wrapperStyle={{ color: "#9e9990", fontSize: 12 }} />
           </PieChart>
         </ResponsiveContainer>
       </div>
-    </div>
+    </ChartPanel>
   );
 }
 
