@@ -5,6 +5,7 @@ import Sidebar from "../components/layout/Sidebar";
 import Header from "../components/layout/Header";
 import RightContextPanel from "../components/layout/RightContextPanel";
 import WritingComposer from "../components/notes/WritingComposer";
+import OnThisDayCard from "../components/notes/OnThisDayCard";
 import RecentThoughtsFeed from "../components/notes/RecentThoughtsFeed";
 import NoteForm from "../components/notes/NoteForm";
 import Modal from "../components/common/Modal";
@@ -53,65 +54,6 @@ import {
 } from "lucide-react";
 import GlassSurface from "../components/glass/GlassSurface";
 
-// Reference notes matching the exact design truth in the attached image
-const DEMO_REFERENCE_NOTES = [
-  {
-    id: "demo-journal-1",
-    title: "Some days just feel different...",
-    category: "My Journal",
-    feeling: "Peaceful",
-    created_at: "2026-09-11T20:30:00.000Z",
-    content:
-      "Today was one of those days. I don't know why, but everything felt a little calmer. I spent some time listening to this song and it actually made me feel better.",
-    photo_url: "/assets/sunset_skyline.jpg",
-    photos: [{ file_url: "/assets/sunset_skyline.jpg" }],
-    attached_music: {
-      id: "arijit-tum-hi-ho",
-      title: "Tum Hi Ho",
-      artist: "Arijit Singh • Aashiqui 2",
-      artwork_url: "/assets/music/cover_tum_hi_ho.jpg",
-      file_url: "/assets/music/tum_hi_ho.mp3",
-      duration: 267,
-      durationFormatted: "04:27",
-      currentTimeFormatted: "01:15",
-    },
-    handwritten_note: "Good things take time. ♡",
-    is_pinned: 1,
-    is_favorite: 1,
-  },
-  {
-    id: "demo-journal-2",
-    title: "A moment for myself",
-    category: "Reflections",
-    feeling: "Grateful",
-    created_at: "2026-09-10T17:15:00.000Z",
-    content:
-      "Sometimes I just need a place to say what I feel. Grateful for small moments, good music and clearer thoughts.",
-    photo_url: "/assets/coffee_notebook.jpg",
-    photos: [{ file_url: "/assets/coffee_notebook.jpg" }],
-    attached_music: {
-      id: "arijit-kesariya",
-      title: "Kesariya",
-      artist: "Arijit Singh • Brahmāstra",
-      artwork_url: "/assets/music/cover_kesariya.jpg",
-      file_url: "/assets/music/kesariya.mp3",
-      duration: 268,
-      durationFormatted: "04:28",
-      currentTimeFormatted: "00:45",
-    },
-    voice_memo: {
-      id: "demo-voice-1",
-      title: "Evening Clarity",
-      duration: 258,
-      durationFormatted: "04:18",
-      currentTimeFormatted: "01:24",
-    },
-    handwritten_note: "Just me... ♡",
-    is_pinned: 0,
-    is_favorite: 0,
-  },
-];
-
 export default function Dashboard({ initialTab = "today" }) {
   const navigate = useNavigate();
   const { user, logout } = useAuth();
@@ -120,7 +62,7 @@ export default function Dashboard({ initialTab = "today" }) {
 
   // Core state
   const [activeTab, setActiveTab] = useState(initialTab === "overview" ? "today" : initialTab);
-  const [notes, setNotes] = useState(DEMO_REFERENCE_NOTES);
+  const [notes, setNotes] = useState([]);
   const [trashNotes, setTrashNotes] = useState([]);
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -172,25 +114,14 @@ export default function Dashboard({ initialTab = "today" }) {
         getDashboardStats().catch(() => ({ data: { stats: null } })),
       ]);
 
-      const apiNotes = notesRes.data?.notes || [];
-      if (apiNotes.length > 0) {
-        // Merge API notes with the demo reference notes to ensure full rich display
-        const existingIds = new Set(apiNotes.map((n) => String(n.id)));
-        const combined = [
-          ...apiNotes,
-          ...DEMO_REFERENCE_NOTES.filter((d) => !existingIds.has(String(d.id))),
-        ];
-        setNotes(combined);
-      } else {
-        setNotes(DEMO_REFERENCE_NOTES);
-      }
+      setNotes(notesRes.data?.notes || []);
 
       if (statsRes.data?.stats) {
         setStats(statsRes.data.stats);
       }
     } catch (err) {
-      console.warn("Could not fetch notes from API, using serene fallback:", err);
-      setNotes(DEMO_REFERENCE_NOTES);
+      console.warn("Could not fetch notes from API:", err);
+      setNotes([]);
     } finally {
       setLoading(false);
     }
@@ -620,6 +551,15 @@ export default function Dashboard({ initialTab = "today" }) {
                     setShowMusicModal(true);
                   }}
                   activeNotebook="My Journal"
+                />
+
+                {/* Memories from earlier days and years */}
+                <OnThisDayCard
+                  notes={notes}
+                  onSelectNote={(n) => {
+                    setEditingNote(n);
+                    setShowNoteModal(true);
+                  }}
                 />
 
                 {/* Recent Thoughts Chronological Feed */}

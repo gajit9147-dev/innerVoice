@@ -10,8 +10,11 @@ import {
   Tag as TagIcon,
   Smile,
   X,
+  Sparkles,
+  RefreshCw,
 } from "lucide-react";
 import GlassSurface from "../glass/GlassSurface";
+import { getDailyPrompt } from "../../utils/journalInsights";
 
 export default function WritingComposer({
   onSaveNote,
@@ -26,6 +29,14 @@ export default function WritingComposer({
   const [selectedFeeling, setSelectedFeeling] = useState("Peaceful");
   const [tagsInput, setTagsInput] = useState("");
   const [isPrivate, setIsPrivate] = useState(false);
+
+  const [promptShift, setPromptShift] = useState(0);
+  const prompt = getDailyPrompt(new Date(), promptShift);
+
+  const usePrompt = () => {
+    setContent((prev) => (prev.trim() ? `${prev.trimEnd()}\n\n${prompt}\n` : `${prompt}\n`));
+    textareaRef.current?.focus();
+  };
 
   const textareaRef = useRef(null);
 
@@ -85,6 +96,26 @@ export default function WritingComposer({
       className="p-5 sm:p-6 rounded-3xl relative transition-all duration-300 shadow-[0_20px_50px_rgba(0,0,0,0.55)]"
     >
       {/* Writing Textarea */}
+      <div className="flex items-start gap-2 mb-2 text-xs text-[#9e9990]">
+        <Sparkles size={14} className="text-[#e2b17a] mt-0.5 shrink-0" />
+        <p className="flex-1 italic min-w-0">{prompt}</p>
+        <button
+          type="button"
+          onClick={usePrompt}
+          className="px-2 py-0.5 rounded-full border border-[#e2b17a]/30 text-[#e2b17a] hover:bg-[#e2b17a]/10 transition-colors shrink-0"
+        >
+          Use
+        </button>
+        <button
+          type="button"
+          onClick={() => setPromptShift((n) => n + 1)}
+          className="p-1 rounded-full hover:bg-white/[0.06] transition-colors shrink-0"
+          title="Another prompt"
+          aria-label="Show another prompt"
+        >
+          <RefreshCw size={13} />
+        </button>
+      </div>
       <div className="relative">
         <textarea
           ref={textareaRef}

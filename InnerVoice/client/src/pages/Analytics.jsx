@@ -4,6 +4,7 @@ import AnalyticsGrid from "../components/analytics/AnalyticsGrid";
 import MoodChart from "../components/analytics/MoodChart";
 import CategoryChart from "../components/analytics/CategoryChart";
 import WeeklyChart from "../components/analytics/WeeklyChart";
+import ActivityHeatmap from "../components/analytics/ActivityHeatmap";
 import InsightCard from "../components/analytics/InsightCard";
 import { getDashboardStats, getMoodStats, getCategoryStats, getNotes } from "../api/note";
 import { TrendingUp } from "lucide-react";
@@ -75,10 +76,9 @@ function Analytics() {
           <CategoryChart data={categories} />
         </div>
 
-        {/* Weekly Writing Frequency Chart */}
-        <div className="w-full">
-          <WeeklyChart notes={notes} />
-        </div>
+        <ActivityHeatmap notes={notes} />
+
+        <WeeklyChart notes={notes} />
       </div>
     </Layout>
   );
