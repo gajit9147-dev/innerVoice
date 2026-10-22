@@ -171,16 +171,8 @@ export default function Dashboard({ initialTab = "today" }) {
       addToast("Note created with attachments", "success");
     } catch (err) {
       console.error("Create note error:", err);
-      const fallback = {
-        id: `local-${Date.now()}`,
-        ...data,
-        photo_url: data.photo_url || (data.photos && data.photos[0]?.file_url) || null,
-        photos: data.photos || (data.photo_url ? [{ file_url: data.photo_url }] : []),
-        created_at: new Date().toISOString(),
-      };
-      setNotes((prev) => [fallback, ...prev]);
-      setShowNoteModal(false);
-      setEditingNote(null);
+      addToast(err.userMessage || "Could not save note. Your draft is still here.", "error");
+      throw err;
     }
   };
 
@@ -223,11 +215,8 @@ export default function Dashboard({ initialTab = "today" }) {
       addToast("Note updated successfully", "success");
     } catch (err) {
       console.error("Update note error:", err);
-      setNotes((prev) =>
-        prev.map((n) => (n.id === editingNote.id ? { ...n, ...data } : n))
-      );
-      setEditingNote(null);
-      setShowNoteModal(false);
+      addToast(err.userMessage || "Could not update note. Your draft is still here.", "error");
+      throw err;
     }
   };
 
@@ -247,14 +236,7 @@ export default function Dashboard({ initialTab = "today" }) {
       addToast("Note moved to trash", "success");
     } catch (err) {
       console.error("Delete note error:", err);
-      setNotes((prev) =>
-        prev.filter(
-          (n) =>
-            String(n.id) !== String(id) &&
-            String(n._id) !== String(id)
-        )
-      );
-      addToast("Note removed from view", "success");
+      addToast(err.userMessage || "Could not move note to trash. Please try again.", "error");
     }
   };
 
@@ -274,7 +256,7 @@ export default function Dashboard({ initialTab = "today" }) {
       setTrashNotes((prev) => prev.filter((n) => n.id !== id));
     } catch (err) {
       console.error("Delete forever error:", err);
-      setTrashNotes((prev) => prev.filter((n) => n.id !== id));
+      addToast(err.userMessage || "Could not delete note. Please retry.", "error");
     }
   };
 
@@ -349,36 +331,29 @@ export default function Dashboard({ initialTab = "today" }) {
     // Reset input so the user can select the same file again if needed
     e.target.value = "";
 
-    const reader = new FileReader();
-    reader.onload = async (event) => {
-      const dataUrl = event.target.result;
-      let finalPhotoUrl = dataUrl;
-
-      try {
-        const formData = new FormData();
-        formData.append("file", file);
-        formData.append("media_type", "photo");
-        formData.append("title", file.name.replace(/\.[^/.]+$/, ""));
-
-        const res = await uploadMediaFile(formData);
-        if (res.data?.media?.file_url) {
-          finalPhotoUrl = res.data.media.file_url;
-        }
-      } catch (uploadErr) {
-        console.warn("Media cloud upload fallback to persistent Data URL:", uploadErr);
-      }
-
-      // Create a fixed photo card with the photo attached
+    if (!file.type.startsWith("image/") || file.size > 10 * 1024 * 1024) {
+      addToast("Choose an image smaller than 10MB.", "error");
+      return;
+    }
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("media_type", "photo");
+      formData.append("title", file.name.replace(/\.[^/.]+$/, ""));
+      const res = await uploadMediaFile(formData);
+      const url = res.data?.media?.file_url;
+      if (!url) throw new Error("Photo upload did not complete.");
       await handleCreateNote({
         title: `Captured Moment: ${file.name.replace(/\.[^/.]+$/, "")}`,
         content: "A visual memory preserved in serenity.",
         category: "Memories",
         feeling: "Grateful",
-        photo_url: finalPhotoUrl,
-        photos: [{ file_url: finalPhotoUrl, title: file.name }],
+        photo_url: url,
+        photos: [{ file_url: url, title: file.name }],
       });
-    };
-    reader.readAsDataURL(file);
+    } catch (err) {
+      addToast(err.userMessage || err.message || "Could not save photo. Please try again.", "error");
+    }
   };
 
   // AI Reflection Handlers
@@ -390,7 +365,7 @@ export default function Dashboard({ initialTab = "today" }) {
       const res = await API.post("/ai/summarize", { note: sampleText });
       setAiResult(res.data.summary || "You are seeking inner clarity and peaceful consistency.");
     } catch (err) {
-      setAiResult("Your recent entries reflect a journey toward inner stillness, patience, and gratitude for small moments.");
+      setAiError(err.userMessage || "Could not generate a reflection. Please retry.");
     } finally {
       setAiLoading(false);
     }
@@ -698,8 +673,8 @@ export default function Dashboard({ initialTab = "today" }) {
           <AudioVoiceMemo
             isModal={true}
             onClose={() => setShowVoiceModal(false)}
-            onSaveNewRecording={(memo) => {
-              handleCreateNote({
+            onSaveNewRecording={async (memo) => {
+              await handleCreateNote({
                 title: memo.title || "Voice Memo Reflection",
                 content: "A spoken thought captured in calmness.",
                 category: "Reflections",

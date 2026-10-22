@@ -13,6 +13,8 @@ import {
   Sparkles,
   AlertCircle,
 } from "lucide-react";
+import { uploadMediaFile } from "../../api/media";
+import AudioVoiceMemo from "./AudioVoiceMemo";
 import GlassSurface from "../glass/GlassSurface";
 import { ARIJIT_SINGH_TRACKS } from "../dashboard/MusicLibraryModal";
 
@@ -25,6 +27,9 @@ export default function NoteForm({ onSave, onCancel, initialData }) {
     is_locked: false,
   });
 
+  const [saving, setSaving] = useState(false);
+  const [photoFile, setPhotoFile] = useState(null);
+  const [showVoiceRecorder, setShowVoiceRecorder] = useState(false);
   const [showMore, setShowMore] = useState(false);
   const [attachedPhoto, setAttachedPhoto] = useState(
     initialData?.photo_url || initialData?.photos?.[0]?.file_url || null
@@ -78,6 +83,11 @@ export default function NoteForm({ onSave, onCancel, initialData }) {
       return;
     }
 
+    if (file.size > 10 * 1024 * 1024) {
+      setErrorMessage("Photo must be smaller than 10MB.");
+      return;
+    }
+    setPhotoFile(file);
     const reader = new FileReader();
     reader.onload = (event) => {
       setAttachedPhoto(event.target.result);
@@ -86,7 +96,8 @@ export default function NoteForm({ onSave, onCancel, initialData }) {
     reader.readAsDataURL(file);
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
+    if (saving) return;
     if (e) e.preventDefault();
 
     if (!formData.content.trim()) {
@@ -99,18 +110,37 @@ export default function NoteForm({ onSave, onCancel, initialData }) {
       formData.content.trim().split("\n")[0].substring(0, 45) ||
       "My Journal Entry";
 
-    const payload = {
-      ...formData,
-      title: titleToSave,
-      photo_url: attachedPhoto || null,
-      photos: attachedPhoto ? [{ file_url: attachedPhoto }] : [],
-      attached_music: attachedMusic || null,
-      music: attachedMusic ? [attachedMusic] : [],
-      voice_memo: attachedVoice || null,
-      voice: attachedVoice ? [attachedVoice] : [],
-    };
+    setSaving(true);
+    try {
+      let photoUrl = attachedPhoto;
+      if (photoFile && attachedPhoto) {
+        const body = new FormData();
+        body.append("file", photoFile);
+        body.append("media_type", "photo");
+        body.append("title", photoFile.name);
+        const response = await uploadMediaFile(body);
+        photoUrl = response.data?.media?.file_url;
+        if (!photoUrl) throw new Error("Photo upload did not complete. Please try again.");
+        setAttachedPhoto(photoUrl);
+        setPhotoFile(null);
+      }
+      const payload = {
+        ...formData,
+        title: titleToSave,
+        photo_url: photoUrl || null,
+        photos: photoUrl ? [{ file_url: photoUrl }] : [],
+        attached_music: attachedMusic || null,
+        music: attachedMusic ? [attachedMusic] : [],
+        voice_memo: attachedVoice || null,
+        voice: attachedVoice ? [attachedVoice] : [],
+      };
 
-    onSave(payload);
+      await onSave(payload);
+    } catch (err) {
+      setErrorMessage(err.userMessage || err.response?.data?.message || err.message || "Could not save. Your draft is still here.");
+    } finally {
+      setSaving(false);
+    }
   };
 
   const feelings = [
@@ -143,6 +173,12 @@ export default function NoteForm({ onSave, onCancel, initialData }) {
         className="hidden"
       />
 
+      {showVoiceRecorder && (
+        <div className="fixed inset-0 z-[60] bg-black/80 flex items-center justify-center p-4">
+          <AudioVoiceMemo isModal onClose={() => setShowVoiceRecorder(false)}
+            onSaveNewRecording={(memo) => { setAttachedVoice(memo); setShowVoiceRecorder(false); }} />
+        </div>
+      )}
       {/* Top Header Bar */}
       <div className="flex items-center justify-between pb-3.5 mb-3 border-b border-white/[0.08]">
         <h2 className="font-serif text-xl sm:text-2xl text-[#f5f2eb] font-normal tracking-tight">
@@ -154,10 +190,11 @@ export default function NoteForm({ onSave, onCancel, initialData }) {
           <button
             type="button"
             onClick={handleSubmit}
+            disabled={saving}
             className="btn-champagne px-3.5 sm:px-4 py-1.5 rounded-xl text-xs font-semibold cursor-pointer shadow-md flex items-center gap-1.5"
           >
             <Save size={13} />
-            <span>Save</span>
+            <span>{saving ? "Saving..." : "Save"}</span>
           </button>
 
           <button
@@ -383,16 +420,7 @@ export default function NoteForm({ onSave, onCancel, initialData }) {
           {/* Voice Memo Button */}
           <button
             type="button"
-            onClick={() => {
-              if (attachedVoice) {
-                setAttachedVoice(null);
-              } else {
-                setAttachedVoice({
-                  title: "Spoken Reflection",
-                  durationFormatted: "01:24",
-                });
-              }
-            }}
+            onClick={() => setShowVoiceRecorder(true)}
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium transition cursor-pointer border ${
               attachedVoice
                 ? "bg-[#e2b17a]/15 text-[#e2b17a] border-[#e2b17a]/30"
@@ -438,6 +466,7 @@ export default function NoteForm({ onSave, onCancel, initialData }) {
         <button
           type="button"
           onClick={handleSubmit}
+          disabled={saving}
           className="btn-champagne px-5 py-1.5 rounded-xl text-xs font-semibold cursor-pointer shadow-md"
         >
           Save

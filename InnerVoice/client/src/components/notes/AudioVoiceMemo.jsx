@@ -213,46 +213,24 @@ export default function AudioVoiceMemo({
       const res = await uploadVoiceMemo(formData);
       const savedMemo = res.data?.memo;
 
+      if (!savedMemo) throw new Error("Voice upload did not complete. Please retry.");
       if (savedMemo) {
         setAudioUrl(savedMemo.file_url);
         setTitle(savedMemo.title);
         setDuration(savedMemo.duration_seconds);
+        if (onSaveNewRecording) {
+          await onSaveNewRecording(savedMemo);
+        }
         setRecordedBlob(null);
         setRecordingState("saved");
         setSavedSuccessMsg("Voice memo saved permanently!");
 
-        if (onSaveNewRecording) {
-          onSaveNewRecording(savedMemo);
-        }
-
         setTimeout(() => setSavedSuccessMsg(null), 3000);
       }
     } catch (err) {
-      console.warn("Failed to upload voice memo to cloud, falling back to local recording:", err);
-      try {
-        const localUrl = URL.createObjectURL(recordedBlob);
-        const fallbackMemo = {
-          id: `local-memo-${Date.now()}`,
-          title: title || "Voice Reflection",
-          file_url: localUrl,
-          duration_seconds: duration || recordTime || 0,
-          is_offline: true,
-        };
-        setAudioUrl(localUrl);
-        setRecordedBlob(null);
-        setRecordingState("saved");
-        setSavedSuccessMsg("Voice memo saved locally to note!");
-
-        if (onSaveNewRecording) {
-          onSaveNewRecording(fallbackMemo);
-        }
-
-        setTimeout(() => setSavedSuccessMsg(null), 3000);
-      } catch (localErr) {
-        console.error("Local fallback error:", localErr);
-        setRecordingState("stopped");
-        setRecordingError("Could not save recording.");
-      }
+      console.error("Failed to save voice memo:", err);
+      setRecordingState("stopped");
+      setRecordingError(err.userMessage || "Could not save recording. Your recording is still here; please retry.");
     }
   };
 

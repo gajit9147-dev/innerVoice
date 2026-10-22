@@ -2,6 +2,9 @@ import { useState } from "react";
 import { useToast } from "../../context/ToastContext";
 import { Database, Download, FileJson, FileText, Loader2, Check } from "lucide-react";
 import { getNotes } from "../../api/note";
+import { getMusicLibrary } from "../../api/media";
+import { getVoiceMemos } from "../../api/voiceMemo";
+import { getProfileInfo } from "../../api/profile";
 import GlassSurface from "../glass/GlassSurface";
 
 function ExportBackupCard() {
@@ -26,7 +29,7 @@ function ExportBackupCard() {
     try {
       setIsExporting(true);
       addToast("Preparing your backup archive...", "success");
-      const res = await getNotes();
+      const [res, music, voice, profile] = await Promise.all([getNotes(), getMusicLibrary(), getVoiceMemos(), getProfileInfo()]);
       const notesList = res.data.notes || [];
 
       if (notesList.length === 0) {
@@ -34,10 +37,9 @@ function ExportBackupCard() {
         return;
       }
 
-      // Read custom music tracks & user metadata to bundle comprehensive data
-      const customMusicRaw = localStorage.getItem("innervoice_custom_tracks");
-      const customMusic = customMusicRaw ? JSON.parse(customMusicRaw) : [];
-      const userProfile = JSON.parse(localStorage.getItem("user") || "{}");
+      const customMusic = music.data?.tracks || [];
+      const voiceMemos = voice.data?.memos || [];
+      const userProfile = profile.data?.profile || {};
 
       if (formatToUse === "markdown") {
         let markdownContent = `# InnerVoice Journal Backup\n`;
@@ -73,6 +75,7 @@ function ExportBackupCard() {
           total_notes: notesList.length,
           notes: notesList,
           saved_music: customMusic,
+          voice_memos: voiceMemos,
         };
 
         const jsonStr = JSON.stringify(completeArchive, null, 2);
@@ -109,7 +112,7 @@ function ExportBackupCard() {
 
       <div className="space-y-4">
         <p className="text-xs text-[#d1cdc7] leading-relaxed">
-          Download a complete archive of your notes, memories, music and profile data.
+          Download your notes and media links. Original media files are not bundled.
         </p>
 
         {/* Format Selector Pills */}

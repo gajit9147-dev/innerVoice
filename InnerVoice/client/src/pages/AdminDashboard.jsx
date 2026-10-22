@@ -6,6 +6,7 @@ import GlassSurface from "../components/glass/GlassSurface";
 import { ShieldAlert, Trash2, Loader2 } from "lucide-react";
 
 function AdminDashboard() {
+  const [error, setError] = useState(null);
   const [users, setUsers] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const { addToast } = useToast();
@@ -19,7 +20,7 @@ function AdminDashboard() {
       const res = await getAllUsers();
       setUsers(res.data.users || []);
     } catch (err) {
-      addToast("Failed to fetch users", "error");
+      setError(err.response?.status === 403 ? "This page is only available to admins." : "Could not load users. Please retry.");
     } finally {
       setIsLoading(false);
     }
@@ -46,6 +47,8 @@ function AdminDashboard() {
       </Layout>
     );
   }
+
+  if (error) return <Layout><div role="alert" className="p-6 text-[#f5f2eb]">{error}</div></Layout>;
 
   return (
     <Layout>

@@ -3,32 +3,24 @@ import { BarChart3, NotebookPen, Music2, Sparkles } from "lucide-react";
 import GlassSurface from "../glass/GlassSurface";
 import { getNotes, getDashboardStats } from "../../api/note";
 import { countMemories } from "../../utils/journalStats";
-import { ARIJIT_SINGH_TRACKS } from "../dashboard/MusicLibraryModal";
+import { getMusicLibrary } from "../../api/media";
 
 function ProfileStats({ stats, createdAt }) {
   const [totalNotes, setTotalNotes] = useState(stats?.totalNotes || 0);
-  const [savedMusicCount, setSavedMusicCount] = useState(6);
+  const [savedMusicCount, setSavedMusicCount] = useState(null);
   const [memoriesCount, setMemoriesCount] = useState(0);
 
   useEffect(() => {
-    // 1. Calculate Music Count (Custom Tracks + 6 Arijit Singh Tracks)
-    try {
-      const customRaw = localStorage.getItem("innervoice_custom_tracks");
-      const customTracks = customRaw ? JSON.parse(customRaw) : [];
-      const totalMusic = customTracks.length + (ARIJIT_SINGH_TRACKS?.length || 6);
-      setSavedMusicCount(totalMusic);
-    } catch {
-      setSavedMusicCount(6);
-    }
-
     // 2. Fetch real counts from backend notes / stats
     const fetchCounts = async () => {
       try {
-        const [dashRes, notesRes] = await Promise.all([
+        const [dashRes, notesRes, musicRes] = await Promise.all([
           getDashboardStats().catch(() => null),
           getNotes().catch(() => null),
+          getMusicLibrary().catch(() => null),
         ]);
 
+        setSavedMusicCount(musicRes ? (musicRes.data?.tracks || []).length : null);
         const notesList = notesRes?.data?.notes || [];
 
         // Total notes count
@@ -103,7 +95,7 @@ function ProfileStats({ stats, createdAt }) {
             </div>
           </div>
           <span className="font-serif text-xl sm:text-2xl text-[#f5f2eb] font-normal tracking-tight">
-            {savedMusicCount}
+            {savedMusicCount ?? "Unavailable"}
           </span>
         </div>
 
