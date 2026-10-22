@@ -13,8 +13,8 @@ This document outlines the evolutionary phases of **InnerVoice**, tracking compl
 | **Phase 3** | Liquid Glass UI System | Glassmorphism, LERP Glare, and Animations | `✅ Completed` |
 | **Phase 4** | Search, Filtering & Discovery | Fuzzy searching, Hashtags, and Date Filters | `✅ Completed` |
 | **Phase 5** | Profile Refinement & Data Export | Multi-column layout, Reactive Avatars, and Backups | `✅ Completed` |
-| **Phase 6** | Rich Content & Cloud Sync | Advanced editor, media embeds, offline journaling | `⏳ Future` |
-| **Phase 7** | Deep Insights & NLP | Sentiment analysis, automated summary tags | `⏳ Future` |
+| **Phase 6** | Rich Content & Cloud Sync | Advanced editor, media embeds, offline journaling | `🟡 Partial` (offline storage + service worker exist; cloud sync not done) |
+| **Phase 7** | Deep Insights & NLP | Sentiment analysis, automated summary tags | `🟡 Partial` (Analytics page: streak, weekly words, mood and category charts computed from real notes; NLP not done) |
 
 ---
 

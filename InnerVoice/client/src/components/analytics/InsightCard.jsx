@@ -37,15 +37,13 @@ function InsightCard({ moods = [], categories = [], notes = [] }) {
   }, [moods, categories, notes]);
 
   return (
-    <div className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-slate-900 dark:to-slate-950 border border-blue-100 dark:border-slate-800 rounded-2xl p-6 shadow-sm flex items-start gap-4 transition-all duration-300">
-      <div className="p-3 rounded-xl bg-blue-500 text-white shadow-md shadow-blue-500/20">
-        <Sparkles size={24} />
+    <div className="glass-primary border border-white/[0.08] rounded-2xl sm:rounded-3xl p-4 sm:p-6 flex items-start gap-3 sm:gap-4">
+      <div className="p-2.5 sm:p-3 rounded-xl bg-[#e2b17a]/15 border border-[#e2b17a]/30 text-[#e2b17a] shrink-0">
+        <Sparkles size={22} />
       </div>
-      <div>
-        <h4 className="font-bold text-gray-800 dark:text-white text-lg">Journaling Insight</h4>
-        <p className="text-gray-600 dark:text-gray-300 text-sm mt-1.5 leading-relaxed font-medium">
-          {insight}
-        </p>
+      <div className="min-w-0">
+        <h4 className="font-serif text-lg text-[#f5f2eb]">Journaling Insight</h4>
+        <p className="text-[#9e9990] text-sm mt-1.5 leading-relaxed">{insight}</p>
       </div>
     </div>
   );

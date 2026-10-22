@@ -6,10 +6,10 @@ Built with a robust full-stack architecture (MySQL, Express, React, Node.js) and
 
 ## ✨ Features
 
-- **Responsive Design:** Completely fluid UI that works flawlessly on desktop, tablet, and mobile.
+- **Responsive Design:** Fluid UI for desktop, tablet and mobile. Pages are checked at 375px, 768px and desktop widths.
 - **Dark Mode:** A meticulously crafted dark theme that respects your eyes during late-night journaling sessions.
 - **Rich Organization:** Categorize your notes and use the powerful search and filtering system to find exactly what you need instantly.
-- **Insights & Analytics:** Track your writing habits, most-used categories, and note frequency over time.
+- **Insights & Analytics:** Track your writing streak, words and notes per week, mood mix and categories. All numbers are computed from your own notes (see `client/src/utils/journalStats.js`).
 - **Beautiful UI/UX:** Features smooth micro-interactions, toast notifications, skeleton loaders, and entry animations for a premium feel.
 
 ## 🚀 Tech Stack

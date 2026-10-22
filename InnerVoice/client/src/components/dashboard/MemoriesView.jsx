@@ -24,57 +24,9 @@ export default function MemoriesView({
 
   const filters = ["All", "Notes", "Photos", "Voice", "Music"];
 
-  // Aggregate memories from notes & sample photos
+  // Aggregate memories from the user's own notes
   const memoryItems = useMemo(() => {
     const items = [];
-
-    // Add sample showcase memories matching reference image
-    items.push({
-      id: "mem-1",
-      type: "photo",
-      title: "City Sunset Horizon",
-      date: "Sep 2026",
-      image: "/assets/sunset_skyline.jpg",
-    });
-    items.push({
-      id: "mem-2",
-      type: "photo",
-      title: "Morning Journal & Coffee",
-      date: "Sep 2026",
-      image: "/assets/coffee_notebook.jpg",
-    });
-    items.push({
-      id: "mem-3",
-      type: "photo",
-      title: "Rainy Pine Sanctuary",
-      date: "Sep 2026",
-      image: "/assets/ambient_bg.jpg",
-    });
-    items.push({
-      id: "mem-4",
-      type: "photo",
-      title: "Mountain Mist Dawn",
-      date: "Sep 2026",
-      image: "/assets/peaceful_mountain.jpg",
-    });
-
-    // Sample music reflections
-    items.push({
-      id: "mem-mus-1",
-      type: "music",
-      title: "Kesariya Reflection",
-      subtitle: "Arijit Singh",
-      date: "Sep 2026",
-      file_url: "/assets/arijit/kesariya.mp3",
-    });
-    items.push({
-      id: "mem-mus-2",
-      type: "music",
-      title: "Tum Hi Ho Starlight",
-      subtitle: "Arijit Singh",
-      date: "Sep 2026",
-      file_url: "/assets/arijit/tum_hi_ho.mp3",
-    });
 
     // Extract memories from user notes
     notes.forEach((n) => {

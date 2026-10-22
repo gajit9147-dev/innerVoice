@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { BarChart3, NotebookPen, Music2, Sparkles } from "lucide-react";
 import GlassSurface from "../glass/GlassSurface";
 import { getNotes, getDashboardStats } from "../../api/note";
+import { countMemories } from "../../utils/journalStats";
 import { ARIJIT_SINGH_TRACKS } from "../dashboard/MusicLibraryModal";
 
 function ProfileStats({ stats, createdAt }) {
@@ -39,14 +40,7 @@ function ProfileStats({ stats, createdAt }) {
           setTotalNotes(notesList.length);
         }
 
-        // Memories count (notes categorized as Memories or with attached photos)
-        const memories = notesList.filter(
-          (n) =>
-            n.category === "Memories" ||
-            (n.photos && n.photos.length > 0) ||
-            n.photo_url
-        );
-        setMemoriesCount(memories.length > 0 ? memories.length : 2);
+        setMemoriesCount(countMemories(notesList));
       } catch (err) {
         console.warn("[ProfileStats] count error:", err);
       }
