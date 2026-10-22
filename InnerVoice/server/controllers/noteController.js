@@ -524,7 +524,6 @@ export const togglePinNote = async (req, res) => {
       [id, userId]
     );
 
-    console.log("Rows:", rows);
 
     if (rows.length === 0) {
       return res.status(404).json({
@@ -544,7 +543,6 @@ export const togglePinNote = async (req, res) => {
       [newValue, id, userId]
     );
 
-    console.log("Affected Rows:", result.affectedRows);
 
     res.json({
       success: true,
@@ -799,11 +797,6 @@ export const deleteForever = async (req, res) => {
 // =========================
 export const setNotePassword = async (req, res) => {
   try {
-    console.log("Note ID:", req.params.id);
-    console.log("req.user:", req.user);
-    console.log("req.user.id:", req.user.id);
-    logDebug(`setNotePassword - ID: ${req.params.id}, req.user.id: ${req.user?.id}, req.body: ${JSON.stringify(req.body)}`);
-
     const { id } = req.params;
     const { password, hint } = req.body;
 
@@ -863,11 +856,6 @@ export const setNotePassword = async (req, res) => {
 // =========================
 export const verifyNotePassword = async (req, res) => {
   try {
-    console.log("Verify Note Password - Note ID:", req.params.id);
-    console.log("Verify Note Password - req.user:", req.user);
-    console.log("Verify Note Password - req.user.id:", req.user?.id);
-    logDebug(`verifyNotePassword - ID: ${req.params.id}, req.user.id: ${req.user?.id}, req.body: ${JSON.stringify(req.body)}`);
-
     const { id } = req.params;
     const { password } = req.body;
 
@@ -876,7 +864,6 @@ export const verifyNotePassword = async (req, res) => {
       [id, req.user.id]
     );
 
-    console.log("Rows:", rows);
 
     if (rows.length === 0) {
       return res.status(404).json({
@@ -924,11 +911,6 @@ export const verifyNotePassword = async (req, res) => {
 // =========================
 export const deleteNotePassword = async (req, res) => {
   try {
-    console.log("Delete Note Password - Note ID:", req.params.id);
-    console.log("Delete Note Password - req.user:", req.user);
-    console.log("Delete Note Password - req.user.id:", req.user?.id);
-    logDebug(`deleteNotePassword - ID: ${req.params.id}, req.user.id: ${req.user?.id}, req.body: ${JSON.stringify(req.body)}`);
-
     const { id } = req.params;
     const { password } = req.body;
 
@@ -1032,8 +1014,6 @@ export const changeNotePassword = async (req, res) => {
       });
     }
 
-    console.log("Current Password:", currentPassword);
-    console.log("Stored Hash:", note.note_password);
 
     const isMatch = await bcrypt.compare(currentPassword, note.note_password);
 
